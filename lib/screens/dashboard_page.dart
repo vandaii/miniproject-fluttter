@@ -11,176 +11,249 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   int _selectedIndex = 0;
-
   final navigationKey = GlobalKey<CurvedNavigationBarState>();
 
   void _onItemTapped(int index) {
-    if (index == 1) {
-      _showFeatureModal();
-    } else {
-      setState(() {
-        _selectedIndex = index;
-      });
-    }
-  }
-
-  void _showFeatureModal() {
-    showModalBottomSheet(
-      context: context,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: GridView.count(
-          crossAxisCount: 3,
-          shrinkWrap: true,
-          children: [
-            _featureItem(Icons.shopping_bag, 'Purchasing'),
-            _featureItem(Icons.inventory, 'Stock'),
-            _featureItem(Icons.insert_chart, 'Reports'),
-            _featureItem(Icons.settings, 'Settings'),
-            _featureItem(Icons.help, 'Help'),
-            _featureItem(Icons.more_horiz, 'Lainnya'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _featureItem(IconData icon, String title) {
-    return Column(
-      children: [
-        CircleAvatar(
-          backgroundColor: const Color.fromARGB(255, 135, 171, 208),
-          child: Icon(icon, color: Color.fromARGB(255, 84, 75, 107)),
-        ),
-        const SizedBox(height: 6),
-        Text(title, style: const TextStyle(fontSize: 12)),
-      ],
-    );
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
+      backgroundColor: const Color(0xFFF2F2F2),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Row(
-                    children: [
-                      Image.asset('assets/images/icons-haus.png', height: 40),
-                      const SizedBox(width: 8),
-                      Text(
-                        'HAUS Inventory',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    height: 250,
+                    decoration: const BoxDecoration(
+                      color: Color(
+                        0xFF4A148C,
+                      ), // Dark purple color for the header
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(40),
+                        bottomRight: Radius.circular(40),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Replace Avatar with Logo and Title
+                            Image.asset(
+                              'assets/images/icons-haus.png', // Use your logo here
+                              height: 60,
+                              width: 60,
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  'HAUS ',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Text(
+                                  'INVENTORY',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.pink.shade400,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Add Notification, Email, and Avatar Icons
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.notifications,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 12),
+                                const Icon(
+                                  Icons.mail_outline,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 12),
+                                const CircleAvatar(
+                                  backgroundImage: AssetImage(
+                                    'assets/images/avatar.jpg', // Replace with avatar image
+                                  ),
+                                  radius: 15,
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 30),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Welcome to the Dashboard',
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: Colors.white70,
+                              ),
+                            ),
+                            RichText(
+                              text: TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: 'Haus ',
+                                    style: GoogleFonts.cinzelDecorative(
+                                      fontSize: 25,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: 'Inventory',
+                                    style: GoogleFonts.cinzelDecorative(
+                                      fontSize: 25,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.pink.shade400,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                  Row(
-                    children: const [
-                      Icon(Icons.search, size: 26),
-                      SizedBox(width: 12),
-                      Icon(Icons.mail_outline, size: 26),
-                      SizedBox(width: 12),
-                      CircleAvatar(
-                        backgroundImage: AssetImage('assets/images/avatar.jpg'),
-                        radius: 18,
+
+                  // Action Buttons Card
+                  Positioned(
+                    top: 200, // Adjust position to overlap the header
+                    left: 16,
+                    right: 16,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 20,
                       ),
-                    ],
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.3),
+                            spreadRadius: 1,
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _actionButton(Icons.account_balance_wallet, 'Top Up'),
+                          _actionButton(Icons.send, 'Send'),
+                          _actionButton(Icons.currency_exchange, 'Request'),
+                          _actionButton(Icons.history, 'History'),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
 
-              Text(
-                'Dashboard',
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 100), // Adjust space below the overlap
+              // Payment List Section
+              _paymentListSection(),
 
-              // Tasks Section
+              // Promo & Discount Section
+              _promoDiscountSection(),
+
+              // Task Card
               Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 12,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Tasks",
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text(
+                          "Show ALL",
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
                     _taskItem(
                       'Stock Opname has not been performed',
                       'High Priority',
-                      'Needs Attention',
-                      Colors.red,
                     ),
-                    const Divider(),
                     _taskItem(
                       'PO-2024-0125 awaiting acceptance',
                       'Medium Priority',
-                      'Waiting for Action',
-                      Colors.orange,
                     ),
-                    const Divider(),
                     _taskItem(
                       'PO-2025-0222 awaiting acceptance',
                       'High Priority',
-                      'Needs Attention',
-                      Colors.red,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
 
-              // Status Boxes
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _statusBox('Outstanding PO', '3', Colors.purple),
-                  _statusBox('Outstanding Direct Purchase', '5', Colors.red),
-                  _statusBox('Outstanding Transfer Out', '8', Colors.orange),
-                ],
-              ),
               const SizedBox(height: 20),
 
-              // Open Item List Table (Mock)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              // Status Cards
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
                   children: [
-                    Text(
-                      'Open Item List',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                    _statusCard('Outstanding\nPO', Colors.pink.shade100),
+                    const SizedBox(width: 8),
+                    _statusCard(
+                      'Outstanding\nTransfer Out',
+                      Colors.red.shade100,
+                      colorText: Colors.red,
                     ),
-                    const SizedBox(height: 12),
-                    _tableHeader(),
-                    const Divider(),
-                    _tableRow('PO-2024-0125', '15/03/2024', 'PT Karunia Alam'),
-                    _tableRow('PO-2024-0125', '15/03/2024', 'PT Kurnia Abadi'),
-                    _tableRow('PO-2024-0125', '15/03/2024', 'PT Boba Supply'),
-                    _tableRow('PO-2024-0125', '15/03/2024', 'PT Kemasan Prima'),
+                    const SizedBox(width: 8),
+                    _statusCard(
+                      'Outstanding\nDirect Purchase',
+                      Colors.blue.shade100,
+                      colorText: Colors.blue,
+                    ),
                   ],
                 ),
               ),
+              const SizedBox(height: 60),
             ],
           ),
         ),
@@ -188,145 +261,266 @@ class _DashboardPageState extends State<DashboardPage> {
       bottomNavigationBar: CurvedNavigationBar(
         key: navigationKey,
         backgroundColor: Colors.transparent,
-        color: const Color.fromARGB(255, 135, 171, 208),
-        buttonBackgroundColor: const Color.fromARGB(255, 84, 75, 107),
+        color: const Color(0xFF673AB7),
+        buttonBackgroundColor: Colors.white,
         height: 60,
-        animationDuration: const Duration(milliseconds: 300),
-        animationCurve: Curves.easeInOut,
-        items: const <Widget>[
-          Icon(Icons.home, color: Colors.white),
-          Icon(Icons.apps, color: Colors.white),
-          Icon(Icons.person, color: Colors.white),
+        items: const [
+          Icon(Icons.home, color: Colors.black),
+          Icon(Icons.search, color: Colors.black),
+          Icon(Icons.add_box, color: Colors.black),
+          Icon(Icons.notifications, color: Colors.black),
+          Icon(Icons.person, color: Colors.black),
         ],
         onTap: _onItemTapped,
+        animationDuration: const Duration(milliseconds: 300),
+        animationCurve: Curves.easeInOut,
+        index: _selectedIndex,
+        letIndexChange: (index) => true,
       ),
     );
   }
 
-  Widget _taskItem(String title, String priority, String status, Color color) {
-    return Row(
-      children: [
-        Icon(Icons.error_outline, color: color),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: GoogleFonts.poppins()),
-              Row(
-                children: [
-                  Text(
-                    priority,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      status,
-                      style: GoogleFonts.poppins(fontSize: 12, color: color),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+  Widget _taskItem(String title, String priority) {
+    IconData icon = Icons.error_outline;
+    Color color = priority == 'High Priority'
+        ? Colors.red
+        : Colors.orangeAccent;
 
-  Widget _statusBox(String title, String count, Color color) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Text(
-              count,
-              style: GoogleFonts.poppins(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(fontSize: 12),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _tableHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _headerCell('PO Number'),
-        _headerCell('Date'),
-        _headerCell('Supplier'),
-        _headerCell('Status'),
-        const Text('Action'),
-      ],
-    );
-  }
-
-  Widget _tableRow(String po, String date, String supplier) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _rowCell(po),
-          _rowCell(date),
-          _rowCell(supplier),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.yellow.shade100,
-              borderRadius: BorderRadius.circular(8),
+          Icon(icon, color: color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: GoogleFonts.poppins(fontSize: 13),
+              overflow: TextOverflow.ellipsis,
             ),
-            child: Text('Open', style: GoogleFonts.poppins(fontSize: 12)),
           ),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.pink),
-            child: const Text('Detail'),
+          Column(
+            children: [
+              Text(
+                '12/03/2025 09:42',
+                style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey),
+              ),
+              Container(
+                margin: const EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  priority,
+                  style: GoogleFonts.poppins(fontSize: 10, color: color),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _headerCell(String title) {
-    return Text(
-      title,
-      style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 12),
+  Widget _statusCard(
+    String title,
+    Color bg, {
+    Color colorText = Colors.purple,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: colorText,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _rowCell(String text) {
-    return SizedBox(
-      width: 80,
-      child: Text(text, style: GoogleFonts.poppins(fontSize: 12)),
+  Widget _actionButton(IconData icon, String text) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.purple.shade50, // Light purple background
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: Colors.deepPurple), // Dark purple icon
+        ),
+        const SizedBox(height: 4),
+        Text(
+          text,
+          style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
+        ),
+      ],
+    );
+  }
+
+  Widget _paymentItem(IconData icon, String text) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 5,
+              ),
+            ],
+          ),
+          child: Icon(icon, color: Colors.deepPurple),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          text,
+          textAlign: TextAlign.center, // Center text for multi-line labels
+          style: GoogleFonts.poppins(fontSize: 12, color: Colors.black87),
+        ),
+      ],
+    );
+  }
+
+  Widget _paymentListSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Payment List',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 4,
+            childAspectRatio: 1,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            children: [
+              _paymentItem(Icons.wifi, 'Internet'),
+              _paymentItem(Icons.flash_on, 'Electricity'),
+              _paymentItem(Icons.card_giftcard, 'Voucher'),
+              _paymentItem(Icons.security, 'Assurance'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _promoDiscountSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Promo & Discount',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              Text(
+                'See more',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: Colors.deepPurple,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 120,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _promoCard(
+                  'Special Offer for Today’s Top Up',
+                  'Get discount for every top up',
+                  Colors.deepPurpleAccent,
+                ),
+                _promoCard(
+                  'New User Discount',
+                  'Register now and get a discount',
+                  Colors.orangeAccent,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _promoCard(String title, String subtitle, Color bgColor) {
+    return Container(
+      width: 200,
+      margin: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70),
+          ),
+        ],
+      ),
     );
   }
 }
