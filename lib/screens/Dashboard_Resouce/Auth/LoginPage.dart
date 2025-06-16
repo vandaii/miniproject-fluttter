@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:miniproject_flutter/screens/dashboard_page.dart';
-import 'package:miniproject_flutter/screens/register_page.dart';
+import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/register_page.dart';
+import 'package:miniproject_flutter/screens/dashboard_page_new.dart';
 import 'package:miniproject_flutter/widgets/CustomPage_Login.dart';
+import 'package:miniproject_flutter/services/authService.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final String? initialId;
+  final String? initialPassword;
+
+  const LoginPage({super.key, this.initialId, this.initialPassword});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -17,12 +21,22 @@ class _LoginPageState extends State<LoginPage> {
   bool _isPasswordVisible = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Auto-fill from registration if available
+    _idController.text = widget.initialId ?? '';
+    _passwordController.text = widget.initialPassword ?? '';
+  }
+
+  @override
   void dispose() {
     _idController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
+  //===================================================================
+  // Build the login page
   @override
   Widget build(BuildContext context) {
     final keyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
@@ -34,13 +48,10 @@ class _LoginPageState extends State<LoginPage> {
         child: Column(
           children: [
             const SizedBox(height: 24),
-
-            // by Logo + Title
             const LogoSection(),
-
             const SizedBox(height: 60),
 
-            //  by Form Login
+            // Form login
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -56,7 +67,7 @@ class _LoginPageState extends State<LoginPage> {
                   rememberMe: _rememberMe,
                   onRememberMeChanged: (val) =>
                       setState(() => _rememberMe = val!),
-                  onLoginPressed: () {
+                  onLoginPressed: () async {
                     final id = _idController.text.trim();
                     final password = _passwordController.text;
 
@@ -70,12 +81,24 @@ class _LoginPageState extends State<LoginPage> {
                       return;
                     }
 
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const DashboardPage(),
-                      ),
-                    );
+                    bool isLoggedIn = await AuthService().login(id, password);
+                    if (isLoggedIn) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DashboardPage(),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Invalid credentials. Please try again.',
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
                   },
                   onForgetPasswordPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -94,7 +117,8 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
 
-            // by Footer Dekorasi (tampil jika keyboard tidak muncul)
+            // ===================================================================
+            // Footer image jika keyboard tidak muncul
             if (!keyboardVisible)
               Padding(
                 padding: const EdgeInsets.only(bottom: 0),

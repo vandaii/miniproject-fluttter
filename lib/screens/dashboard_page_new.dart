@@ -1,31 +1,7 @@
-# miniproject_flutter
-
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-
-color by web
--FB773C
--EB3678
--4F1787
--180161
-
-
-code 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Purchasing/GRPO_Page.dart';
+import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/MaterialCalculate_Page.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/StockOpname_Page.dart';
 import 'Dashboard_Resouce/Purchasing/DirectPurchase_Page.dart';
 import 'Dashboard_Resouce/Stock_Management/TransferStock_Page.dart';
@@ -35,6 +11,7 @@ import 'Dashboard_Resouce/Stock_Management/Waste_Page.dart';
 import 'Dashboard_Resouce/Auth/Help_Page.dart';
 import 'Dashboard_Resouce/Auth/Notification_Page.dart';
 import 'Dashboard_Resouce/Auth/Email_Page.dart';
+import 'package:miniproject_flutter/services/authService.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -43,16 +20,27 @@ class DashboardPage extends StatefulWidget {
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> {
+class _DashboardPageState extends State<DashboardPage>
+    with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
   bool _isSidebarExpanded = true;
+  bool _isDrawerOpen = false;
+  bool _isProfileMenuOpen = false;
+  bool _isStoreMenuOpen = false;
+  int? _expandedMenuIndex; // Untuk menyimpan index menu yang sedang terbuka
 
   int _selectedOpenItemTab = 0; // 0: PO, 1: Direct Purchase, 2: Transfer Out
 
   final Color primaryColor = const Color(0xFFF8BBD0);
-  final Color accentColor = const Color(0xFFE91E63);
-  final Color deepPink = const Color(0xFF880E4F);
+  // final Color accentColor = const Color.fromARGB(255, 233, 30, 99);
+  final Color deepPink = const Color.fromARGB(255, 233, 30, 99);
   final Color lightPink = const Color(0xFFFCE4EC);
+
+  // Konstanta untuk menu index
+  static const int PURCHASING_MENU = 1;
+  static const int STOCK_MANAGEMENT_MENU = 2;
+
+  final AuthService _authService = AuthService();
 
   // Dummy data untuk masing-masing tab
   final List<List<DataRow>> _openItemRows = [
@@ -68,7 +56,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF880E4F),
+                backgroundColor: Color.fromARGB(255, 233, 30, 99),
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 shape: RoundedRectangleBorder(
@@ -94,7 +82,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF880E4F),
+                backgroundColor: Color.fromARGB(255, 233, 30, 99),
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 shape: RoundedRectangleBorder(
@@ -120,7 +108,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF880E4F),
+                backgroundColor: Color.fromARGB(255, 233, 30, 99),
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 shape: RoundedRectangleBorder(
@@ -137,217 +125,103 @@ class _DashboardPageState extends State<DashboardPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  void _toggleMenu(int menuIndex) {
+    setState(() {
+      if (_expandedMenuIndex == menuIndex) {
+        // Jika menu yang sama diklik, tutup menu
+        _expandedMenuIndex = null;
+      } else {
+        // Buka menu yang baru diklik
+        _expandedMenuIndex = menuIndex;
+      }
+    });
+  }
+
+  Future<void> _handleLogout() async {
+    try {
+      // Tampilkan loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(child: CircularProgressIndicator());
+        },
+      );
+
+      // Panggil API logout
+      await _authService.logout();
+
+      // Tutup loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Tampilkan snackbar sukses
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Berhasil logout'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Navigate ke halaman login
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      }
+    } catch (e) {
+      // Handle error
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal logout: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
-      body: Row(
+      drawer: isMobile
+          ? Drawer(
+              child: _buildSidebarContent(
+                isMobile: true,
+                closeDrawer: () => Navigator.pop(context),
+              ),
+            )
+          : null,
+      body: Stack(
         children: [
-          // Sidebar
+          // Main Content
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            width: _isSidebarExpanded ? 250 : 70,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 0),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                // Logo dan Toggle Button
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: Row(
-                    mainAxisAlignment: _isSidebarExpanded
-                        ? MainAxisAlignment.spaceBetween
-                        : MainAxisAlignment.center,
-                    children: [
-                      if (_isSidebarExpanded)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 20),
-                          child: Image.asset(
-                            'assets/images/icons-haus.png',
-                            height: 40,
-                            width: 40,
-                          ),
-                        ),
-                      IconButton(
-                        icon: Icon(
-                          _isSidebarExpanded
-                              ? Icons.chevron_left
-                              : Icons.chevron_right,
-                          color: deepPink,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _isSidebarExpanded = !_isSidebarExpanded;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                // Menu Items
-                Expanded(
-                  child: ListView(
-                    padding: EdgeInsets.zero,
-                    children: [
-                      _buildMenuItem(
-                        icon: Icons.home,
-                        title: 'Dashboard',
-                        isSelected: _selectedIndex == 0,
-                        onTap: () => setState(() => _selectedIndex = 0),
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.shopping_cart,
-                        title: 'Direct Purchase',
-                        isSelected: _selectedIndex == 1,
-                        onTap: () {
-                          setState(() => _selectedIndex = 1);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const DirectPurchasePage()),
-                          );
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.assignment_turned_in,
-                        title: 'GRPO',
-                        isSelected: _selectedIndex == 2,
-                        onTap: () {
-                          setState(() => _selectedIndex = 2);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const GRPO_Page()),
-                          );
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.request_page,
-                        title: 'Material Request',
-                        isSelected: _selectedIndex == 3,
-                        onTap: () {
-                          setState(() => _selectedIndex = 3);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const MaterialRequestPage()),
-                          );
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.inventory,
-                        title: 'Stock Opname',
-                        isSelected: _selectedIndex == 4,
-                        onTap: () {
-                          setState(() => _selectedIndex = 4);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const StockOpnamePage()),
-                          );
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.compare_arrows,
-                        title: 'Transfer Stock',
-                        isSelected: _selectedIndex == 5,
-                        onTap: () {
-                          setState(() => _selectedIndex = 5);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const TransferStockPage()),
-                          );
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.delete,
-                        title: 'Waste',
-                        isSelected: _selectedIndex == 6,
-                        onTap: () {
-                          setState(() => _selectedIndex = 6);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const WastePage()),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1),
-                      _buildMenuItem(
-                        icon: Icons.notifications,
-                        title: 'Notifications',
-                        isSelected: _selectedIndex == 7,
-                        onTap: () {
-                          setState(() => _selectedIndex = 7);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => NotificationPage()),
-                          );
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.mail_outline,
-                        title: 'Email',
-                        isSelected: _selectedIndex == 8,
-                        onTap: () {
-                          setState(() => _selectedIndex = 8);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => EmailPage()),
-                          );
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.help_outline,
-                        title: 'Help',
-                        isSelected: _selectedIndex == 9,
-                        onTap: () {
-                          setState(() => _selectedIndex = 9);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const HelpPage()),
-                          );
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.person,
-                        title: 'Profile',
-                        isSelected: _selectedIndex == 10,
-                        onTap: () {
-                          setState(() => _selectedIndex = 10);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const UserprofilePage()),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Main Content
-          Expanded(
+            margin: isMobile
+                ? EdgeInsets.zero
+                : EdgeInsets.only(left: _isSidebarExpanded ? 250 : 70),
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  _buildHeader(screenWidth),
+                  _buildHeader(screenWidth, isMobile),
                   const SizedBox(height: 130),
                   _buildTaskSection(),
                   const SizedBox(height: 60),
@@ -359,6 +233,200 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
           ),
+          // Sidebar (hanya tampil di desktop/tablet)
+          if (!isMobile)
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: _isSidebarExpanded ? 250 : 70,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 0),
+                  ),
+                ],
+              ),
+              child: _buildSidebarContent(isMobile: false),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSidebarContent({
+    bool isMobile = false,
+    VoidCallback? closeDrawer,
+  }) {
+    return Container(
+      color: Colors.white,
+      child: Column(
+        children: [
+          // Logo dan nama aplikasi
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 16 : 20,
+              vertical: 24,
+            ),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.grey.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Image.asset(
+                  'assets/images/icons-haus.png',
+                  height: 36,
+                  width: 36,
+                ),
+                if (_isSidebarExpanded || isMobile) const SizedBox(width: 12),
+                if (_isSidebarExpanded || isMobile)
+                  Text(
+                    'haus! Inventory',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: deepPink,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          // Info toko dengan dropdown
+          if (_isSidebarExpanded || isMobile) _buildStoreDropdown(),
+
+          // Menu Items dengan Expanded
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  // Section GENERAL
+                  if (_isSidebarExpanded || isMobile)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                      child: Row(
+                        children: [
+                          Text(
+                            'GENERAL',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              letterSpacing: 1,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            height: 1,
+                            width: 100,
+                            color: Colors.grey.withOpacity(0.2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  _buildMenuItem(
+                    icon: Icons.dashboard_outlined,
+                    title: 'Dashboard',
+                    isSelected: _selectedIndex == 0,
+                    onTap: () {
+                      setState(() => _selectedIndex = 0);
+                      if (isMobile && closeDrawer != null) closeDrawer();
+                    },
+                  ),
+                  _buildExpandableMenu(
+                    icon: Icons.shopping_cart_outlined,
+                    title: 'Purchasing',
+                    isExpanded: _selectedIndex == PURCHASING_MENU,
+                    menuIndex: PURCHASING_MENU,
+                    children: [
+                      _buildSubMenuItem('Direct Purchase', 11),
+                      _buildSubMenuItem('GRPO', 12),
+                    ],
+                    onTap: () {
+                      setState(() => _selectedIndex = PURCHASING_MENU);
+                    },
+                    isMobile: isMobile,
+                  ),
+                  _buildExpandableMenu(
+                    icon: Icons.inventory_2_outlined,
+                    title: 'Stock Management',
+                    isExpanded: _selectedIndex == STOCK_MANAGEMENT_MENU,
+                    menuIndex: STOCK_MANAGEMENT_MENU,
+                    children: [
+                      _buildSubMenuItem('Material Request', 21),
+                      _buildSubMenuItem('Material Calculate', 25),
+                      _buildSubMenuItem('Stock Opname', 22),
+                      _buildSubMenuItem('Transfer Stock', 23),
+                      _buildSubMenuItem('Waste', 24),
+                    ],
+                    onTap: () {
+                      setState(() => _selectedIndex = STOCK_MANAGEMENT_MENU);
+                    },
+                    isMobile: isMobile,
+                  ),
+                  _buildMenuItem(
+                    icon: Icons.assessment_outlined,
+                    title: 'Inventory Report',
+                    isSelected: _selectedIndex == 3,
+                    onTap: () {
+                      setState(() => _selectedIndex = 3);
+                      if (isMobile && closeDrawer != null) closeDrawer();
+                    },
+                  ),
+                  // Section TOOLS
+                  if (_isSidebarExpanded || isMobile)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                      child: Row(
+                        children: [
+                          Text(
+                            'TOOLS',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              letterSpacing: 1,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            height: 1,
+                            width: 100,
+                            color: Colors.grey.withOpacity(0.2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  _buildMenuItem(
+                    icon: Icons.settings_outlined,
+                    title: 'Account & Settings',
+                    isSelected: _selectedIndex == 4,
+                    onTap: () {
+                      setState(() => _selectedIndex = 4);
+                      if (isMobile && closeDrawer != null) closeDrawer();
+                    },
+                  ),
+                  _buildMenuItem(
+                    icon: Icons.help_outline,
+                    title: 'Help',
+                    isSelected: _selectedIndex == 5,
+                    onTap: () {
+                      setState(() => _selectedIndex = 5);
+                      if (isMobile && closeDrawer != null) closeDrawer();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // User profile dengan dropdown (selalu di bawah)
+          if (_isSidebarExpanded || isMobile) _buildProfileDropdown(),
         ],
       ),
     );
@@ -370,34 +438,236 @@ class _DashboardPageState extends State<DashboardPage> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: isSelected ? deepPink : Colors.grey,
-      ),
-      title: _isSidebarExpanded
-          ? Text(
-              title,
-              style: GoogleFonts.poppins(
-                color: isSelected ? deepPink : Colors.grey,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            )
-          : null,
-      selected: isSelected,
-      onTap: onTap,
-      tileColor: isSelected ? lightPink.withOpacity(0.3) : null,
-      shape: RoundedRectangleBorder(
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isSelected ? lightPink.withOpacity(0.3) : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
       ),
-      contentPadding: EdgeInsets.symmetric(
-        horizontal: _isSidebarExpanded ? 20 : 0,
-        vertical: 8,
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? deepPink.withOpacity(0.1)
+                : Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: isSelected ? deepPink : Colors.grey,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(
+            color: isSelected ? deepPink : Colors.grey,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontSize: 14,
+          ),
+        ),
+        selected: isSelected,
+        onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        dense: true,
       ),
     );
   }
 
-  Widget _buildHeader(double screenWidth) {
+  Widget _buildExpandableMenu({
+    required IconData icon,
+    required String title,
+    required bool isExpanded,
+    required List<Widget> children,
+    required VoidCallback onTap,
+    required int menuIndex,
+    bool isMobile = false,
+  }) {
+    final isMenuExpanded = _expandedMenuIndex == menuIndex;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: isExpanded ? lightPink.withOpacity(0.3) : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isExpanded
+                    ? deepPink.withOpacity(0.1)
+                    : Colors.grey.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: isExpanded ? deepPink : Colors.grey,
+                size: 20,
+              ),
+            ),
+            title: Text(
+              title,
+              style: GoogleFonts.poppins(
+                color: isExpanded ? deepPink : Colors.grey,
+                fontWeight: isExpanded ? FontWeight.bold : FontWeight.normal,
+                fontSize: 14,
+              ),
+            ),
+            trailing: Icon(
+              isMenuExpanded ? Icons.expand_less : Icons.expand_more,
+              color: isExpanded ? deepPink : Colors.grey,
+            ),
+            onTap: () {
+              _toggleMenu(menuIndex);
+              onTap();
+            },
+            dense: true,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+          ),
+        ),
+        if (isMenuExpanded && (_isSidebarExpanded || isMobile))
+          Container(
+            margin: const EdgeInsets.only(left: 16),
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: children,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSubMenuItem(String title, int index) {
+    return Container(
+      margin: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
+      decoration: BoxDecoration(
+        color: _selectedIndex == index
+            ? lightPink.withOpacity(0.3)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: _selectedIndex == index
+                ? deepPink.withOpacity(0.1)
+                : Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            _getSubMenuIcon(index),
+            color: _selectedIndex == index ? deepPink : Colors.grey,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            color: _selectedIndex == index ? deepPink : Colors.black87,
+            fontWeight: _selectedIndex == index
+                ? FontWeight.bold
+                : FontWeight.normal,
+          ),
+        ),
+        selected: _selectedIndex == index,
+        onTap: () {
+          setState(() => _selectedIndex = index);
+          _navigateToPage(index);
+        },
+        dense: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      ),
+    );
+  }
+
+  void _navigateToPage(int index) {
+    switch (index) {
+      case 11: // Direct Purchase
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => DirectPurchasePage()),
+        );
+        break;
+      case 12: // GRPO
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => GRPO_Page()),
+        );
+        break;
+      case 21: // Material Request
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => MaterialRequestPage()),
+        );
+        break;
+      case 22: // Stock Opname
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => StockOpnamePage()),
+        );
+        break;
+      case 23: // Transfer Stock
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => TransferStockPage()),
+        );
+        break;
+      case 24: // Waste
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => WastePage()),
+        );
+        break;
+      case 25: // Material Calculate
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => MaterialCalculatePage()),
+        );
+    }
+  }
+
+  IconData _getSubMenuIcon(int index) {
+    switch (index) {
+      case 11: // Direct Purchase
+        return Icons.shopping_cart_outlined;
+      case 12: // GRPO
+        return Icons.receipt_long_outlined;
+      case 21: // Material Request
+        return Icons.inventory_2_outlined;
+      case 22: // Stock Opname
+        return Icons.checklist_rtl_outlined;
+      case 23: // Transfer Stock
+        return Icons.swap_horiz_outlined;
+      case 24: // Waste
+        return Icons.delete_outline;
+      case 25: //material calculate
+        return Icons.inventory_2_outlined;
+      default:
+        return Icons.circle_outlined;
+    }
+  }
+
+  Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -413,7 +683,25 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           child: Column(
             children: [
-              _buildHeaderRow(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      if (isMobile)
+                        Builder(
+                          builder: (context) => IconButton(
+                            icon: Icon(Icons.menu, color: Colors.white),
+                            onPressed: () {
+                              Scaffold.of(context).openDrawer();
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                  _buildProfileIcons(),
+                ],
+              ),
               const SizedBox(height: 30),
               _buildWelcomeText(),
             ],
@@ -425,16 +713,6 @@ class _DashboardPageState extends State<DashboardPage> {
           right: 16,
           child: _buildSearchBar(),
         ),
-      ],
-    );
-  }
-
-  Widget _buildHeaderRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Image.asset('assets/images/icons-haus.png', height: 60, width: 60),
-        _buildProfileIcons(),
       ],
     );
   }
@@ -464,15 +742,72 @@ class _DashboardPageState extends State<DashboardPage> {
         const SizedBox(width: 12),
         GestureDetector(
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const UserprofilePage()),
-            );
+            _showProfileMenu(context);
           },
           child: const CircleAvatar(
             backgroundImage: AssetImage('assets/images/avatar.jpg'),
             radius: 15,
           ),
+        ),
+      ],
+    );
+  }
+
+  void _showProfileMenu(BuildContext context) {
+    final RenderBox button = context.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(Offset.zero, ancestor: overlay),
+        button.localToGlobal(
+          button.size.bottomRight(Offset.zero),
+          ancestor: overlay,
+        ),
+      ),
+      Offset.zero & overlay.size,
+    );
+
+    showMenu(
+      context: context,
+      position: position,
+      color: Colors.white,
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      items: [
+        PopupMenuItem(
+          height: 40,
+          child: _buildProfileMenuItem(Icons.person_outline, 'Profile'),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const UserprofilePage()),
+            );
+          },
+        ),
+        PopupMenuItem(
+          height: 40,
+          child: _buildProfileMenuItem(Icons.settings_outlined, 'Settings'),
+          onTap: () {
+            // Handle settings
+          },
+        ),
+        PopupMenuItem(
+          height: 40,
+          child: _buildProfileMenuItem(Icons.help_outline, 'Help & Support'),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => HelpPage()),
+            );
+          },
+        ),
+        PopupMenuItem(
+          height: 40,
+          child: _buildProfileMenuItem(Icons.logout, 'Logout', isLogout: true),
+          onTap: () async {
+            await _handleLogout();
+          },
         ),
       ],
     );
@@ -1152,4 +1487,217 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
-} 
+
+  Widget _buildStoreDropdown() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: lightPink,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: deepPink.withOpacity(0.1), width: 1),
+      ),
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isStoreMenuOpen = !_isStoreMenuOpen;
+                _isProfileMenuOpen = false;
+              });
+            },
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: deepPink.withOpacity(0.1),
+                  child: Icon(Icons.store, color: deepPink),
+                  radius: 18,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Toko',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      Text(
+                        'HAUS Jakarta',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  _isStoreMenuOpen ? Icons.expand_less : Icons.expand_more,
+                  color: deepPink,
+                ),
+              ],
+            ),
+          ),
+          if (_isStoreMenuOpen)
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.withOpacity(0.2)),
+              ),
+              child: Column(
+                children: [
+                  _buildStoreMenuItem('HAUS Jakarta', true),
+                  _buildStoreMenuItem('HAUS Bandung', false),
+                  _buildStoreMenuItem('HAUS Surabaya', false),
+                  _buildStoreMenuItem('HAUS Medan', false),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStoreMenuItem(String storeName, bool isSelected) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isSelected ? lightPink.withOpacity(0.3) : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        dense: true,
+        title: Text(
+          storeName,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? deepPink : Colors.black87,
+          ),
+        ),
+        trailing: isSelected
+            ? Icon(Icons.check_circle, color: deepPink, size: 18)
+            : null,
+        onTap: () {
+          setState(() {
+            _isStoreMenuOpen = false;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildProfileDropdown() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: lightPink,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: deepPink.withOpacity(0.1), width: 1),
+      ),
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isProfileMenuOpen = !_isProfileMenuOpen;
+                _isStoreMenuOpen = false;
+              });
+            },
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: deepPink,
+                  child: Text('J', style: TextStyle(color: Colors.white)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'John Doe',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Text(
+                        'Admin',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  _isProfileMenuOpen ? Icons.expand_less : Icons.expand_more,
+                  color: deepPink,
+                ),
+              ],
+            ),
+          ),
+          if (_isProfileMenuOpen)
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.withOpacity(0.2)),
+              ),
+              child: Column(
+                children: [
+                  _buildProfileMenuItem(Icons.person_outline, 'Profile'),
+                  _buildProfileMenuItem(Icons.settings_outlined, 'Settings'),
+                  _buildProfileMenuItem(Icons.help_outline, 'Help & Support'),
+                  _buildProfileMenuItem(Icons.logout, 'Logout', isLogout: true),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileMenuItem(
+    IconData icon,
+    String title, {
+    bool isLogout = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        dense: true,
+        leading: Icon(
+          icon,
+          size: 20,
+          color: isLogout ? Colors.red : Colors.black87,
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            color: isLogout ? Colors.red : Colors.black87,
+          ),
+        ),
+        onTap: () {
+          setState(() {
+            _isProfileMenuOpen = false;
+          });
+          // Handle menu item tap
+        },
+      ),
+    );
+  }
+}
