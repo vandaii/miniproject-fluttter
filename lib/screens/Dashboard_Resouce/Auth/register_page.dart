@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:miniproject_flutter/widgets/custom_page_register.dart'; // Mengimpor HeaderWithLogo dan buildTextField
+import 'package:miniproject_flutter/services/authService.dart';
+import 'package:miniproject_flutter/widgets/customPageRegister.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -33,11 +36,9 @@ class _RegisterPageState extends State<RegisterPage> {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               child: Column(
                 children: [
-                  // Menggunakan HeaderWithLogo di sini
                   HeaderWithLogo(),
-                  const SizedBox(height: 40),
 
-                  // Form Input
+                  const SizedBox(height: 40),
                   Expanded(
                     child: SingleChildScrollView(
                       child: Column(
@@ -46,7 +47,6 @@ class _RegisterPageState extends State<RegisterPage> {
                             children: [
                               Expanded(
                                 child: buildTextField(
-                                  // Panggil fungsi buildTextField
                                   label: 'Employee ID',
                                   icon: Icons.badge,
                                   controller: _employeeIdController,
@@ -55,7 +55,6 @@ class _RegisterPageState extends State<RegisterPage> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: buildTextField(
-                                  // Panggil fungsi buildTextField
                                   label: 'Full Name',
                                   icon: Icons.person,
                                   controller: _nameController,
@@ -68,7 +67,6 @@ class _RegisterPageState extends State<RegisterPage> {
                             children: [
                               Expanded(
                                 child: buildTextField(
-                                  // Panggil fungsi buildTextField
                                   label: 'Email',
                                   icon: Icons.email,
                                   controller: _emailController,
@@ -78,7 +76,6 @@ class _RegisterPageState extends State<RegisterPage> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: buildTextField(
-                                  // Panggil fungsi buildTextField
                                   label: 'Phone Number',
                                   icon: Icons.phone,
                                   controller: _phoneController,
@@ -92,7 +89,6 @@ class _RegisterPageState extends State<RegisterPage> {
                             children: [
                               Expanded(
                                 child: buildTextField(
-                                  // Panggil fungsi buildTextField
                                   label: 'Password',
                                   icon: Icons.lock,
                                   controller: _passwordController,
@@ -118,7 +114,6 @@ class _RegisterPageState extends State<RegisterPage> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: buildTextField(
-                                  // Panggil fungsi buildTextField
                                   label: 'Confirm Password',
                                   icon: Icons.lock,
                                   controller: _confirmPasswordController,
@@ -145,12 +140,70 @@ class _RegisterPageState extends State<RegisterPage> {
                             ],
                           ),
                           const SizedBox(height: 40),
-                          // Tombol Sign Up
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: () {
-                                // Todo: Handle register logic
+                              onPressed: () async {
+                                final employeeId = _employeeIdController.text
+                                    .trim();
+                                final name = _nameController.text.trim();
+                                final email = _emailController.text.trim();
+                                final phone = _phoneController.text.trim();
+                                final password = _passwordController.text;
+                                final confirmPassword =
+                                    _confirmPasswordController.text;
+
+                                if (employeeId.isEmpty ||
+                                    name.isEmpty ||
+                                    email.isEmpty ||
+                                    phone.isEmpty ||
+                                    password.isEmpty ||
+                                    confirmPassword.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Please fill all fields'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                if (password != confirmPassword) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Passwords do not match'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                bool isRegistered = await AuthService()
+                                    .register(
+                                      employeeId: employeeId,
+                                      name: name,
+                                      email: email,
+                                      phone: phone,
+                                      password: password,
+                                      confirmedPassword: confirmPassword,
+                                    );
+
+                                if (isRegistered) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Registration successful'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                  Navigator.pop(context);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Registration failed'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.pink,
@@ -194,19 +247,6 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ),
           FooterImage(),
-          // Positioned(
-          //   bottom: 0,
-          //   left: 0,
-          //   right: 0,
-          //   child: IgnorePointer(
-          //     child: Image.asset(
-          //       'assets/images/icons-logoDekoration.png',
-          //       width: size.width,
-          //       height: 115,
-          //       fit: BoxFit.cover,
-          //     ),
-          //   ),
-          // ),
         ],
       ),
     );
