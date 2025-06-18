@@ -56,6 +56,7 @@ class LoginForm extends StatelessWidget {
   final VoidCallback onLoginPressed;
   final VoidCallback onForgetPasswordPressed;
   final VoidCallback onSignUpPressed;
+  final bool isLoading;
 
   const LoginForm({
     super.key,
@@ -68,6 +69,7 @@ class LoginForm extends StatelessWidget {
     required this.onLoginPressed,
     required this.onForgetPasswordPressed,
     required this.onSignUpPressed,
+    this.isLoading = false,
   });
 
   @override
@@ -134,19 +136,28 @@ class LoginForm extends StatelessWidget {
 
           SizedBox(
             width: double.infinity,
+            height: 50,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.pink,
-                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              onPressed: onLoginPressed,
-              child: const Text(
-                'Sign In',
-                style: TextStyle(fontSize: 16, color: Colors.white),
-              ),
+              onPressed: isLoading ? null : onLoginPressed,
+              child: isLoading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'Sign In',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
             ),
           ),
           const SizedBox(height: 16),
