@@ -16,42 +16,53 @@ class _WastePageState extends State<WastePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: AppBar(
-          leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back,
-              color: Colors.white,
-            ), // Ubah warna icon back ke putih
-            onPressed: () => Navigator.of(context).pop(),
+        preferredSize: Size.fromHeight(55),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFE91E63), Color(0xFFFF4081)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0xFFE91E63).withOpacity(0.2),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
           ),
-          title: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0),
-            child: Text(
-              'Waste',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-                color: Colors.white,
+          child: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back, color: Colors.white, size: 20),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            title: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                'Waste',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 20,
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
-          backgroundColor: const Color(0xFF880E4F),
-          elevation: 4,
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: IconButton(
-                icon: Icon(Icons.filter_alt, color: Colors.white),
-                onPressed: () {
-                  // Filter action here
-                },
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: IconButton(
+                  icon: Icon(Icons.filter_alt, color: Colors.white, size: 20),
+                  onPressed: () {},
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor: Color(0xFFF8F9FA),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
@@ -66,24 +77,27 @@ class _WastePageState extends State<WastePage> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
-                      spreadRadius: 3,
-                      blurRadius: 6,
-                      offset: Offset(0, 3),
+                      color: Colors.grey.withOpacity(0.06),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
                     ),
                   ],
                 ),
                 child: TextField(
+                  style: GoogleFonts.poppins(fontSize: 13),
                   decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                    prefixIcon: Icon(Icons.search, color: Color(0xFFE91E63), size: 20),
                     hintText: 'Search by No.Doc, Date Picker, Outlet, etc',
-                    hintStyle: TextStyle(color: Colors.grey[600]),
+                    hintStyle: GoogleFonts.poppins(
+                      color: Colors.grey[600],
+                      fontSize: 13,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
                     contentPadding: EdgeInsets.symmetric(
-                      vertical: 14,
+                      vertical: 12,
                       horizontal: 16,
                     ),
                   ),
@@ -91,75 +105,81 @@ class _WastePageState extends State<WastePage> {
               ),
             ),
             // Taskbar for Outstanding and Approved
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                // Outstanding Button
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      isOutstandingSelected = true;
-                    });
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    width: 170,
-                    decoration: BoxDecoration(
-                      color: isOutstandingSelected
-                          ? Color(0xFF880E4F)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isOutstandingSelected
-                            ? Colors.transparent
-                            : Colors.grey[400]!,
-                      ),
-                    ),
-                    child: Text(
-                      'Pending',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        color: isOutstandingSelected
-                            ? Colors.white
-                            : Colors.grey[700],
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.06),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          isOutstandingSelected = true;
+                        });
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: isOutstandingSelected
+                              ? Color(0xFFE91E63)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'Pending',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                            color: isOutstandingSelected
+                                ? Colors.white
+                                : Colors.grey[700],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                // Approved Button
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      isOutstandingSelected = false;
-                    });
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    width: 170,
-                    decoration: BoxDecoration(
-                      color: !isOutstandingSelected
-                          ? Color(0xFF880E4F)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: !isOutstandingSelected
-                            ? Colors.transparent
-                            : Colors.grey[400]!,
-                      ),
-                    ),
-                    child: Text(
-                      'Approved',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        color: !isOutstandingSelected
-                            ? Colors.white
-                            : Colors.grey[700],
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          isOutstandingSelected = false;
+                        });
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: !isOutstandingSelected
+                              ? Color(0xFFE91E63)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'Approved',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                            color: !isOutstandingSelected
+                                ? Colors.white
+                                : Colors.grey[700],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 20),
             // Display content based on the selected tab (Outstanding or Approved)
@@ -205,17 +225,29 @@ class _WastePageState extends State<WastePage> {
           ],
         ),
       ),
-      floatingActionButton: Tooltip(
-        message: "Add New Waste",
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFE91E63), Color(0xFFFF4081)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Color(0xFFE91E63).withOpacity(0.3),
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
         child: FloatingActionButton(
-          onPressed: () {
-            // Action to add a new direct purchase
-          },
-          backgroundColor: const Color(0xFF880E4F),
-          child: Icon(Icons.add, size: 30), // + icon
+          onPressed: () {},
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Icon(Icons.add, size: 24),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
@@ -228,155 +260,143 @@ class _WastePageState extends State<WastePage> {
     required String status,
   }) {
     Color statusColor = status == "Approved"
-        ? Colors.green
+        ? Colors.green[600]!
         : status == "Pending"
-        ? Colors.orange
-        : Color(0xFF880E4F);
+            ? Colors.orange[600]!
+            : Color(0xFFE91E63);
 
     Color statusBg = status == "Approved"
-        ? Colors.green.withOpacity(0.12)
+        ? Colors.green[50]!
         : status == "Pending"
-        ? Colors.orange.withOpacity(0.12)
-        : Color(0xFF880E4F).withOpacity(0.12);
+            ? Colors.orange[50]!
+            : Color(0xFFE91E63).withOpacity(0.1);
 
-    return Card(
-      elevation: 7,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      margin: const EdgeInsets.only(bottom: 18),
-      color: Colors.white,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.06),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(18.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // No. Doc
             Row(
               children: [
-                Icon(Icons.description, color: Color(0xFF880E4F), size: 22),
-                const SizedBox(width: 10),
-                Text(
-                  'No. Doc',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                  ),
-                ),
+                Icon(Icons.description, color: Color(0xFFE91E63), size: 20),
                 const SizedBox(width: 8),
                 Text(
                   docNo,
                   style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Color(0xFF880E4F),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // Date Picker
-            Row(
-              children: [
-                Icon(Icons.calendar_today, color: Colors.blue[700], size: 20),
-                const SizedBox(width: 10),
-                Text(
-                  'Date :',
-                  style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  date,
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w500,
                     fontSize: 15,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // Outlet/Store
-            Row(
-              children: [
-                Icon(Icons.store, color: Colors.teal[700], size: 20),
-                const SizedBox(width: 10),
-                Text(
-                  'Outlet/Store :',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  outlet,
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 15,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // Qty
-            Row(
-              children: [
-                Icon(
-                  Icons.confirmation_number,
-                  color: Colors.deepPurple[700],
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'Qty :',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  qty,
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 15,
-                    color: Colors.black87,
+                    color: Color(0xFFE91E63),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            // Status & Detail Button
+            Row(
+              children: [
+                Icon(Icons.calendar_today, color: Colors.grey[600], size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  "Date: ",
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[600],
+                    fontSize: 13,
+                  ),
+                ),
+                Text(
+                  date,
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[800],
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.store, color: Colors.grey[600], size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  "Outlet: ",
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[600],
+                    fontSize: 13,
+                  ),
+                ),
+                Text(
+                  outlet,
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[800],
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.confirmation_number, color: Colors.grey[600], size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  "Qty: ",
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[600],
+                    fontSize: 13,
+                  ),
+                ),
+                Text(
+                  qty,
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[800],
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: statusBg,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         status == 'Pending'
                             ? Icons.hourglass_top
                             : Icons.check_circle,
                         color: statusColor,
-                        size: 18,
+                        size: 14,
                       ),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 4),
                       Text(
                         status,
                         style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w500,
                           color: statusColor,
                           fontSize: 13,
                         ),
@@ -384,20 +404,22 @@ class _WastePageState extends State<WastePage> {
                     ],
                   ),
                 ),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Color(0xFF880E4F),
-                    side: BorderSide(color: Color(0xFF880E4F)),
+                TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Color(0xFFE91E63),
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   ),
                   onPressed: () {},
-                  icon: Icon(Icons.info_outline, size: 18),
+                  icon: Icon(Icons.info_outline, size: 16),
                   label: Text(
                     'Detail',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ],

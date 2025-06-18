@@ -1,4 +1,4 @@
-import 'dart:io';
+// TODO:regristrasi eror 
 
 import 'package:flutter/material.dart';
 import 'package:miniproject_flutter/services/authService.dart';
@@ -21,11 +21,10 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool _showPassword = false;
   bool _showConfirmPassword = false;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
@@ -140,18 +139,17 @@ class _RegisterPageState extends State<RegisterPage> {
                             ],
                           ),
                           const SizedBox(height: 40),
-                          SizedBox(
+                          SizedBox(  
                             width: double.infinity,
+                            height: 50,
                             child: ElevatedButton(
-                              onPressed: () async {
-                                final employeeId = _employeeIdController.text
-                                    .trim();
+                              onPressed: _isLoading ? null : () async {
+                                final employeeId = _employeeIdController.text.trim();
                                 final name = _nameController.text.trim();
                                 final email = _emailController.text.trim();
                                 final phone = _phoneController.text.trim();
                                 final password = _passwordController.text;
-                                final confirmPassword =
-                                    _confirmPasswordController.text;
+                                final confirmPassword = _confirmPasswordController.text;
 
                                 if (employeeId.isEmpty ||
                                     name.isEmpty ||
@@ -161,7 +159,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                     confirmPassword.isEmpty) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('Please fill all fields'),
+                                      content: Text('Silakan isi semua field'),
                                       backgroundColor: Colors.red,
                                     ),
                                   );
@@ -171,63 +169,84 @@ class _RegisterPageState extends State<RegisterPage> {
                                 if (password != confirmPassword) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('Passwords do not match'),
+                                      content: Text('Password tidak cocok'),
                                       backgroundColor: Colors.red,
                                     ),
                                   );
                                   return;
                                 }
 
-                                bool isRegistered = await AuthService()
-                                    .register(
-                                      employeeId: employeeId,
-                                      name: name,
-                                      email: email,
-                                      phone: phone,
-                                      password: password,
-                                      confirmedPassword: confirmPassword,
-                                    );
+                                setState(() {
+                                  _isLoading = true;
+                                });
 
-                                if (isRegistered) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Registration successful'),
-                                      backgroundColor: Colors.green,
-                                    ),
+                                try {
+                                  bool isRegistered = await AuthService().register(
+                                    employeeId: employeeId,
+                                    name: name,
+                                    email: email,
+                                    phone: phone,
+                                    password: password,
+                                    confirmedPassword: confirmPassword,
                                   );
-                                  Navigator.pop(context);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Registration failed'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
+
+                                  if (isRegistered) {
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Registrasi berhasil'),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                      Navigator.pop(context);
+                                    }
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(e.toString().replaceFirst("Exception: ", "")),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                } finally {
+                                  if (mounted) {
+                                    setState(() {
+                                      _isLoading = false;
+                                    });
+                                  }
                                 }
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.pink,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: const Text(
-                                'Sign Up',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Sign Up',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                             ),
                           ),
                           const SizedBox(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text('Already have an account?'),
+                              const Text('Sudah punya akun?'),
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
                                 child: const Text(

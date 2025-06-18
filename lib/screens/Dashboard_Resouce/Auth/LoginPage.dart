@@ -19,11 +19,11 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    // Auto-fill from registration if available
     _idController.text = widget.initialId ?? '';
     _passwordController.text = widget.initialPassword ?? '';
   }
@@ -35,8 +35,6 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  //===================================================================
-  // Build the login page
   @override
   Widget build(BuildContext context) {
     final keyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
@@ -51,7 +49,6 @@ class _LoginPageState extends State<LoginPage> {
             const LogoSection(),
             const SizedBox(height: 60),
 
-            // Form login
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -67,6 +64,7 @@ class _LoginPageState extends State<LoginPage> {
                   rememberMe: _rememberMe,
                   onRememberMeChanged: (val) =>
                       setState(() => _rememberMe = val!),
+                  isLoading: _isLoading,
                   onLoginPressed: () async {
                     final id = _idController.text.trim();
                     final password = _passwordController.text;
@@ -74,35 +72,50 @@ class _LoginPageState extends State<LoginPage> {
                     if (id.isEmpty || password.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Please enter both ID and Password'),
+                          content: Text('Silakan isi ID dan Password.'),
                           backgroundColor: Colors.red,
                         ),
                       );
                       return;
                     }
 
-                    bool isLoggedIn = await AuthService().login(id, password);
-                    if (isLoggedIn) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const DashboardPage(),
-                        ),
+                    setState(() {
+                      _isLoading = true;
+                    });
+
+                    try {
+                      final isLoggedIn = await AuthService().login(
+                        id,
+                        password,
                       );
-                    } else {
+                      if (isLoggedIn) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const DashboardPage(),
+                          ),
+                        );
+                      }
+                    } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           content: Text(
-                            'Invalid credentials. Please try again.',
+                            e.toString().replaceFirst("Exception: ", ""),
                           ),
                           backgroundColor: Colors.red,
                         ),
                       );
+                    } finally {
+                      if (mounted) {
+                        setState(() {
+                          _isLoading = false;
+                        });
+                      }
                     }
                   },
                   onForgetPasswordPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Forget Password clicked')),
+                      const SnackBar(content: Text('Lupa Password diklik')),
                     );
                   },
                   onSignUpPressed: () {
@@ -117,8 +130,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
 
-            // ===================================================================
-            // Footer image jika keyboard tidak muncul
             if (!keyboardVisible)
               Padding(
                 padding: const EdgeInsets.only(bottom: 0),

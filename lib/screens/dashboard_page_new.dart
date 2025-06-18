@@ -12,6 +12,7 @@ import 'Dashboard_Resouce/Auth/Help_Page.dart';
 import 'Dashboard_Resouce/Auth/Notification_Page.dart';
 import 'Dashboard_Resouce/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/services/authService.dart';
+import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/LoginPage.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -24,7 +25,6 @@ class _DashboardPageState extends State<DashboardPage>
     with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
   bool _isSidebarExpanded = true;
-  bool _isDrawerOpen = false;
   bool _isProfileMenuOpen = false;
   bool _isStoreMenuOpen = false;
   int? _expandedMenuIndex; // Untuk menyimpan index menu yang sedang terbuka
@@ -176,20 +176,34 @@ class _DashboardPageState extends State<DashboardPage>
         );
       }
 
-      // Navigate ke halaman login
+      // Navigate ke halaman login dan hapus semua route sebelumnya
       if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+          (route) => false,
+        );
       }
     } catch (e) {
       // Handle error
       if (mounted) {
+        // Tutup loading dialog jika masih terbuka
         Navigator.of(context).pop();
+
+        // Tampilkan pesan error
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gagal logout: ${e.toString()}'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 2),
           ),
+        );
+
+        // Tetap arahkan ke halaman login meskipun terjadi error
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+          (route) => false,
         );
       }
     }
@@ -210,47 +224,64 @@ class _DashboardPageState extends State<DashboardPage>
               ),
             )
           : null,
-      body: Stack(
-        children: [
-          // Main Content
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            margin: isMobile
-                ? EdgeInsets.zero
-                : EdgeInsets.only(left: _isSidebarExpanded ? 250 : 70),
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _buildHeader(screenWidth, isMobile),
-                  const SizedBox(height: 130),
-                  _buildTaskSection(),
-                  const SizedBox(height: 60),
-                  _buildOutstandingCards(),
-                  const SizedBox(height: 40),
-                  _buildOpenItemList(),
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
-          ),
-          // Sidebar (hanya tampil di desktop/tablet)
-          if (!isMobile)
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Main Content
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              width: _isSidebarExpanded ? 250 : 70,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 0),
-                  ),
-                ],
+              margin: isMobile
+                  ? EdgeInsets.zero
+                  : EdgeInsets.only(left: _isSidebarExpanded ? 250 : 70),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    _buildHeader(screenWidth, isMobile),
+                    const SizedBox(height: 10),
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Divider(
+                        color: Colors.grey.withOpacity(0.13),
+                        thickness: 1.2,
+                        height: 0,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    // Search bar di luar header
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _buildSearchBar(),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildTaskSection(),
+                    const SizedBox(height: 16),
+                    _buildOutstandingCards(),
+                    const SizedBox(height: 16),
+                    _buildOpenItemList(),
+                    const SizedBox(height: 12),
+                  ],
+                ),
               ),
-              child: _buildSidebarContent(isMobile: false),
             ),
-        ],
+            // Sidebar (hanya tampil di desktop/tablet)
+            if (!isMobile)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: _isSidebarExpanded ? 250 : 70,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 0),
+                    ),
+                  ],
+                ),
+                child: _buildSidebarContent(isMobile: false),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -668,52 +699,56 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          height: screenWidth * 0.6,
-          decoration: BoxDecoration(
-            color: deepPink,
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(40),
-              bottomRight: Radius.circular(40),
-            ),
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        10,
+        isMobile ? 5 : 10,
+        20,
+        isMobile ? 5 : 10,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
-          child: Column(
+        ],
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      if (isMobile)
-                        Builder(
-                          builder: (context) => IconButton(
-                            icon: Icon(Icons.menu, color: Colors.white),
-                            onPressed: () {
-                              Scaffold.of(context).openDrawer();
-                            },
-                          ),
-                        ),
-                    ],
+                  if (isMobile)
+                    Builder(
+                      builder: (context) => IconButton(
+                        icon: Icon(Icons.menu, color: Colors.black),
+                        onPressed: () {
+                          Scaffold.of(context).openDrawer();
+                        },
+                      ),
+                    ),
+                  Text(
+                    'Dashboard',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      color: deepPink,
+                    ),
                   ),
-                  _buildProfileIcons(),
                 ],
               ),
-              const SizedBox(height: 30),
-              _buildWelcomeText(),
+              _buildProfileIcons(),
             ],
           ),
-        ),
-        Positioned(
-          top: screenWidth * 0.45,
-          left: 16,
-          right: 16,
-          child: _buildSearchBar(),
-        ),
-      ],
+          const SizedBox(height: 4),
+        ],
+      ),
     );
   }
 
@@ -727,7 +762,7 @@ class _DashboardPageState extends State<DashboardPage>
               MaterialPageRoute(builder: (context) => NotificationPage()),
             );
           },
-          child: const Icon(Icons.notifications, color: Colors.white),
+          child: const Icon(Icons.notifications, color: Colors.black),
         ),
         const SizedBox(width: 12),
         GestureDetector(
@@ -737,7 +772,7 @@ class _DashboardPageState extends State<DashboardPage>
               MaterialPageRoute(builder: (context) => EmailPage()),
             );
           },
-          child: const Icon(Icons.mail_outline, color: Colors.white),
+          child: const Icon(Icons.mail_outline, color: Colors.black),
         ),
         const SizedBox(width: 12),
         GestureDetector(
@@ -777,7 +812,18 @@ class _DashboardPageState extends State<DashboardPage>
       items: [
         PopupMenuItem(
           height: 40,
-          child: _buildProfileMenuItem(Icons.person_outline, 'Profile'),
+          child: _buildProfileMenuItem(
+            Icons.person_outline,
+            'Profile',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const UserprofilePage(),
+                ),
+              );
+            },
+          ),
           onTap: () {
             Navigator.push(
               context,
@@ -787,14 +833,29 @@ class _DashboardPageState extends State<DashboardPage>
         ),
         PopupMenuItem(
           height: 40,
-          child: _buildProfileMenuItem(Icons.settings_outlined, 'Settings'),
+          child: _buildProfileMenuItem(
+            Icons.settings_outlined,
+            'Settings',
+            onTap: () {
+              // Handle settings
+            },
+          ),
           onTap: () {
             // Handle settings
           },
         ),
         PopupMenuItem(
           height: 40,
-          child: _buildProfileMenuItem(Icons.help_outline, 'Help & Support'),
+          child: _buildProfileMenuItem(
+            Icons.help_outline,
+            'Help & Support',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => HelpPage()),
+              );
+            },
+          ),
           onTap: () {
             Navigator.push(
               context,
@@ -804,7 +865,14 @@ class _DashboardPageState extends State<DashboardPage>
         ),
         PopupMenuItem(
           height: 40,
-          child: _buildProfileMenuItem(Icons.logout, 'Logout', isLogout: true),
+          child: _buildProfileMenuItem(
+            Icons.logout,
+            'Logout',
+            isLogout: true,
+            onTap: () async {
+              await _handleLogout();
+            },
+          ),
           onTap: () async {
             await _handleLogout();
           },
@@ -813,85 +881,53 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
-  Widget _buildWelcomeText() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          'Welcome to the Dashboard',
-          style: GoogleFonts.poppins(fontSize: 14, color: Colors.white70),
-        ),
-        RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: 'Haus ',
-                style: GoogleFonts.cinzelDecorative(
-                  fontSize: 25,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              TextSpan(
-                text: 'Inventory',
-                style: GoogleFonts.cinzelDecorative(
-                  fontSize: 25,
-                  fontWeight: FontWeight.bold,
-                  color: primaryColor,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildSearchBar() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
-            spreadRadius: 1,
-            blurRadius: 8,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(12),
+    return Material(
+      elevation: 2,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.07),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
             ),
-            child: TextField(
-              decoration: InputDecoration(
-                icon: Icon(Icons.search, color: deepPink),
-                hintText: 'Search...',
-                border: InputBorder.none,
-              ),
+          ],
+        ),
+        child: TextField(
+          style: GoogleFonts.poppins(fontSize: 16),
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 18,
+              horizontal: 0,
+            ),
+            prefixIcon: Icon(Icons.search, color: deepPink, size: 26),
+            hintText: 'Search transactions',
+            hintStyle: GoogleFonts.poppins(
+              fontSize: 16,
+              color: Colors.black38,
+              fontWeight: FontWeight.w500,
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Colors.grey.shade200, width: 2),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: deepPink, width: 2.2),
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Colors.grey.shade200, width: 2),
             ),
           ),
-          const SizedBox(height: 16),
-          _buildActionButtons(),
-        ],
+        ),
       ),
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _actionButton(Icons.shopping_cart, 'Purchasing'),
-        _actionButton(Icons.assignment, 'Stock'),
-        _actionButton(Icons.report, 'Report'),
-      ],
     );
   }
 
@@ -917,8 +953,8 @@ class _DashboardPageState extends State<DashboardPage>
 
   Widget _buildTaskSection() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -968,19 +1004,21 @@ class _DashboardPageState extends State<DashboardPage>
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           _buildTaskCard(
             "Stock Opname has not been performed",
             "12/03/2025 09:42",
             "High Priority",
             "Needs Attention",
           ),
+          const SizedBox(height: 8),
           _buildTaskCard(
             "PO-2024-0125 awaiting acceptance from PTK",
             "12/03/2025 09:42",
             "Medium Priority",
             "Waiting for Action",
           ),
+          const SizedBox(height: 8),
           _buildTaskCard(
             "PO-2025-0222 awaiting acceptance from PTK",
             "12/03/2025 09:42",
@@ -1026,9 +1064,9 @@ class _DashboardPageState extends State<DashboardPage>
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 0),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -1086,7 +1124,7 @@ class _DashboardPageState extends State<DashboardPage>
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     IconButton(
                       icon: Icon(Icons.chevron_right, color: Colors.grey),
                       onPressed: () {
@@ -1097,8 +1135,8 @@ class _DashboardPageState extends State<DashboardPage>
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Divider(color: Colors.grey.withOpacity(0.3), thickness: 1),
+            const SizedBox(height: 6),
+            Divider(color: Colors.grey.withOpacity(0.18), thickness: 1),
           ],
         ),
       ),
@@ -1106,149 +1144,132 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   Widget _buildOutstandingCards() {
-    final List<Map<String, String>> items = [
-      {'title': 'Outstanding PO', 'count': '5', 'icon': 'shopping_cart'},
-      {'title': 'Outstanding Transfer Out', 'count': '3', 'icon': 'swap_horiz'},
-      {
-        'title': 'Outstanding Direct Purchase',
-        'count': '2',
-        'icon': 'local_mall',
-      },
+    final List<Map<String, dynamic>> items = [
+      {'title': 'Outstanding PO', 'count': '3'},
+      {'title': 'Outstanding Direct Purchase', 'count': '5'},
+      {'title': 'Outstanding Transfer Out', 'count': '8'},
     ];
 
-    final List<IconData> icons = [
-      Icons.shopping_cart,
-      Icons.swap_horiz,
-      Icons.local_mall,
-    ];
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
 
-    final List<Color> gradients = [
-      const Color(0xFFE91E63),
-      const Color(0xFF42A5F5),
-      const Color(0xFFFFB300),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(0),
-        ),
-        height: 200,
-        child: PageView.builder(
-          controller: PageController(viewportFraction: 0.7),
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            final item = items[index];
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      gradients[index].withOpacity(0.92),
-                      gradients[index].withOpacity(0.7),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+    if (isMobile) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Column(
+          children: items.map((item) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
                   ),
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: [
-                    BoxShadow(
-                      color: gradients[index].withOpacity(0.18),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 24,
+                  horizontal: 16,
                 ),
-                child: Stack(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Positioned(
-                      top: 18,
-                      right: 18,
-                      child: Icon(
-                        icons[index],
-                        color: Colors.white.withOpacity(0.18),
-                        size: 60,
+                    Text(
+                      item['count'],
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 32,
+                        color: deepPink,
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: Colors.white.withOpacity(0.18),
-                            radius: 22,
-                            child: Icon(
-                              icons[index],
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            item['title']!,
-                            style: GoogleFonts.poppins(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            item['count']!,
-                            style: GoogleFonts.poppins(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black.withOpacity(0.12),
-                                  blurRadius: 8,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 18,
-                      right: 18,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.18),
-                          shape: BoxShape.circle,
-                        ),
-                        padding: const EdgeInsets.all(8),
-                        child: const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
+                    const SizedBox(height: 8),
+                    Text(
+                      item['title'],
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        color: Colors.black87,
                       ),
                     ),
                   ],
                 ),
               ),
             );
-          },
+          }).toList(),
         ),
-      ),
-    );
+      );
+    } else {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: items.map((item) {
+            return Expanded(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 28,
+                  horizontal: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      item['count'],
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 32,
+                        color: deepPink,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      item['title'],
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        color: Colors.black87,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    }
   }
 
   Widget _buildOpenItemList() {
     double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
 
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-      padding: EdgeInsets.all(screenWidth * 0.05),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(
+        vertical: isMobile ? 14 : 24,
+        horizontal: 20,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -1270,13 +1291,11 @@ class _DashboardPageState extends State<DashboardPage>
                 "Open Item List",
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.bold,
-                  fontSize: screenWidth * 0.045,
+                  fontSize: isMobile ? 18 : screenWidth * 0.045,
                 ),
               ),
               GestureDetector(
-                onTap: () {
-                  // Handle Filter icon tap
-                },
+                onTap: () {},
                 child: Row(
                   children: [
                     Icon(Icons.filter_list, size: 16, color: Colors.black54),
@@ -1293,16 +1312,18 @@ class _DashboardPageState extends State<DashboardPage>
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+            padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 2.0),
             child: _buildTaskBar(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: ConstrainedBox(
-              constraints: BoxConstraints(minWidth: screenWidth - 32),
+              constraints: BoxConstraints(
+                minWidth: screenWidth - (isMobile ? 24 : 64),
+              ),
               child: DataTable(
                 headingRowHeight: 50,
                 columns: [
@@ -1361,7 +1382,7 @@ class _DashboardPageState extends State<DashboardPage>
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1374,9 +1395,7 @@ class _DashboardPageState extends State<DashboardPage>
                   IconButton(
                     icon: const Icon(Icons.chevron_left),
                     splashRadius: 20,
-                    onPressed: () {
-                      // Handle previous page
-                    },
+                    onPressed: () {},
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -1427,9 +1446,7 @@ class _DashboardPageState extends State<DashboardPage>
                   IconButton(
                     icon: const Icon(Icons.chevron_right),
                     splashRadius: 20,
-                    onPressed: () {
-                      // Handle next page
-                    },
+                    onPressed: () {},
                   ),
                 ],
               ),
@@ -1655,10 +1672,47 @@ class _DashboardPageState extends State<DashboardPage>
               ),
               child: Column(
                 children: [
-                  _buildProfileMenuItem(Icons.person_outline, 'Profile'),
-                  _buildProfileMenuItem(Icons.settings_outlined, 'Settings'),
-                  _buildProfileMenuItem(Icons.help_outline, 'Help & Support'),
-                  _buildProfileMenuItem(Icons.logout, 'Logout', isLogout: true),
+                  _buildProfileMenuItem(
+                    Icons.person_outline,
+                    'Profile',
+                    onTap: () {
+                      setState(() => _isProfileMenuOpen = false);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const UserprofilePage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildProfileMenuItem(
+                    Icons.settings_outlined,
+                    'Settings',
+                    onTap: () {
+                      setState(() => _isProfileMenuOpen = false);
+                      // Handle settings
+                    },
+                  ),
+                  _buildProfileMenuItem(
+                    Icons.help_outline,
+                    'Help & Support',
+                    onTap: () {
+                      setState(() => _isProfileMenuOpen = false);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => HelpPage()),
+                      );
+                    },
+                  ),
+                  _buildProfileMenuItem(
+                    Icons.logout,
+                    'Logout',
+                    isLogout: true,
+                    onTap: () async {
+                      setState(() => _isProfileMenuOpen = false);
+                      await _handleLogout();
+                    },
+                  ),
                 ],
               ),
             ),
@@ -1671,6 +1725,7 @@ class _DashboardPageState extends State<DashboardPage>
     IconData icon,
     String title, {
     bool isLogout = false,
+    required VoidCallback onTap,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -1691,12 +1746,7 @@ class _DashboardPageState extends State<DashboardPage>
             color: isLogout ? Colors.red : Colors.black87,
           ),
         ),
-        onTap: () {
-          setState(() {
-            _isProfileMenuOpen = false;
-          });
-          // Handle menu item tap
-        },
+        onTap: onTap,
       ),
     );
   }
