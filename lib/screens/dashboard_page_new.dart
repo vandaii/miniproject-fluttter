@@ -15,7 +15,7 @@ import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/LoginPage.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  const DashboardPage({super.key, required int selectedIndex});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -123,6 +123,14 @@ class _DashboardPageState extends State<DashboardPage>
       ),
     ],
   ];
+
+  // Tambahkan state untuk hover
+  int? _hoveredIndex;
+
+  // Fungsi reusable untuk menentukan apakah menu sedang di-hover atau selected
+  bool _isMenuActive(int index) {
+    return _selectedIndex == index || _hoveredIndex == index;
+  }
 
   @override
   void initState() {
@@ -364,10 +372,13 @@ class _DashboardPageState extends State<DashboardPage>
                   _buildMenuItem(
                     icon: Icons.dashboard_outlined,
                     title: 'Dashboard',
-                    isSelected: _selectedIndex == 0,
+                    index: 0,
                     onTap: () {
-                      setState(() => _selectedIndex = 0);
-                      if (isMobile && closeDrawer != null) closeDrawer();
+                      if (_selectedIndex != 0) {
+                        setState(() => _selectedIndex = 0);
+                        _navigateToPage(0);
+                        if (isMobile && closeDrawer != null) closeDrawer();
+                      }
                     },
                   ),
                   _buildExpandableMenu(
@@ -404,7 +415,7 @@ class _DashboardPageState extends State<DashboardPage>
                   _buildMenuItem(
                     icon: Icons.assessment_outlined,
                     title: 'Inventory Report',
-                    isSelected: _selectedIndex == 3,
+                    index: 3,
                     onTap: () {
                       setState(() => _selectedIndex = 3);
                       if (isMobile && closeDrawer != null) closeDrawer();
@@ -437,7 +448,7 @@ class _DashboardPageState extends State<DashboardPage>
                   _buildMenuItem(
                     icon: Icons.settings_outlined,
                     title: 'Account & Settings',
-                    isSelected: _selectedIndex == 4,
+                    index: 4,
                     onTap: () {
                       setState(() => _selectedIndex = 4);
                       if (isMobile && closeDrawer != null) closeDrawer();
@@ -446,7 +457,7 @@ class _DashboardPageState extends State<DashboardPage>
                   _buildMenuItem(
                     icon: Icons.help_outline,
                     title: 'Help',
-                    isSelected: _selectedIndex == 5,
+                    index: 5,
                     onTap: () {
                       setState(() => _selectedIndex = 5);
                       if (isMobile && closeDrawer != null) closeDrawer();
@@ -466,43 +477,53 @@ class _DashboardPageState extends State<DashboardPage>
   Widget _buildMenuItem({
     required IconData icon,
     required String title,
-    required bool isSelected,
+    required int index,
     required VoidCallback onTap,
   }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: isSelected ? lightPink.withOpacity(0.3) : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? deepPink.withOpacity(0.1)
-                : Colors.grey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            icon,
-            color: isSelected ? deepPink : Colors.grey,
-            size: 20,
-          ),
+    final isActive = _isMenuActive(index);
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredIndex = index),
+      onExit: (_) => setState(() => _hoveredIndex = null),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
         ),
-        title: Text(
-          title,
-          style: GoogleFonts.poppins(
-            color: isSelected ? deepPink : Colors.grey,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            fontSize: 14,
+        child: ListTile(
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isActive
+                  ? deepPink.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: isActive ? deepPink : Colors.grey,
+              size: 20,
+            ),
           ),
+          title: Text(
+            title,
+            style: GoogleFonts.poppins(
+              color: isActive ? deepPink : Colors.grey,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              fontSize: 14,
+            ),
+          ),
+          selected: isActive,
+          onTap: () {
+            if (_selectedIndex != index) {
+              setState(() => _selectedIndex = index);
+              _navigateToPage(index);
+            }
+          },
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          dense: true,
         ),
-        selected: isSelected,
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        dense: true,
       ),
     );
   }
