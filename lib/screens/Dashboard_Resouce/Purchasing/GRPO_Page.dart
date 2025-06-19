@@ -11,6 +11,8 @@ import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/Help_Page.dar
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/Waste_Page.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/LoginPage.dart';
+import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/Notification_Page.dart';
+import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/Email_Page.dart';
 
 class GRPO_Page extends StatefulWidget {
   final int selectedIndex;
@@ -21,7 +23,8 @@ class GRPO_Page extends StatefulWidget {
 }
 
 class _GrpoPageState extends State<GRPO_Page> {
-  bool isOutstandingSelected = true; // Track selected tab (Outstanding or Approved)
+  bool isOutstandingSelected =
+      true; // Track selected tab (Outstanding or Approved)
   bool _isSidebarExpanded = true;
   bool _isProfileMenuOpen = false;
   bool _isStoreMenuOpen = false;
@@ -38,7 +41,11 @@ class _GrpoPageState extends State<GRPO_Page> {
 
   final AuthService _authService = AuthService();
 
-  bool _isMenuActive(int index) {
+  bool _isMainMenuActive(int index) {
+    return _selectedIndex == index;
+  }
+
+  bool _isSubMenuActive(int index) {
     return _selectedIndex == index || _hoveredIndex == index;
   }
 
@@ -80,66 +87,64 @@ class _GrpoPageState extends State<GRPO_Page> {
     );
   }
 
+  //header
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFFE91E63), Color(0xFFFF4081)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        child: AppBar(
+          backgroundColor: const Color(0xFFE91E63),
+          elevation: 0,
+          leading: Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu, color: Colors.white),
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Color(0xFFE91E63).withOpacity(0.2),
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              ),
-            ],
           ),
-          child: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: Builder(
-              builder: (context) => IconButton(
-                icon: const Icon(Icons.menu, color: Colors.white),
-                onPressed: () {
-                  Scaffold.of(context).openDrawer();
+          title: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Text(
+              'GRPO',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                fontSize: 20,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.notifications, color: Colors.white),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => NotificationPage()),
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.mail_outline, color: Colors.white),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => EmailPage()),
+                );
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isProfileMenuOpen = !_isProfileMenuOpen;
+                    _isStoreMenuOpen = false;
+                  });
                 },
-              ),
-            ),
-            title: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Text(
-                'GRPO',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 20,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 5.0),
-                child: IconButton(
-                  icon: Icon(Icons.notifications_outlined, color: Colors.white),
-                  onPressed: () {},
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 5.0),
-                child: IconButton(
-                  icon: Icon(Icons.email_outlined, color: Colors.white),
-                  onPressed: () {},
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 16.0),
-                child: CircleAvatar(
+                child: const CircleAvatar(
                   backgroundColor: Colors.white,
                   radius: 16,
                   child: Text(
@@ -151,8 +156,8 @@ class _GrpoPageState extends State<GRPO_Page> {
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       drawer: Drawer(
@@ -337,6 +342,7 @@ class _GrpoPageState extends State<GRPO_Page> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Search bar + filter modern
             Padding(
               padding: const EdgeInsets.only(top: 16.0, bottom: 20.0),
               child: Row(
@@ -394,7 +400,7 @@ class _GrpoPageState extends State<GRPO_Page> {
                     child: IconButton(
                       icon: Icon(Icons.filter_alt, color: Color(0xFFE91E63)),
                       onPressed: () {
-                        // Filter action here
+                        // Filter action
                       },
                     ),
                   ),
@@ -732,43 +738,37 @@ class _GrpoPageState extends State<GRPO_Page> {
     required int index,
     required VoidCallback onTap,
   }) {
-    final isActive = _isMenuActive(index);
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hoveredIndex = index),
-      onExit: (_) => setState(() => _hoveredIndex = null),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: ListTile(
-          leading: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isActive ? deepPink.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: isActive ? deepPink : Colors.grey,
-              size: 20,
-            ),
+    final isActive = _isMainMenuActive(index);
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isActive
+                ? deepPink.withOpacity(0.1)
+                : Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
           ),
-          title: Text(
-            title,
-            style: GoogleFonts.poppins(
-              color: isActive ? deepPink : Colors.grey,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              fontSize: 14,
-            ),
-          ),
-          selected: isActive,
-          onTap: onTap,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          dense: true,
+          child: Icon(icon, color: isActive ? deepPink : Colors.grey, size: 20),
         ),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(
+            color: isActive ? deepPink : Colors.grey,
+            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            fontSize: 14,
+          ),
+        ),
+        selected: isActive,
+        onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        dense: true,
       ),
     );
   }
@@ -861,7 +861,7 @@ class _GrpoPageState extends State<GRPO_Page> {
     bool isMobile = false,
     VoidCallback? closeDrawer,
   }) {
-    final isActive = _isMenuActive(index);
+    final isActive = _isSubMenuActive(index);
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredIndex = index),
       onExit: (_) => setState(() => _hoveredIndex = null),
@@ -875,7 +875,9 @@ class _GrpoPageState extends State<GRPO_Page> {
           leading: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: isActive ? deepPink.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+              color: isActive
+                  ? deepPink.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -895,16 +897,16 @@ class _GrpoPageState extends State<GRPO_Page> {
           selected: isActive,
           onTap: () {
             if (_selectedIndex != index) {
-              Navigator.pushReplacement(
-                context,
-                _getPageRouteByIndex(index),
-              );
+              Navigator.pushReplacement(context, _getPageRouteByIndex(index));
               if (isMobile && closeDrawer != null) closeDrawer();
             }
           },
           dense: true,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 4,
+          ),
         ),
       ),
     );
@@ -913,23 +915,41 @@ class _GrpoPageState extends State<GRPO_Page> {
   Route _getPageRouteByIndex(int index) {
     switch (index) {
       case 0:
-        return MaterialPageRoute(builder: (context) => DirectPurchasePage(selectedIndex: 0));
+        return MaterialPageRoute(
+          builder: (context) => DirectPurchasePage(selectedIndex: 0),
+        );
       case 11:
-        return MaterialPageRoute(builder: (context) => DirectPurchasePage(selectedIndex: 11));
+        return MaterialPageRoute(
+          builder: (context) => DirectPurchasePage(selectedIndex: 11),
+        );
       case 12:
-        return MaterialPageRoute(builder: (context) => GRPO_Page(selectedIndex: 12));
+        return MaterialPageRoute(
+          builder: (context) => GRPO_Page(selectedIndex: 12),
+        );
       case 21:
-        return MaterialPageRoute(builder: (context) => MaterialRequestPage(selectedIndex: 21));
+        return MaterialPageRoute(
+          builder: (context) => MaterialRequestPage(selectedIndex: 21),
+        );
       case 22:
-        return MaterialPageRoute(builder: (context) => StockOpnamePage(selectedIndex: 22));
+        return MaterialPageRoute(
+          builder: (context) => StockOpnamePage(selectedIndex: 22),
+        );
       case 23:
-        return MaterialPageRoute(builder: (context) => TransferStockPage(selectedIndex: 23));
+        return MaterialPageRoute(
+          builder: (context) => TransferStockPage(selectedIndex: 23),
+        );
       case 24:
-        return MaterialPageRoute(builder: (context) => WastePage(selectedIndex: 24));
+        return MaterialPageRoute(
+          builder: (context) => WastePage(selectedIndex: 24),
+        );
       case 25:
-        return MaterialPageRoute(builder: (context) => MaterialCalculatePage(selectedIndex: 25));
+        return MaterialPageRoute(
+          builder: (context) => MaterialCalculatePage(selectedIndex: 25),
+        );
       default:
-        return MaterialPageRoute(builder: (context) => DirectPurchasePage(selectedIndex: 11));
+        return MaterialPageRoute(
+          builder: (context) => DirectPurchasePage(selectedIndex: 11),
+        );
     }
   }
 
@@ -946,7 +966,9 @@ class _GrpoPageState extends State<GRPO_Page> {
       case 11: // Direct Purchase
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => DirectPurchasePage(selectedIndex: 11)),
+          MaterialPageRoute(
+            builder: (context) => DirectPurchasePage(selectedIndex: 11),
+          ),
         );
         break;
       case 12: // GRPO
@@ -958,19 +980,25 @@ class _GrpoPageState extends State<GRPO_Page> {
       case 21: // Material Request
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => MaterialRequestPage(selectedIndex: 21)),
+          MaterialPageRoute(
+            builder: (context) => MaterialRequestPage(selectedIndex: 21),
+          ),
         );
         break;
       case 22: // Stock Opname
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => StockOpnamePage(selectedIndex: 22)),
+          MaterialPageRoute(
+            builder: (context) => StockOpnamePage(selectedIndex: 22),
+          ),
         );
         break;
       case 23: // Transfer Stock
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => TransferStockPage(selectedIndex: 23)),
+          MaterialPageRoute(
+            builder: (context) => TransferStockPage(selectedIndex: 23),
+          ),
         );
         break;
       case 24: // Waste
@@ -982,7 +1010,9 @@ class _GrpoPageState extends State<GRPO_Page> {
       case 25: // Material Calculate
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => MaterialCalculatePage(selectedIndex: 25)),
+          MaterialPageRoute(
+            builder: (context) => MaterialCalculatePage(selectedIndex: 25),
+          ),
         );
         break;
     }
