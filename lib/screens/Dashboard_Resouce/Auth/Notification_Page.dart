@@ -53,7 +53,10 @@ class NotificationPage extends StatelessWidget {
           ? Center(
               child: Text(
                 'No notifications yet.',
-                style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[600]),
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
               ),
             )
           : ListView.separated(
