@@ -521,7 +521,10 @@ class _DashboardPageState extends State<DashboardPage>
             }
           },
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
           dense: true,
         ),
       ),
