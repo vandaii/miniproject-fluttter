@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 
 class AuthService {
-  final String baseUrl = 'http://192.168.1.15:8000/api';
+  final String baseUrl = 'http://192.168.1.7:8000/api';
   final FlutterSecureStorage storage = FlutterSecureStorage();
 
   http.Client client = IOClient(
