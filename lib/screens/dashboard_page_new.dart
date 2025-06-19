@@ -15,11 +15,7 @@ import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/LoginPage.dart';
 
 class DashboardPage extends StatefulWidget {
-<<<<<<< HEAD
   const DashboardPage({super.key, required int selectedIndex});
-=======
-  const DashboardPage({super.key});
->>>>>>> 97f52ab515b6f84bb14965e565d4b2225c216b0c
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -128,7 +124,6 @@ class _DashboardPageState extends State<DashboardPage>
     ],
   ];
 
-<<<<<<< HEAD
   // Tambahkan state untuk hover
   int? _hoveredIndex;
 
@@ -137,8 +132,6 @@ class _DashboardPageState extends State<DashboardPage>
     return _selectedIndex == index || _hoveredIndex == index;
   }
 
-=======
->>>>>>> 97f52ab515b6f84bb14965e565d4b2225c216b0c
   @override
   void initState() {
     super.initState();
@@ -379,7 +372,6 @@ class _DashboardPageState extends State<DashboardPage>
                   _buildMenuItem(
                     icon: Icons.dashboard_outlined,
                     title: 'Dashboard',
-<<<<<<< HEAD
                     index: 0,
                     onTap: () {
                       if (_selectedIndex != 0) {
@@ -387,12 +379,6 @@ class _DashboardPageState extends State<DashboardPage>
                         _navigateToPage(0);
                         if (isMobile && closeDrawer != null) closeDrawer();
                       }
-=======
-                    isSelected: _selectedIndex == 0,
-                    onTap: () {
-                      setState(() => _selectedIndex = 0);
-                      if (isMobile && closeDrawer != null) closeDrawer();
->>>>>>> 97f52ab515b6f84bb14965e565d4b2225c216b0c
                     },
                   ),
                   _buildExpandableMenu(
@@ -429,11 +415,7 @@ class _DashboardPageState extends State<DashboardPage>
                   _buildMenuItem(
                     icon: Icons.assessment_outlined,
                     title: 'Inventory Report',
-<<<<<<< HEAD
                     index: 3,
-=======
-                    isSelected: _selectedIndex == 3,
->>>>>>> 97f52ab515b6f84bb14965e565d4b2225c216b0c
                     onTap: () {
                       setState(() => _selectedIndex = 3);
                       if (isMobile && closeDrawer != null) closeDrawer();
@@ -466,11 +448,7 @@ class _DashboardPageState extends State<DashboardPage>
                   _buildMenuItem(
                     icon: Icons.settings_outlined,
                     title: 'Account & Settings',
-<<<<<<< HEAD
                     index: 4,
-=======
-                    isSelected: _selectedIndex == 4,
->>>>>>> 97f52ab515b6f84bb14965e565d4b2225c216b0c
                     onTap: () {
                       setState(() => _selectedIndex = 4);
                       if (isMobile && closeDrawer != null) closeDrawer();
@@ -479,11 +457,7 @@ class _DashboardPageState extends State<DashboardPage>
                   _buildMenuItem(
                     icon: Icons.help_outline,
                     title: 'Help',
-<<<<<<< HEAD
                     index: 5,
-=======
-                    isSelected: _selectedIndex == 5,
->>>>>>> 97f52ab515b6f84bb14965e565d4b2225c216b0c
                     onTap: () {
                       setState(() => _selectedIndex = 5);
                       if (isMobile && closeDrawer != null) closeDrawer();
@@ -503,7 +477,6 @@ class _DashboardPageState extends State<DashboardPage>
   Widget _buildMenuItem({
     required IconData icon,
     required String title,
-<<<<<<< HEAD
     required int index,
     required VoidCallback onTap,
   }) {
@@ -551,45 +524,6 @@ class _DashboardPageState extends State<DashboardPage>
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           dense: true,
         ),
-=======
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: isSelected ? lightPink.withOpacity(0.3) : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? deepPink.withOpacity(0.1)
-                : Colors.grey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            icon,
-            color: isSelected ? deepPink : Colors.grey,
-            size: 20,
-          ),
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.poppins(
-            color: isSelected ? deepPink : Colors.grey,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            fontSize: 14,
-          ),
-        ),
-        selected: isSelected,
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        dense: true,
->>>>>>> 97f52ab515b6f84bb14965e565d4b2225c216b0c
       ),
     );
   }
