@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 
 class AuthService {
-  final String baseUrl = 'http://192.168.1.15:8000/api';
+  final String baseUrl = 'http://192.168.1.11:8000/api';
   final FlutterSecureStorage storage = FlutterSecureStorage();
 
   http.Client client = IOClient(
@@ -14,7 +14,7 @@ class AuthService {
           (X509Certificate cert, String host, int port) => true,
   );
 
-  /// ✅ REGISTER (dengan optional foto)
+  /// REGISTER (dengan optional foto)
   Future<bool> register({
     required String employeeId,
     required String name,
@@ -76,8 +76,9 @@ class AuthService {
       final resData = jsonDecode(response.body);
       print('Login Response: $resData');
 
-      if (response.statusCode == 200 && resData['access_token'] != null) {
-        await storage.write(key: 'token', value: resData['access_token']);
+      // respon status data untuk mengambil dari respon token backend APi
+      if (response.statusCode == 200 && resData['token'] != null) {
+        await storage.write(key: 'token', value: resData['token']);
         return true;
       } else {
         print('Login failed: ${resData['message']}');

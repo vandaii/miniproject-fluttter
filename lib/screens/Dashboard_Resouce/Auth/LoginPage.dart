@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/register_page.dart';
-import 'package:miniproject_flutter/screens/dashboard_page_new.dart';
+import 'package:miniproject_flutter/screens/DashboardPage.dart';
 import 'package:miniproject_flutter/widgets/CustomPage_Login.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 
@@ -94,7 +94,9 @@ class _LoginPageState extends State<LoginPage> {
                           MaterialPageRoute(
                             builder: (context) {
                               var selectedIndex = 0;
-                              return DashboardPage(selectedIndex: selectedIndex);
+                              return DashboardPage(
+                                selectedIndex: selectedIndex,
+                              );
                             },
                           ),
                         );

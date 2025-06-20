@@ -342,21 +342,25 @@ class _GrpoPageState extends State<GRPO_Page> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search bar + filter modern
+            // Search Bar Section (duplikasi desain Direct Purchase)
             Padding(
-              padding: const EdgeInsets.only(top: 16.0, bottom: 20.0),
+              padding: const EdgeInsets.only(top: 24.0, bottom: 16.0),
               child: Row(
                 children: [
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        gradient: LinearGradient(
+                          colors: [Color(0xFFF8BBD0), Color(0xFFE91E63)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.08),
-                            blurRadius: 6,
-                            offset: Offset(0, 2),
+                            color: Color(0xFFE91E63).withOpacity(0.10),
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
                           ),
                         ],
                       ),
@@ -365,48 +369,53 @@ class _GrpoPageState extends State<GRPO_Page> {
                           prefixIcon: Icon(
                             Icons.search,
                             color: Color(0xFFE91E63),
-                            size: 20,
+                            size: 22,
                           ),
-                          hintText: 'Search by No. GRPO, Supplier, or Total',
+                          hintText: 'Cari GRPO',
                           hintStyle: GoogleFonts.poppins(
                             color: Colors.grey[400],
-                            fontSize: 13,
+                            fontSize: 14,
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
                           ),
                           contentPadding: EdgeInsets.symmetric(
-                            vertical: 14,
-                            horizontal: 16,
+                            vertical: 16,
+                            horizontal: 18,
                           ),
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.85),
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(width: 12),
+                  SizedBox(width: 14),
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      gradient: LinearGradient(
+                        colors: [Color(0xFFF8BBD0), Color(0xFFE91E63)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.08),
-                          blurRadius: 6,
-                          offset: Offset(0, 2),
+                          color: Color(0xFFE91E63).withOpacity(0.10),
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
                         ),
                       ],
                     ),
                     child: IconButton(
-                      icon: Icon(Icons.filter_alt, color: Color(0xFFE91E63)),
-                      onPressed: () {
-                        // Filter action
-                      },
+                      icon: Icon(Icons.filter_alt, color: Colors.white),
+                      onPressed: () {},
                     ),
                   ),
                 ],
               ),
             ),
+            // Taskbar Outstanding/Received (pertahankan logika GRPO)
             Container(
               padding: EdgeInsets.all(3),
               decoration: BoxDecoration(
@@ -436,32 +445,44 @@ class _GrpoPageState extends State<GRPO_Page> {
                               ? LinearGradient(
                                   colors: [
                                     Color(0xFFE91E63),
-                                    Color(0xFFFF4081),
+                                    Color(0xFFF8BBD0),
                                   ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 )
                               : null,
+                          color: isOutstandingSelected ? null : Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0xFFE91E63).withOpacity(0.08),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                          border: Border.all(
                           color: isOutstandingSelected
-                              ? null
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
+                                ? Colors.transparent
+                                : Color(0xFFE91E63),
+                            width: 2,
+                          ),
                         ),
                         child: Center(
                           child: Text(
                             'Shipping',
                             style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
                               color: isOutstandingSelected
                                   ? Colors.white
-                                  : Colors.grey[600],
+                                  : Color(0xFFE91E63),
+                              fontSize: 15,
                             ),
                           ),
                         ),
                       ),
                     ),
                   ),
+                  const SizedBox(width: 18),
                   Expanded(
                     child: GestureDetector(
                       onTap: () {
@@ -476,26 +497,37 @@ class _GrpoPageState extends State<GRPO_Page> {
                               ? LinearGradient(
                                   colors: [
                                     Color(0xFFE91E63),
-                                    Color(0xFFFF4081),
+                                    Color(0xFFF8BBD0),
                                   ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 )
                               : null,
+                          color: !isOutstandingSelected ? null : Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0xFFE91E63).withOpacity(0.08),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                          border: Border.all(
                           color: !isOutstandingSelected
-                              ? null
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
+                                ? Colors.transparent
+                                : Color(0xFFE91E63),
+                            width: 2,
+                          ),
                         ),
                         child: Center(
                           child: Text(
                             'Received',
                             style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
                               color: !isOutstandingSelected
                                   ? Colors.white
-                                  : Colors.grey[600],
+                                  : Color(0xFFE91E63),
+                              fontSize: 15,
                             ),
                           ),
                         ),
@@ -506,47 +538,39 @@ class _GrpoPageState extends State<GRPO_Page> {
               ),
             ),
             const SizedBox(height: 20),
+            // Card List (duplikasi desain Direct Purchase, data tetap GRPO)
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: isOutstandingSelected
                       ? [
-                          _buildModernCard(
-                            'DP-2023-1',
+                          _buildShippingCard(
+                            'PO-2023-1',
                             'Supplier 1',
-                            'Rp 1.000.000',
-                            'Pending',
-                            Icons.local_shipping,
+                            '24/04/2025',
+                            'Shipping',
                           ),
-                          _buildModernCard(
-                            'DP-2023-2',
+                          _buildShippingCard(
+                            'PO-2023-2',
                             'Supplier 2',
-                            'Rp 1.000.000',
-                            'Pending',
-                            Icons.local_shipping,
-                          ),
-                          _buildModernCard(
-                            'DP-2023-3',
-                            'Supplier 3',
-                            'Rp 1.000.000',
-                            'Pending',
-                            Icons.local_shipping,
+                            '25/04/2025',
+                            'Shipping',
                           ),
                         ]
                       : [
-                          _buildModernCard(
-                            'DP-2023-4',
-                            'Supplier 4',
-                            'Rp 2.000.000',
+                          _buildReceivedCard(
+                            'GRPO-2023-1',
+                            'PO-2023-1',
+                            'Supplier 1',
+                            '24/04/2025',
                             'Received',
-                            Icons.check_circle,
                           ),
-                          _buildModernCard(
-                            'DP-2023-5',
-                            'Supplier 5',
-                            'Rp 2.500.000',
+                          _buildReceivedCard(
+                            'GRPO-2023-2',
+                            'PO-2023-2',
+                            'Supplier 2',
+                            '25/04/2025',
                             'Received',
-                            Icons.check_circle,
                           ),
                         ],
                 ),
@@ -581,153 +605,430 @@ class _GrpoPageState extends State<GRPO_Page> {
     );
   }
 
-  Widget _buildModernCard(
-    String id,
+  Widget _buildShippingCard(
+    String poNumber,
     String supplier,
-    String total,
+    String receiveDate,
     String status,
-    IconData statusIcon,
   ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.06),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {},
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    Color badgeColor = const Color(0xFFFFF9C4);
+    Color badgeTextColor = const Color(0xFFFBC02D);
+    IconData badgeIcon = Icons.local_shipping_rounded;
+    String badgeText = status;
+    return Card(
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      margin: const EdgeInsets.only(bottom: 16),
+      color: Colors.white,
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                RichText(
+                  text: TextSpan(
                     children: [
-                      Text(
-                        'No. $id',
+                      TextSpan(
+                        text: 'No. Purchase Order: ',
                         style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.bold,
                           fontSize: 15,
                           color: Color(0xFFE91E63),
                         ),
                       ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
+                      TextSpan(
+                        text: poNumber,
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.normal,
+                          fontSize: 15,
+                          color: Color(0xFFE91E63),
                         ),
-                        decoration: BoxDecoration(
-                          color: status == 'Pending'
-                              ? Colors.orange.withOpacity(0.08)
-                              : Colors.green.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                      ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.store, color: Color(0xFFE91E63), size: 16),
+                    SizedBox(width: 6),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
                           children: [
-                            Icon(
-                              statusIcon,
-                              size: 14,
-                              color: status == 'Pending'
-                                  ? Colors.orange
-                                  : Colors.green,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              status,
+                            TextSpan(
+                              text: 'Supplier: ',
                               style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 12,
-                                color: status == 'Pending'
-                                    ? Colors.orange
-                                    : Colors.green,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: Colors.grey[800],
+                              ),
+                            ),
+                            TextSpan(
+                              text: supplier,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.normal,
+                                fontSize: 14,
+                                color: Colors.grey[800],
                               ),
                             ),
                           ],
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Icon(Icons.business, size: 14, color: Colors.grey[600]),
-                      SizedBox(width: 6),
-                      Text(
-                        supplier,
-                        style: GoogleFonts.poppins(
-                          color: Colors.grey[700],
-                          fontSize: 13,
+                    ),
+                  ],
+                ),
+                SizedBox(height: 6),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.calendar_today,
+                      color: Color(0xFFE91E63),
+                      size: 16,
+                    ),
+                    SizedBox(width: 6),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Receive Date: ',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: Colors.grey[900],
+                              ),
+                            ),
+                            TextSpan(
+                              text: receiveDate,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.normal,
+                                fontSize: 14,
+                                color: Colors.grey[900],
+                              ),
+                            ),
+                          ],
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.attach_money,
-                        size: 14,
-                        color: Colors.grey[600],
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        total,
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey[800],
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: () {},
-                      icon: Icon(
-                        Icons.arrow_forward,
-                        size: 14,
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: OutlinedButton.icon(
+                    onPressed: () {},
+                    icon: Icon(
+                      Icons.info_outline_rounded,
+                      color: Color(0xFFE91E63),
+                      size: 18,
+                    ),
+                    label: Text(
+                      'Detail',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
                         color: Color(0xFFE91E63),
                       ),
-                      label: Text(
-                        'View Details',
-                        style: GoogleFonts.poppins(
-                          color: Color(0xFFE91E63),
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12,
-                        ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      side: BorderSide(color: Color(0xFFE91E63), width: 2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        backgroundColor: Color(0xFFE91E63).withOpacity(0.08),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
                       ),
+                      elevation: 0,
+                      minimumSize: Size(120, 44),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Status badge di pojok kanan atas
+          Positioned(
+            top: 14,
+            right: 18,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 120),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: badgeColor,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: badgeColor.withOpacity(0.18),
+                    blurRadius: 4,
+                    offset: Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(badgeIcon, color: badgeTextColor, size: 16),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      badgeText,
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                        color: badgeTextColor,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
                     ),
                   ),
                 ],
               ),
             ),
           ),
-        ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReceivedCard(
+    String grpoNumber,
+    String poNumber,
+    String supplier,
+    String receiveDate,
+    String status,
+  ) {
+    Color badgeColor = const Color(0xFF90CAF9);
+    Color badgeTextColor = const Color(0xFF1565C0);
+    IconData badgeIcon = Icons.verified_rounded;
+    String badgeText = status;
+    return Card(
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      margin: const EdgeInsets.only(bottom: 16),
+      color: Colors.white,
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'No. GRPO: ',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: Color(0xFFE91E63),
+                        ),
+                      ),
+                      TextSpan(
+                        text: grpoNumber,
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.normal,
+                          fontSize: 15,
+                          color: Color(0xFFE91E63),
+                        ),
+                      ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 8),
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'No. Purchase Order: ',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      TextSpan(
+                        text: poNumber,
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.normal,
+                          fontSize: 14,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.store, color: Color(0xFFE91E63), size: 16),
+                    SizedBox(width: 6),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Supplier: ',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: Colors.grey[800],
+                              ),
+                            ),
+                            TextSpan(
+                              text: supplier,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.normal,
+                                fontSize: 14,
+                                color: Colors.grey[800],
+                              ),
+                            ),
+                          ],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 6),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.calendar_today,
+                      color: Color(0xFFE91E63),
+                      size: 16,
+                    ),
+                    SizedBox(width: 6),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Receive Date: ',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: Colors.grey[900],
+                              ),
+                            ),
+                            TextSpan(
+                              text: receiveDate,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.normal,
+                                fontSize: 14,
+                                color: Colors.grey[900],
+                              ),
+                            ),
+                          ],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: OutlinedButton.icon(
+                    onPressed: () {},
+                    icon: Icon(
+                      Icons.info_outline_rounded,
+                      color: Color(0xFFE91E63),
+                      size: 18,
+                    ),
+                    label: Text(
+                      'Detail',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFE91E63),
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      side: BorderSide(color: Color(0xFFE91E63), width: 2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                      elevation: 0,
+                      minimumSize: Size(120, 44),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Status badge di pojok kanan atas
+          Positioned(
+            top: 14,
+            right: 18,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 120),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: badgeColor,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: badgeColor.withOpacity(0.18),
+                    blurRadius: 4,
+                    offset: Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(badgeIcon, color: badgeTextColor, size: 16),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      badgeText,
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                        color: badgeTextColor,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -789,35 +1090,35 @@ class _GrpoPageState extends State<GRPO_Page> {
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: isExpanded ? lightPink.withOpacity(0.3) : Colors.transparent,
+            color: isMenuExpanded ? lightPink.withOpacity(0.3) : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: ListTile(
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isExpanded
+                color: isMenuExpanded
                     ? deepPink.withOpacity(0.1)
                     : Colors.grey.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 icon,
-                color: isExpanded ? deepPink : Colors.grey,
+                color: isMenuExpanded ? deepPink : Colors.grey,
                 size: 20,
               ),
             ),
             title: Text(
               title,
               style: GoogleFonts.poppins(
-                color: isExpanded ? deepPink : Colors.grey,
-                fontWeight: isExpanded ? FontWeight.bold : FontWeight.normal,
+                color: isMenuExpanded ? deepPink : Colors.grey,
+                fontWeight: isMenuExpanded ? FontWeight.bold : FontWeight.normal,
                 fontSize: 14,
               ),
             ),
             trailing: Icon(
               isMenuExpanded ? Icons.expand_less : Icons.expand_more,
-              color: isExpanded ? deepPink : Colors.grey,
+              color: isMenuExpanded ? deepPink : Colors.grey,
             ),
             onTap: () {
               setState(() {
@@ -1339,297 +1640,436 @@ class _GrpoPageState extends State<GRPO_Page> {
   }
 }
 
-class _AddGRPOFormContent extends StatelessWidget {
-  const _AddGRPOFormContent();
+class _AddGRPOFormContent extends StatefulWidget {
+  const _AddGRPOFormContent({Key? key}) : super(key: key);
+
+  @override
+  State<_AddGRPOFormContent> createState() => _AddGRPOFormContentState();
+}
+
+class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _poController = TextEditingController();
+  final TextEditingController _grpoController = TextEditingController();
+  DateTime? _receiveDate;
+  String? _expenseType = 'Inventory';
+  final TextEditingController _shipperController = TextEditingController();
+  String? _receiveBy = 'John Doe';
+  final TextEditingController _supplierController = TextEditingController();
+  final List<Map<String, dynamic>> _items = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _addItem();
+    _supplierController.text = 'MTP';
+  }
+
+  void _addItem() {
+    setState(() {
+      _items.add({
+        'code': TextEditingController(text: 'M-1300'),
+        'name': TextEditingController(text: 'Bubuk Thai Tea'),
+        'qty': TextEditingController(text: '50'),
+        'unit': 'PCS',
+      });
+    });
+  }
+
+  void _removeItem(int index) {
+    if (_items.length > 1) {
+      final item = _items.removeAt(index);
+      item['code'].dispose();
+      item['name'].dispose();
+      item['qty'].dispose();
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    for (var item in _items) {
+      item['code'].dispose();
+      item['name'].dispose();
+      item['qty'].dispose();
+    }
+    _poController.dispose();
+    _grpoController.dispose();
+    _shipperController.dispose();
+    _supplierController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Column(
       children: [
-        // Handle bar
-        Center(
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ),
         // Header
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           decoration: BoxDecoration(
             color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.05),
-                blurRadius: 10,
-                offset: Offset(0, 2),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
               ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
+            ),
+            child: Center(
+              child: Text(
                 'Add GRPO',
                 style: GoogleFonts.poppins(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFFE91E63),
+                  color: Colors.grey[800],
                 ),
               ),
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: Icon(Icons.close, color: Colors.grey[600]),
               ),
-            ],
           ),
-        ),
-        // Form Content
+          const Divider(height: 1, color: Color.fromARGB(255, 230, 230, 230)),
+          // Form
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
+              child: Form(
+                key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Basic Information
                 _buildSection(
-                  title: 'Basic Information',
+                      title: "Basic Information",
                   icon: Icons.info_outline,
-                  color: Color(0xFFE91E63),
                   children: [
-                    _buildModernTextField(
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildModernTextField(
+                                label: 'NO. PO',
+                                controller: _poController,
+                                hint: 'PO-123',
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildModernTextField(
                       label: 'NO. GRPO',
-                      hint: 'Enter GRPO number',
-                      prefixIcon: Icons.numbers,
-                      iconColor: Color(0xFFE91E63),
+                                controller: _grpoController,
+                                hint: 'GR-123',
+                              ),
+                            ),
+                          ],
                     ),
                     const SizedBox(height: 16),
-                    _buildModernTextField(
-                      label: 'Supplier',
-                      hint: 'Select supplier',
-                      prefixIcon: Icons.business,
-                      suffixIcon: Icons.arrow_drop_down,
-                      iconColor: Color(0xFFE91E63),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildModernTextField(
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildModernTextField(
                       label: 'Receive Date',
-                      hint: 'Select date',
+                                readOnly: true,
+                                controller: TextEditingController(
+                                  text: _receiveDate == null
+                                      ? ''
+                                      : "${_receiveDate!.day.toString().padLeft(2, '0')}/${_receiveDate!.month.toString().padLeft(2, '0')}/${_receiveDate!.year}",
+                                ),
+                                hint: '24/04/2025',
+                                onTap: () async {
+                                  final date = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime(2000),
+                                    lastDate: DateTime(2100),
+                                  );
+                                  if (date != null) {
+                                    setState(() {
+                                      _receiveDate = date;
+                                    });
+                                  }
+                                },
                       prefixIcon: Icons.calendar_today,
-                      suffixIcon: Icons.arrow_drop_down,
-                      iconColor: Color(0xFFE91E63),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                // Item Details
-                _buildSection(
-                  title: 'Item Details',
-                  icon: Icons.inventory_2_outlined,
-                  color: Color(0xFF2196F3),
-                  children: [
-                    _buildModernTextField(
-                      label: 'Item Name',
-                      hint: 'Enter item name',
-                      prefixIcon: Icons.inventory_2,
-                      iconColor: Color(0xFF2196F3),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildModernDropdown(
+                                label: 'Expense Type',
+                                value: _expenseType,
+                                items: ['Inventory', 'Non Inventory'],
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setState(() {
+                                      _expenseType = val;
+                                    });
+                                  }
+                                },
+                                prefixIcon: Icons.category_outlined,
+                              ),
+                            ),
+                          ],
                     ),
                     const SizedBox(height: 16),
                     Row(
                       children: [
                         Expanded(
                           child: _buildModernTextField(
-                            label: 'Quantity',
-                            hint: 'Enter quantity',
-                            prefixIcon: Icons.format_list_numbered,
-                            iconColor: Color(0xFF2196F3),
+                                label: 'Shipper by',
+                                controller: _shipperController,
+                                hint: 'Harries',
                           ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: _buildModernTextField(
-                            label: 'Unit',
-                            hint: 'Select unit',
-                            prefixIcon: Icons.straighten,
-                            suffixIcon: Icons.arrow_drop_down,
-                            iconColor: Color(0xFF2196F3),
+                              child: _buildModernDropdown(
+                                label: 'Receive by',
+                                value: _receiveBy,
+                                items: ['John Doe', 'Jane Smith'],
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setState(() {
+                                      _receiveBy = val;
+                                    });
+                                  }
+                                },
+                                prefixIcon: Icons.person,
                           ),
                         ),
                       ],
                     ),
+                        const SizedBox(height: 16),
+                        _buildModernTextField(
+                          label: 'Supplier',
+                          controller: _supplierController,
+                          hint: 'MTP',
+                          readOnly: true,
+                        ),
                   ],
                 ),
                 const SizedBox(height: 24),
-                // Notes
                 _buildSection(
-                  title: 'Additional Notes',
+                      title: 'Item',
+                      icon: Icons.inventory_2_outlined,
+                      children: [
+                        _buildItemTable(),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _buildSection(
+                      title: 'Upload Packing Slip',
+                      icon: Icons.upload_file,
+                      children: [
+                        _buildFileUploadSection(),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _buildSection(
+                      title: 'Notes',
                   icon: Icons.note_alt_outlined,
-                  color: Color(0xFF4CAF50),
                   children: [
                     _buildModernTextField(
                       label: 'Notes',
-                      hint: 'Add any additional notes here...',
-                      prefixIcon: Icons.note,
+                          hint: 'Masukan catatan / remarks',
                       maxLines: 3,
-                      iconColor: Color(0xFF4CAF50),
                     ),
                   ],
                 ),
-                const SizedBox(height: 32),
-                // Action Buttons
+                  ],
+                ),
+              ),
+            ),
+          ),
+          _buildBottomButtons(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemTable() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ..._items.asMap().entries.map((entry) {
+          int index = entry.key;
+          var item = entry.value;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16.0),
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+            child: Column(
+              children: [
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: BorderSide(color: Color(0xFFE91E63)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          'Cancel',
-                          style: GoogleFonts.poppins(
-                            color: Color(0xFFE91E63),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                      child: _buildModernTextField(
+                        label: 'Item Code',
+                        controller: item['code'],
+                        hint: 'Kode',
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFE91E63),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          'Save',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                      child: _buildModernTextField(
+                        label: 'Item Name',
+                        controller: item['name'],
+                        hint: 'Nama Item',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: _buildModernTextField(
+                        label: 'Qty',
+                        controller: item['qty'],
+                        hint: 'Qty',
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 3,
+                      child: _buildModernDropdown(
+                        label: 'Unit',
+                        value: item['unit'],
+                        items: ['PCS', 'BOX', 'KG', 'L'],
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() {
+                              item['unit'] = val;
+                            });
+                          }
+                        },
                       ),
                     ),
                   ],
                 ),
               ],
             ),
-          ),
+          );
+        }).toList(),
+        Row(
+          children: [
+            OutlinedButton.icon(
+              onPressed: _items.length > 1 ? () => _removeItem(_items.length - 1) : null,
+              icon: const Icon(Icons.delete, color: Colors.red),
+              label: const Text('Remove Item', style: TextStyle(color: Colors.red)),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            ),
+            const Spacer(),
+            FilledButton.icon(
+              onPressed: _addItem,
+              icon: const Icon(Icons.add),
+              label: const Text('Add Item'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 233, 30, 99),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildSection({
-    required String title,
-    required IconData icon,
-    required Color color,
-    required List<Widget> children,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
-        border: Border.all(color: color.withOpacity(0.1), width: 1),
-      ),
-      child: Column(
+  Widget _buildFileUploadSection() {
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
+        Text(
+          'Choose File...',
+          style: GoogleFonts.poppins(
+            color: Colors.grey[700],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
               Container(
-                padding: EdgeInsets.all(8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+            color: Colors.grey[50],
+            border: Border.all(color: Colors.grey[300]!),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              SizedBox(width: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.upload_file, color: Colors.grey[600]),
+              const SizedBox(width: 12),
               Text(
-                title,
+                'Choose File to Upload',
                 style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: color,
+                  color: Colors.grey[700],
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          ...children,
-        ],
-      ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Supported formats: JPG, PNG, PDF (Max. 5MB)',
+          style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[500]),
+        ),
+      ],
     );
   }
 
   Widget _buildModernTextField({
     required String label,
-    required String hint,
-    required IconData prefixIcon,
-    IconData? suffixIcon,
+    String? hint,
+    TextEditingController? controller,
+    IconData? prefixIcon,
+    bool readOnly = false,
+    VoidCallback? onTap,
     int maxLines = 1,
-    required Color iconColor,
+    TextInputType? keyboardType,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (label.isNotEmpty)
         Text(
           label,
           style: GoogleFonts.poppins(
-            fontSize: 13,
             fontWeight: FontWeight.w500,
+              fontSize: 13,
             color: Colors.grey[700],
           ),
         ),
-        const SizedBox(height: 8),
-        TextField(
+        if (label.isNotEmpty) const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          readOnly: readOnly,
+          onTap: onTap,
           maxLines: maxLines,
+          keyboardType: keyboardType,
           decoration: InputDecoration(
-            hintText: hint,
+            hintText: hint ?? 'Enter $label',
             hintStyle: GoogleFonts.poppins(
               color: Colors.grey[400],
               fontSize: 13,
             ),
-            prefixIcon: Icon(prefixIcon, color: iconColor, size: 18),
-            suffixIcon: suffixIcon != null
-                ? Icon(suffixIcon, color: iconColor, size: 18)
+            prefixIcon: prefixIcon != null
+                ? Icon(prefixIcon, size: 18, color: Colors.grey[600])
                 : null,
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: Colors.white,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey[200]!),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey[200]!),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: iconColor),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: const Color.fromARGB(255, 233, 30, 99)),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -1638,6 +2078,157 @@ class _AddGRPOFormContent extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildModernDropdown({
+    required String label,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+    IconData? prefixIcon,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (label.isNotEmpty)
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w500,
+              fontSize: 13,
+              color: Colors.grey[700],
+            ),
+          ),
+        if (label.isNotEmpty) const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: value,
+          isExpanded: true,
+          items: items
+              .map(
+                (e) => DropdownMenuItem(
+                  value: e,
+                  child: Text(e, style: GoogleFonts.poppins(fontSize: 13)),
+                ),
+              )
+              .toList(),
+          onChanged: onChanged,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            prefixIcon: prefixIcon != null
+                ? Icon(prefixIcon, size: 18, color: Colors.grey[600])
+                : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: const Color.fromARGB(255, 233, 30, 99)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+          ),
+          style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[800]),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSection({
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: const Color.fromARGB(255, 233, 30, 99), size: 20),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 24),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomButtons(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+        border: Border(top: BorderSide(color: Colors.grey[200]!)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.grey[700],
+                side: BorderSide(color: Colors.grey[300]!),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () {
+                // Add logic
+              },
+              child: const Text('Add'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 233, 30, 99),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 2,
+                shadowColor: const Color.fromARGB(255, 233, 30, 99).withOpacity(0.3),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
