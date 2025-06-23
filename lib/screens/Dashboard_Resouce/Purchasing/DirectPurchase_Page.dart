@@ -497,7 +497,8 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                             color: Color(0xFFE91E63),
                             size: 22,
                           ),
-                          hintText: 'Cari direct purchase',
+                          hintText:
+                              'search by NO direct , Supplier , date ,etc',
                           hintStyle: GoogleFonts.poppins(
                             color: Colors.grey[400],
                             fontSize: 14,
@@ -665,6 +666,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   }
 
   Widget _buildDirectPurchaseCardFromApi(dynamic item) {
+    // Todo : checking for status item
     print(item); // Debug: cek field yang tersedia
     // Mapping status dan badge
     String status = item['status'] ?? '';
@@ -678,8 +680,8 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       badgeIcon = Icons.hourglass_top_rounded;
       badgeText = 'Pending Area Manager';
     } else if (status == 'approved_area_manager') {
-      badgeColor = const Color(0xFF90CAF9);
-      badgeTextColor = const Color(0xFF1565C0);
+      badgeColor = const Color.fromARGB(255, 144, 202, 249);
+      badgeTextColor = const Color.fromARGB(255, 21, 101, 192);
       badgeIcon = Icons.verified_user_rounded;
       badgeText = 'Approved Area Manager';
     } else if (status == 'approved_accounting') {
@@ -693,6 +695,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       badgeIcon = Icons.info_outline_rounded;
       badgeText = status;
     }
+    // todo : card index
     return Card(
       elevation: 8,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -799,7 +802,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                 Align(
                   alignment: Alignment.bottomRight,
                   child: OutlinedButton.icon(
-                    onPressed: () {},
+                    onPressed: () => _showDetailPopup(item),
                     icon: Icon(
                       Icons.info_outline_rounded,
                       color: Color(0xFFE91E63),
@@ -874,6 +877,163 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
         ],
       ),
     );
+  }
+
+  void _showDetailPopup(dynamic item) async {
+    final GlobalKey<FormState> _detailKey = GlobalKey<FormState>();
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return AnimatedPadding(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          padding: MediaQuery.of(context).viewInsets,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: Offset(0, -5),
+                ),
+              ],
+            ),
+            child: Form(
+              key: _detailKey,
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 60,
+                          height: 6,
+                          margin: EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        'Detail Direct Purchase',
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFE91E63),
+                        ),
+                      ),
+                      SizedBox(height: 18),
+                      _buildDetailRow('No Direct', getNoDirect(item)),
+                      _buildDetailRow('Supplier', item['supplier'] ?? '-'),
+                      _buildDetailRow('Date', getDate(item)),
+                      _buildDetailRow(
+                        'Expense Type',
+                        item['expenseType'] ?? '-',
+                      ),
+                      _buildDetailRow('Status', item['status'] ?? '-'),
+                      _buildDetailRow('Note', item['note'] ?? '-'),
+                      SizedBox(height: 12),
+                      Text(
+                        'Items:',
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                      ),
+                      ...((item['items'] as List?)
+                              ?.map(
+                                (itm) => Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 4.0,
+                                  ),
+                                  child: Text(
+                                    '- ${itm['itemName'] ?? itm['item_name'] ?? '-'} | Qty: ${itm['quantity']} | Price: ${itm['price']} | Total: ${itm['totalPrice'] ?? itm['total_price']}',
+                                    style: GoogleFonts.poppins(fontSize: 13),
+                                  ),
+                                ),
+                              )
+                              ?.toList() ??
+                          []),
+                      SizedBox(height: 18),
+                      if ((item['status'] ?? '').toLowerCase() ==
+                          'pending area manager')
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            icon: Icon(Icons.check, color: Colors.white),
+                            label: Text(
+                              'Approve',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF388E3C),
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: () async {
+                              Navigator.of(context).pop();
+                              await _approveDirectPurchase(item);
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              '$label:',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+            ),
+          ),
+          Expanded(child: Text(value, style: GoogleFonts.poppins())),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _approveDirectPurchase(dynamic item) async {
+    try {
+      final id = item['id'];
+      await _authService.approveByAreaManager(id, true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Berhasil approve!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      _fetchDirectPurchases();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal approve: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildMenuItem({
@@ -1128,6 +1288,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   //   }
   // }
 
+  // Todo : Routing navigation page for each page
   void _navigateToPage(int index) {
     switch (index) {
       case 0: // Dashboard
@@ -1224,6 +1385,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
         return Icons.circle_outlined;
     }
   }
+  // =========================================================================================== //
 
   Widget _buildStoreDropdown() {
     return Container(
@@ -1534,11 +1696,11 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   }
 
   String getDate(dynamic item) {
-    String? rawDate = item['tanggal'] ??
-        item['purchase_date'] ??
-        item['tanggal_beli'] ??
-        item['tgl'] ??
+    String? rawDate =
+        item['directPurchaseDate'] ??
         item['date'] ??
+        item['tanggal'] ??
+        item['purchase_date'] ??
         item['created_at'] ??
         item['createdAt'];
     if (rawDate == null) return '-';
@@ -1551,6 +1713,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   }
 }
 
+// Todo : ini souce line untuk menambahkan data baru di database
 class _AddDirectPurchaseFormContent extends StatefulWidget {
   final VoidCallback onSuccess;
   const _AddDirectPurchaseFormContent({Key? key, required this.onSuccess})
@@ -1718,6 +1881,8 @@ class _AddDirectPurchaseFormContentState
       if (mounted) setState(() => _isSubmitting = false);
     }
   }
+
+  // Todo : styling souce line untuk item konten
 
   @override
   Widget build(BuildContext context) {
