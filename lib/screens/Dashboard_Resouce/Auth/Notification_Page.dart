@@ -8,28 +8,28 @@ class NotificationPage extends StatelessWidget {
       'title': 'Purchase Approved',
       'message': 'Your direct purchase request has been approved.',
       'time': '2 min ago',
-      'color': Colors.green,
+      'color': Color(0xFFE91E63),
     },
     {
       'icon': Icons.assignment_turned_in,
       'title': 'GRPO Received',
       'message': 'Goods receipt has been completed for PO-2023-12.',
       'time': '10 min ago',
-      'color': Colors.blue,
+      'color': Color(0xFFE91E63),
     },
     {
       'icon': Icons.warning_amber_rounded,
       'title': 'Stock Low',
       'message': 'Stock for Item ABC is below minimum level.',
       'time': '1 hour ago',
-      'color': Colors.orange,
+      'color': Color(0xFFE91E63),
     },
     {
       'icon': Icons.info_outline,
       'title': 'System Update',
       'message': 'The app will be updated tonight at 11:00 PM.',
       'time': 'Yesterday',
-      'color': Colors.purple,
+      'color': Color(0xFFE91E63),
     },
   ];
 
@@ -45,7 +45,7 @@ class NotificationPage extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-        backgroundColor: Color(0xFF880E4F),
+        backgroundColor: Color(0xFFE91E63),
         elevation: 4,
       ),
       backgroundColor: const Color(0xFFF3F4F6),
@@ -81,7 +81,7 @@ class NotificationPage extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
-                        color: Color(0xFF880E4F),
+                        color: Color(0xFFE91E63),
                       ),
                     ),
                     subtitle: Column(
