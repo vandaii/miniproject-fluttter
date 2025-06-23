@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/Email_Page.dart';
@@ -11,12 +12,15 @@ import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/M
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/StockOpname_Page.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/Waste_Page.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/UserProfile_Page.dart';
+import 'package:miniproject_flutter/screens/DashboardPage.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/LoginPage.dart';
+import 'package:miniproject_flutter/widgets/modern_bottom_sheet.dart';
 
 class TransferStockPage extends StatefulWidget {
   final int selectedIndex;
-  const TransferStockPage({this.selectedIndex = 23, Key? key}) : super(key: key);
+  const TransferStockPage({this.selectedIndex = 23, Key? key})
+    : super(key: key);
 
   @override
   _TransferStockPageState createState() => _TransferStockPageState();
@@ -42,11 +46,18 @@ class _TransferStockPageState extends State<TransferStockPage> {
   final AuthService _authService = AuthService();
 
   bool _isMainMenuActive(int index) {
+    // Aktif jika salah satu submenu dari menu utama sedang selected
+    if (index == PURCHASING_MENU) {
+      return [11, 12].contains(_selectedIndex);
+    } else if (index == STOCK_MANAGEMENT_MENU) {
+      return [21, 22, 23, 24, 25].contains(_selectedIndex);
+    }
     return _selectedIndex == index;
   }
 
   bool _isSubMenuActive(int index) {
-    return _selectedIndex == index || _hoveredIndex == index;
+    // Submenu aktif hanya jika selected
+    return _selectedIndex == index;
   }
 
   void _toggleMenu(int menuIndex) {
@@ -116,6 +127,17 @@ class _TransferStockPageState extends State<TransferStockPage> {
   bool isOutstandingSelected = true;
 
   @override
+  void initState() {
+    super.initState();
+    // Set expanded menu otomatis sesuai submenu yang sedang selected
+    if ([11, 12].contains(_selectedIndex)) {
+      _expandedMenuIndex = PURCHASING_MENU;
+    } else if ([21, 22, 23, 24, 25].contains(_selectedIndex)) {
+      _expandedMenuIndex = STOCK_MANAGEMENT_MENU;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
@@ -123,7 +145,7 @@ class _TransferStockPageState extends State<TransferStockPage> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60),
         child: AppBar(
-          backgroundColor: Colors.transparent,
+          backgroundColor: const Color(0xFFE91E63),
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.menu, color: Colors.white),
@@ -186,165 +208,200 @@ class _TransferStockPageState extends State<TransferStockPage> {
           ],
         ),
       ),
-      backgroundColor: Color(0xFFF8F9FA),
+      backgroundColor: const Color(0xFFF3F4F6),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
+            // Search Bar & Filter
+            Padding(
+              padding: const EdgeInsets.only(top: 24.0, bottom: 16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFFF8BBD0), Color(0xFFE91E63)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0xFFE91E63).withOpacity(0.10),
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: TextField(
+                        decoration: InputDecoration(
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: Color(0xFFE91E63),
+                            size: 22,
+                          ),
+                          hintText: 'Cari transfer stock',
+                          hintStyle: GoogleFonts.poppins(
+                            color: Colors.grey[400],
+                            fontSize: 14,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 18,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.85),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 14),
+                  Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      gradient: LinearGradient(
+                        colors: [Color(0xFFF8BBD0), Color(0xFFE91E63)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.06),
+                          color: Color(0xFFE91E63).withOpacity(0.10),
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.filter_alt, color: Colors.white),
+                      onPressed: () {},
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Taskbar for Transfer Out/In
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      isOutstandingSelected = true;
+                    });
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                    decoration: BoxDecoration(
+                      gradient: isOutstandingSelected
+                          ? LinearGradient(
+                              colors: [Color(0xFFE91E63), Color(0xFFF8BBD0)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: isOutstandingSelected ? null : Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0xFFE91E63).withOpacity(0.08),
                           blurRadius: 8,
                           offset: Offset(0, 2),
                         ),
                       ],
+                      border: Border.all(
+                        color: isOutstandingSelected
+                            ? Colors.transparent
+                            : Color(0xFFE91E63),
+                        width: 2,
+                      ),
                     ),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.search, color: Color(0xFFE91E63)),
-                        hintText: 'Cari transfer stock',
-                        hintStyle: GoogleFonts.poppins(
-                          color: Colors.grey[600],
-                          fontSize: 13,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          vertical: 14,
-                          horizontal: 16,
-                        ),
+                    child: Text(
+                      'Transfer Out',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        color: isOutstandingSelected
+                            ? Colors.white
+                            : Color(0xFFE91E63),
+                        fontSize: 15,
                       ),
                     ),
                   ),
                 ),
-                SizedBox(width: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.08),
-                        blurRadius: 6,
-                        offset: Offset(0, 2),
+                const SizedBox(width: 18),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      isOutstandingSelected = false;
+                    });
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                    decoration: BoxDecoration(
+                      gradient: !isOutstandingSelected
+                          ? LinearGradient(
+                              colors: [Color(0xFFE91E63), Color(0xFFF8BBD0)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: !isOutstandingSelected ? null : Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0xFFE91E63).withOpacity(0.08),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                      border: Border.all(
+                        color: !isOutstandingSelected
+                            ? Colors.transparent
+                            : Color(0xFFE91E63),
+                        width: 2,
                       ),
-                    ],
-                  ),
-                  child: IconButton(
-                    icon: Icon(Icons.filter_alt, color: Color(0xFFE91E63)),
-                    onPressed: () {
-                      // Filter action
-                    },
+                    ),
+                    child: Text(
+                      'Transfer In',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        color: !isOutstandingSelected
+                            ? Colors.white
+                            : Color(0xFFE91E63),
+                        fontSize: 15,
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 16),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.06),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          isOutstandingSelected = true;
-                        });
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: isOutstandingSelected
-                              ? Color(0xFFE91E63)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'Transfer Out',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13,
-                            color: isOutstandingSelected
-                                ? Colors.white
-                                : Colors.grey[700],
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          isOutstandingSelected = false;
-                        });
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: !isOutstandingSelected
-                              ? Color(0xFFE91E63)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'Transfer In',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13,
-                            color: !isOutstandingSelected
-                                ? Colors.white
-                                : Colors.grey[700],
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
             const SizedBox(height: 20),
+            // Card List
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: isOutstandingSelected
                       ? [
-                          _buildTransferCard(
+                          _buildTransferStockCard(
                             'TO-2023-1',
                             'Outlet A',
                             'Rp 1.000.000',
                             'Shipping',
                           ),
-                          _buildTransferCard(
+                          _buildTransferStockCard(
                             'TO-2023-2',
                             'Outlet B',
                             'Rp 1.000.000',
                             'Pending',
                           ),
-                          _buildTransferCard(
+                          _buildTransferStockCard(
                             'TO-2023-3',
                             'Outlet C',
                             'Rp 1.000.000',
@@ -352,13 +409,13 @@ class _TransferStockPageState extends State<TransferStockPage> {
                           ),
                         ]
                       : [
-                          _buildTransferCard(
+                          _buildTransferStockCard(
                             'TI-2023-4',
                             'Outlet D',
                             'Rp 2.000.000',
                             'Pending',
                           ),
-                          _buildTransferCard(
+                          _buildTransferStockCard(
                             'TI-2023-5',
                             'Outlet E',
                             'Rp 2.500.000',
@@ -371,7 +428,8 @@ class _TransferStockPageState extends State<TransferStockPage> {
           ],
         ),
       ),
-      floatingActionButton: _SimpleFabMenu(),
+      floatingActionButton: _FabMenuTransferStock(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
@@ -445,7 +503,7 @@ class _TransferStockPageState extends State<TransferStockPage> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => DirectPurchasePage(selectedIndex: 0),
+                          builder: (context) => DashboardPage(selectedIndex: 0),
                         ),
                       );
                     },
@@ -462,7 +520,10 @@ class _TransferStockPageState extends State<TransferStockPage> {
                     onTap: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => DirectPurchasePage(selectedIndex: 11)),
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              DirectPurchasePage(selectedIndex: 11),
+                        ),
                       );
                     },
                     isMobile: true,
@@ -482,7 +543,10 @@ class _TransferStockPageState extends State<TransferStockPage> {
                     onTap: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => TransferStockPage(selectedIndex: 23)),
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              TransferStockPage(selectedIndex: 23),
+                        ),
                       );
                     },
                     isMobile: true,
@@ -494,7 +558,10 @@ class _TransferStockPageState extends State<TransferStockPage> {
                     onTap: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => DirectPurchasePage(selectedIndex: 3)),
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              DirectPurchasePage(selectedIndex: 3),
+                        ),
                       );
                     },
                   ),
@@ -527,7 +594,10 @@ class _TransferStockPageState extends State<TransferStockPage> {
                     onTap: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => DirectPurchasePage(selectedIndex: 4)),
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              DirectPurchasePage(selectedIndex: 4),
+                        ),
                       );
                     },
                   ),
@@ -569,14 +639,12 @@ class _TransferStockPageState extends State<TransferStockPage> {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: isActive ? deepPink.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+            color: isActive
+                ? deepPink.withOpacity(0.1)
+                : Colors.grey.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            color: isActive ? deepPink : Colors.grey,
-            size: 20,
-          ),
+          child: Icon(icon, color: isActive ? deepPink : Colors.grey, size: 20),
         ),
         title: Text(
           title,
@@ -605,42 +673,54 @@ class _TransferStockPageState extends State<TransferStockPage> {
     bool isMobile = false,
   }) {
     final isMenuExpanded = _expandedMenuIndex == menuIndex;
-
+    // Cek jika ada submenu yang sedang aktif pada menu ini
+    bool isAnySubMenuActive = false;
+    if (menuIndex == PURCHASING_MENU) {
+      isAnySubMenuActive = [11, 12].contains(_selectedIndex);
+    } else if (menuIndex == STOCK_MANAGEMENT_MENU) {
+      isAnySubMenuActive = [21, 22, 23, 24, 25].contains(_selectedIndex);
+    }
+    // Jika ada submenu aktif, nonaktifkan hover/active background pada parent
+    final bool highlightParent = isExpanded && !isAnySubMenuActive;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: isExpanded ? lightPink.withOpacity(0.3) : Colors.transparent,
+            color: highlightParent
+                ? lightPink.withOpacity(0.3)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: ListTile(
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isExpanded
+                color: highlightParent
                     ? deepPink.withOpacity(0.1)
                     : Colors.grey.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 icon,
-                color: isExpanded ? deepPink : Colors.grey,
+                color: highlightParent ? deepPink : Colors.grey,
                 size: 20,
               ),
             ),
             title: Text(
               title,
               style: GoogleFonts.poppins(
-                color: isExpanded ? deepPink : Colors.grey,
-                fontWeight: isExpanded ? FontWeight.bold : FontWeight.normal,
+                color: highlightParent ? deepPink : Colors.grey,
+                fontWeight: highlightParent
+                    ? FontWeight.bold
+                    : FontWeight.normal,
                 fontSize: 14,
               ),
             ),
             trailing: Icon(
               isMenuExpanded ? Icons.expand_less : Icons.expand_more,
-              color: isExpanded ? deepPink : Colors.grey,
+              color: highlightParent ? deepPink : Colors.grey,
             ),
             onTap: () {
               setState(() {
@@ -686,8 +766,16 @@ class _TransferStockPageState extends State<TransferStockPage> {
   }) {
     final isActive = _isSubMenuActive(index);
     return MouseRegion(
-      onEnter: (_) => setState(() => _hoveredIndex = index),
-      onExit: (_) => setState(() => _hoveredIndex = null),
+      onEnter: (_) {
+        if (!isActive) {
+          setState(() => _hoveredIndex = index);
+        }
+      },
+      onExit: (_) {
+        if (!isActive) {
+          setState(() => _hoveredIndex = null);
+        }
+      },
       child: Container(
         margin: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
         decoration: BoxDecoration(
@@ -698,7 +786,9 @@ class _TransferStockPageState extends State<TransferStockPage> {
           leading: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: isActive ? deepPink.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+              color: isActive
+                  ? deepPink.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -718,16 +808,24 @@ class _TransferStockPageState extends State<TransferStockPage> {
           selected: isActive,
           onTap: () {
             if (_selectedIndex != index) {
-              Navigator.pushReplacement(
-                context,
-                _getPageRouteByIndex(index),
-              );
+              setState(() {
+                // Pastikan parent menu tetap expanded
+                if ([11, 12].contains(index)) {
+                  _expandedMenuIndex = PURCHASING_MENU;
+                } else if ([21, 22, 23, 24, 25].contains(index)) {
+                  _expandedMenuIndex = STOCK_MANAGEMENT_MENU;
+                }
+              });
+              Navigator.pushReplacement(context, _getPageRouteByIndex(index));
               if (isMobile && closeDrawer != null) closeDrawer();
             }
           },
           dense: true,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 4,
+          ),
         ),
       ),
     );
@@ -736,23 +834,41 @@ class _TransferStockPageState extends State<TransferStockPage> {
   Route _getPageRouteByIndex(int index) {
     switch (index) {
       case 0:
-        return MaterialPageRoute(builder: (context) => DirectPurchasePage(selectedIndex: 0));
+        return MaterialPageRoute(
+          builder: (context) => DashboardPage(selectedIndex: 0),
+        );
       case 11:
-        return MaterialPageRoute(builder: (context) => DirectPurchasePage(selectedIndex: 11));
+        return MaterialPageRoute(
+          builder: (context) => DirectPurchasePage(selectedIndex: 11),
+        );
       case 12:
-        return MaterialPageRoute(builder: (context) => GRPO_Page(selectedIndex: 12));
+        return MaterialPageRoute(
+          builder: (context) => GRPO_Page(selectedIndex: 12),
+        );
       case 21:
-        return MaterialPageRoute(builder: (context) => MaterialRequestPage(selectedIndex: 21));
+        return MaterialPageRoute(
+          builder: (context) => MaterialRequestPage(selectedIndex: 21),
+        );
       case 22:
-        return MaterialPageRoute(builder: (context) => StockOpnamePage(selectedIndex: 22));
+        return MaterialPageRoute(
+          builder: (context) => StockOpnamePage(selectedIndex: 22),
+        );
       case 23:
-        return MaterialPageRoute(builder: (context) => TransferStockPage(selectedIndex: 23));
+        return MaterialPageRoute(
+          builder: (context) => TransferStockPage(selectedIndex: 23),
+        );
       case 24:
-        return MaterialPageRoute(builder: (context) => WastePage(selectedIndex: 24));
+        return MaterialPageRoute(
+          builder: (context) => WastePage(selectedIndex: 24),
+        );
       case 25:
-        return MaterialPageRoute(builder: (context) => MaterialCalculatePage(selectedIndex: 25));
+        return MaterialPageRoute(
+          builder: (context) => MaterialCalculatePage(selectedIndex: 25),
+        );
       default:
-        return MaterialPageRoute(builder: (context) => DirectPurchasePage(selectedIndex: 11));
+        return MaterialPageRoute(
+          builder: (context) => DirectPurchasePage(selectedIndex: 11),
+        );
     }
   }
 
@@ -1022,154 +1138,336 @@ class _TransferStockPageState extends State<TransferStockPage> {
     );
   }
 
-  Widget _buildTransferCard(
+  Widget _buildTransferStockCard(
     String id,
-    String destination,
+    String outlet,
     String total,
     String status,
   ) {
-    Color statusColor = status == "Completed"
-        ? Colors.green[600]!
-        : status == "Shipping"
-        ? Colors.blue[600]!
-        : status == "Pending"
-        ? Colors.orange[600]!
-        : Colors.green[600]!;
-
-    Color statusBg = status == "Completed"
-        ? Colors.green[50]!
-        : status == "Shipping"
-        ? Colors.blue[50]!
-        : status == "Pending"
-        ? Colors.orange[50]!
-        : Colors.green[50]!;
-
-    return Container(
+    Color badgeColor;
+    Color badgeTextColor;
+    IconData badgeIcon;
+    if (status == 'Pending') {
+      badgeColor = Color(0xFFFFF9C4);
+      badgeTextColor = Color(0xFFFBC02D);
+      badgeIcon = Icons.pending_actions;
+    } else if (status == 'Completed' || status == 'Received') {
+      badgeColor = Color(0xFFC8E6C9);
+      badgeTextColor = Color(0xFF388E3C);
+      badgeIcon = Icons.verified_rounded;
+    } else if (status == 'Shipping') {
+      badgeColor = Color(0xFFB3E5FC);
+      badgeTextColor = Color(0xFF0288D1);
+      badgeIcon = Icons.local_shipping;
+    } else {
+      badgeColor = Color(0xFFF8BBD0);
+      badgeTextColor = Color(0xFFE91E63);
+      badgeIcon = Icons.info_outline_rounded;
+    }
+    return Card(
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.06),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      color: Colors.white,
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.description, color: Color(0xFFE91E63), size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  id,
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    color: Color(0xFFE91E63),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(Icons.store, color: Colors.grey[600], size: 16),
-                const SizedBox(width: 8),
-                Text(
-                  "Destination: ",
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[600],
-                    fontSize: 13,
-                  ),
-                ),
-                Text(
-                  destination,
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[800],
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.attach_money, color: Colors.grey[600], size: 16),
-                const SizedBox(width: 8),
-                Text(
-                  "Total: ",
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[600],
-                    fontSize: 13,
-                  ),
-                ),
-                Text(
-                  total,
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[800],
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: statusBg,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                RichText(
+                  text: TextSpan(
                     children: [
-                      Icon(
-                        status == "Completed"
-                            ? Icons.check_circle
-                            : status == "Shipping"
-                            ? Icons.local_shipping
-                            : status == "Pending"
-                            ? Icons.pending
-                            : Icons.check_circle,
-                        color: statusColor,
-                        size: 14,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        status,
+                      TextSpan(
+                        text: 'No Transfer: ',
                         style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500,
-                          color: statusColor,
-                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: Color(0xFFE91E63),
+                        ),
+                      ),
+                      TextSpan(
+                        text: id,
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.normal,
+                          fontSize: 15,
+                          color: Color(0xFFE91E63),
                         ),
                       ),
                     ],
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                TextButton.icon(
-                  style: TextButton.styleFrom(
-                    foregroundColor: Color(0xFFE91E63),
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.store, color: Color(0xFFE91E63), size: 16),
+                    SizedBox(width: 6),
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Outlet: ',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                          TextSpan(
+                            text: outlet,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.normal,
+                              fontSize: 14,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                        ],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+                SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.attach_money,
+                      color: Color(0xFFE91E63),
+                      size: 16,
+                    ),
+                    SizedBox(width: 6),
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Total: ',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Colors.grey[900],
+                            ),
+                          ),
+                          TextSpan(
+                            text: total,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.normal,
+                              fontSize: 14,
+                              color: Colors.grey[900],
+                            ),
+                          ),
+                        ],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: OutlinedButton.icon(
+                    onPressed: () {},
+                    icon: Icon(
+                      Icons.info_outline_rounded,
+                      color: Color(0xFFE91E63),
+                      size: 18,
+                    ),
+                    label: Text(
+                      'Detail',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFE91E63),
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      side: BorderSide(color: Color(0xFFE91E63), width: 2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                      elevation: 0,
+                      minimumSize: Size(120, 44),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
-                  onPressed: () {},
-                  icon: Icon(Icons.info_outline, size: 16),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 12,
+            right: 18,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: badgeColor,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: badgeColor.withOpacity(0.18),
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(badgeIcon, color: badgeTextColor, size: 18),
+                  SizedBox(width: 6),
+                  Text(
+                    status,
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: badgeTextColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showTransferInModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ModernBottomSheet(
+        title: 'List Transfer Out',
+        showAddButton: false,
+        onClose: () => Navigator.of(context).pop(),
+        child: _ListTransferOutModalContent(),
+      ),
+    );
+  }
+}
+
+class _ListTransferOutModalContent extends StatelessWidget {
+  void _showAddTransferInModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ModernBottomSheet(
+        title: 'Add Transfer In',
+        addLabel: 'Create',
+        closeLabel: 'Close',
+        onClose: () => Navigator.pop(context),
+        onAdd: () {},
+        child: _AddTransferInFormContent(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Search & Filter
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              Container(
+                width: 260,
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: TextField(
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(Icons.search, color: Color(0xFFE91E63)),
+                    hintText: 'Search',
+                    hintStyle: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: Colors.grey[400],
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                    filled: true,
+                    fillColor: Colors.transparent,
+                  ),
+                ),
+              ),
+              SizedBox(width: 12),
+              OutlinedButton.icon(
+                onPressed: () {},
+                icon: Icon(Icons.filter_alt, color: Color(0xFFE91E63)),
+                label: Text(
+                  'Filter',
+                  style: GoogleFonts.poppins(color: Color(0xFFE91E63)),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Color(0xFFE91E63)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        // DataTable
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: 600),
+            child: DataTable(
+              headingRowColor: MaterialStateProperty.all(Color(0xFFF3F4F6)),
+              columnSpacing: 16,
+              columns: [
+                DataColumn(
                   label: Text(
-                    'Detail',
+                    'No. Transfer',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Transfer Date',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Outlet/Store',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Action',
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.w500,
                       fontSize: 13,
@@ -1177,41 +1475,587 @@ class _TransferStockPageState extends State<TransferStockPage> {
                   ),
                 ),
               ],
+              rows: [
+                DataRow(
+                  cells: [
+                    DataCell(
+                      Text(
+                        'TO-2024-0125',
+                        style: GoogleFonts.poppins(fontSize: 13),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        '15/03/2024',
+                        style: GoogleFonts.poppins(fontSize: 13),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        'HAUS Jakarta',
+                        style: GoogleFonts.poppins(fontSize: 13),
+                      ),
+                    ),
+                    DataCell(
+                      ElevatedButton(
+                        onPressed: () => _showAddTransferInModal(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFFE91E63),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 8,
+                          ),
+                        ),
+                        child: Text(
+                          'Choose',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                DataRow(
+                  cells: [
+                    DataCell(
+                      Text(
+                        'TO-2024-0125',
+                        style: GoogleFonts.poppins(fontSize: 13),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        '15/03/2024',
+                        style: GoogleFonts.poppins(fontSize: 13),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        'HAUS Tangerang Selatan',
+                        style: GoogleFonts.poppins(fontSize: 13),
+                      ),
+                    ),
+                    DataCell(
+                      ElevatedButton(
+                        onPressed: () => _showAddTransferInModal(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFFE91E63),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 8,
+                          ),
+                        ),
+                        child: Text(
+                          'Choose',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                DataRow(
+                  cells: [
+                    DataCell(
+                      Text(
+                        'TO-2024-0125',
+                        style: GoogleFonts.poppins(fontSize: 13),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        '15/03/2024',
+                        style: GoogleFonts.poppins(fontSize: 13),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        'HAUS Tangerang',
+                        style: GoogleFonts.poppins(fontSize: 13),
+                      ),
+                    ),
+                    DataCell(
+                      ElevatedButton(
+                        onPressed: () => _showAddTransferInModal(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFFE91E63),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 8,
+                          ),
+                        ),
+                        child: Text(
+                          'Choose',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        // Pagination
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              Text(
+                '1 - 10 of 13 Pages',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: Color(0xFFE91E63),
+                ),
+              ),
+              SizedBox(width: 8),
+              Text('Page on', style: GoogleFonts.poppins(fontSize: 13)),
+              SizedBox(width: 8),
+              DropdownButton<int>(
+                value: 1,
+                items: [DropdownMenuItem(value: 1, child: Text('1'))],
+                onChanged: (v) {},
+              ),
+              SizedBox(width: 8),
+              IconButton(icon: Icon(Icons.chevron_left), onPressed: null),
+              IconButton(icon: Icon(Icons.chevron_right), onPressed: null),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Widget form Add Transfer In sesuai gambar dan styling Direct Purchase
+class _AddTransferInFormContent extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final deepPink = Color(0xFFE91E63);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Row 1: No. Transfer In & Receipt Date
+        Row(
+          children: [
+            Expanded(
+              child: _modernTextField(
+                label: 'No. Transfer In',
+                initialValue: 'TI-2024-0125',
+                readOnly: true,
+              ),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: _modernTextField(
+                label: 'Receipt Date',
+                initialValue: '15/03/2024',
+                readOnly: true,
+                prefixIcon: Icons.calendar_today,
+              ),
             ),
           ],
         ),
+        SizedBox(height: 16),
+        // Row 2: No. Transfer Out & Transfer Date
+        Row(
+          children: [
+            Expanded(
+              child: _modernTextField(
+                label: 'No. Transfer Out',
+                initialValue: 'TO-2024-0125',
+                readOnly: true,
+              ),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: _modernTextField(
+                label: 'Transfer Date',
+                initialValue: '15/03/2024',
+                readOnly: true,
+                prefixIcon: Icons.calendar_today,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 16),
+        // Row 3: Source, Destination, Received by
+        Row(
+          children: [
+            Expanded(
+              child: _modernTextField(
+                label: 'Source Location',
+                initialValue: 'HAUS Jakarta',
+                readOnly: true,
+              ),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: _modernTextField(
+                label: 'Destination Source',
+                initialValue: 'HAUS Tanggerang',
+                readOnly: true,
+              ),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: _modernDropdown(
+                label: 'Received by',
+                value: 'John Doe',
+                items: ['John Doe', 'Jane Doe'],
+                onChanged: (v) {},
+                readOnly: true,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 24),
+        // Item Section
+        Text(
+          'Item',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+            color: Colors.grey[800],
+          ),
+        ),
+        SizedBox(height: 8),
+        Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _modernDropdown(
+                label: 'Item Name',
+                value: 'Bubuk Vanilla',
+                items: ['Bubuk Vanilla', 'Bubuk Coklat'],
+                onChanged: (v) {},
+                readOnly: true,
+              ),
+              SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _modernTextField(
+                      label: 'Qty',
+                      initialValue: '100',
+                      readOnly: true,
+                      isNumber: true,
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: _modernDropdown(
+                      label: 'Unit',
+                      value: 'PCS',
+                      items: ['PCS', 'BOX', 'KG'],
+                      onChanged: (v) {},
+                      readOnly: true,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () {},
+                icon: Icon(Icons.delete, color: Colors.white),
+                label: Text('Remove'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 14),
+                  textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                  elevation: 0,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 24),
+        // Upload File
+        Text(
+          'Upload File',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+            color: Colors.grey[800],
+          ),
+        ),
+        SizedBox(height: 8),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            border: Border.all(color: Colors.grey[300]!),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.upload_file, color: Colors.grey[600]),
+              SizedBox(width: 12),
+              Text(
+                'Choose File...',
+                style: GoogleFonts.poppins(
+                  color: Colors.grey[700],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 12),
+        // File Preview Dummy
+        Container(
+          height: 80,
+          width: 220,
+          margin: EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
+          child: Center(
+            child: Text(
+              'Preview File',
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+            ),
+          ),
+        ),
+        SizedBox(height: 8),
+        // Notes
+        Text(
+          'Notes',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+            color: Colors.grey[800],
+          ),
+        ),
+        SizedBox(height: 8),
+        TextFormField(
+          initialValue: 'Pengiriman Stock Bubuk Vanilla ke Haus Tanggerang',
+          maxLines: 2,
+          readOnly: true,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: deepPink),
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _modernTextField({
+    required String label,
+    String? initialValue,
+    bool readOnly = false,
+    IconData? prefixIcon,
+    bool isNumber = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
+            color: Colors.grey[700],
+          ),
+        ),
+        SizedBox(height: 8),
+        TextFormField(
+          initialValue: initialValue,
+          readOnly: readOnly,
+          keyboardType: isNumber ? TextInputType.number : null,
+          decoration: InputDecoration(
+            hintText: label,
+            hintStyle: GoogleFonts.poppins(
+              color: Colors.grey[400],
+              fontSize: 13,
+            ),
+            prefixIcon: prefixIcon != null
+                ? Icon(prefixIcon, size: 18, color: Colors.grey[600])
+                : null,
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Color(0xFFE91E63)),
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _modernDropdown({
+    required String label,
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+    bool readOnly = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
+            color: Colors.grey[700],
+          ),
+        ),
+        SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: value,
+          isExpanded: true,
+          items: items
+              .map(
+                (e) => DropdownMenuItem(
+                  value: e,
+                  child: Text(e, style: GoogleFonts.poppins(fontSize: 13)),
+                ),
+              )
+              .toList(),
+          onChanged: readOnly ? null : onChanged,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Color(0xFFE91E63)),
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+          style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[800]),
+        ),
+      ],
+    );
+  }
+}
+
+class _FabMenuTransferStock extends StatefulWidget {
+  @override
+  State<_FabMenuTransferStock> createState() => _FabMenuTransferStockState();
+}
+
+class _FabMenuTransferStockState extends State<_FabMenuTransferStock>
+    with SingleTickerProviderStateMixin {
+  bool _isOpen = false;
+  late AnimationController _controller;
+  late Animation<double> _fadeAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 200),
+    );
+    _fadeAnim = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _toggle() {
+    setState(() {
+      _isOpen = !_isOpen;
+      if (_isOpen) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    });
+  }
+
+  void _showTransferInModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ModernBottomSheet(
+        title: 'List Transfer Out',
+        showAddButton: false,
+        onClose: () => Navigator.of(context).pop(),
+        child: _ListTransferOutModalContent(),
       ),
     );
   }
-}
 
-class _SimpleFabMenu extends StatefulWidget {
-  @override
-  State<_SimpleFabMenu> createState() => _SimpleFabMenuState();
-}
-
-class _SimpleFabMenuState extends State<_SimpleFabMenu> {
-  bool _isOpen = false;
-
-  void _toggle() => setState(() => _isOpen = !_isOpen);
-
-  void _showTransferOut(BuildContext context) {
-    setState(() => _isOpen = false);
+  void _showTransferOutModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _ListTransferOutModal(),
-    );
-  }
-
-  void _showTransferIn(BuildContext context) {
-    setState(() => _isOpen = false);
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _ListTransferInModal(),
+      builder: (context) => ModernBottomSheet(
+        title: 'Add Transfer Out',
+        addLabel: 'Create',
+        closeLabel: 'Close',
+        onClose: () => Navigator.pop(context),
+        onAdd: () {},
+        child: _AddTransferOutFormContent(),
+      ),
     );
   }
 
@@ -1221,885 +2065,449 @@ class _SimpleFabMenuState extends State<_SimpleFabMenu> {
       alignment: Alignment.bottomRight,
       children: [
         if (_isOpen) ...[
-          Padding(
-            padding: const EdgeInsets.only(bottom: 130, right: 8),
-            child: _FabMenuItem(
-              label: 'Transfer Out',
-              icon: Icons.upload,
-              onTap: () => _showTransferOut(context),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 80, right: 8),
-            child: _FabMenuItem(
-              label: 'Transfer In',
-              icon: Icons.download,
-              onTap: () => _showTransferIn(context),
+          Positioned(
+            bottom: 90,
+            right: 0,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _buildMenuItem(
+                  label: 'Transfer Out',
+                  icon: Icons.upload,
+                  onTap: () {
+                    print('Transfer Out tapped');
+                  },
+                ),
+                SizedBox(height: 16),
+                _buildMenuItem(
+                  label: 'Transfer In',
+                  icon: Icons.download,
+                  onTap: () {
+                    print('Transfer In tapped');
+                  },
+                ),
+              ],
             ),
           ),
         ],
-        Padding(
-          padding: const EdgeInsets.only(right: 8, bottom: 16),
+        Positioned(
+          bottom: 16,
+          right: 0,
           child: FloatingActionButton(
             backgroundColor: Color(0xFFE91E63),
             onPressed: _toggle,
-            child: Icon(_isOpen ? Icons.close : Icons.add),
+            child: AnimatedRotation(
+              turns: _isOpen ? 0.125 : 0,
+              duration: Duration(milliseconds: 200),
+              child: Icon(Icons.add, size: 30, color: Colors.white),
+            ),
           ),
         ),
       ],
     );
   }
-}
 
-class _FabMenuItem extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-  const _FabMenuItem({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(30),
-        onTap: onTap,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  Widget _buildMenuItem({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return FadeTransition(
+      opacity: _fadeAnim,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              if (label == 'Transfer In') {
+                _showTransferInModal(context);
+              } else if (label == 'Transfer Out') {
+                _showTransferOutModal(context);
+              } else {
+                onTap();
+              }
+              _toggle();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6)],
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(icon, color: Color(0xFFE91E63), size: 20),
-                  SizedBox(width: 8),
+                  Icon(icon, color: Color(0xFFE91E63), size: 22),
+                  const SizedBox(width: 10),
                   Text(
                     label,
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       color: Color(0xFFE91E63),
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
                     ),
                   ),
                 ],
               ),
             ),
-            SizedBox(width: 8),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _ListTransferOutModal extends StatefulWidget {
-  @override
-  State<_ListTransferOutModal> createState() => _ListTransferOutModalState();
-}
-
-class _ListTransferOutModalState extends State<_ListTransferOutModal> {
-  final List<Map<String, String>> _data = [
-    {'no': 'TO-2024-0125', 'date': '15/03/2024', 'outlet': 'HAUS Jakarta'},
-    {
-      'no': 'TO-2024-0125',
-      'date': '15/03/2024',
-      'outlet': 'HAUS Tangerang Selatan',
-    },
-    {'no': 'TO-2024-0125', 'date': '15/03/2024', 'outlet': 'HAUS Tangerang'},
-  ];
-  int _page = 1;
-  int _totalPages = 2;
-
+// Widget form Add Transfer Out sesuai gambar dan styling Direct Purchase
+class _AddTransferOutFormContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: SingleChildScrollView(
-            controller: scrollController,
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'List Transfer Out',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 20,
-                  ),
-                ),
-                SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: Color(0xFFE91E63),
-                          ),
-                          hintText: 'Search',
-                          hintStyle: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: Colors.grey[400],
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: Icon(Icons.filter_alt, color: Color(0xFFE91E63)),
-                      label: Text(
-                        'Filter',
-                        style: GoogleFonts.poppins(color: Color(0xFFE91E63)),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Color(0xFFE91E63)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          vertical: 14,
-                          horizontal: 18,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 18),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Color(0xFFE5E7EB)),
-                  ),
-                  child: DataTable(
-                    headingRowColor: MaterialStateProperty.all(
-                      Color(0xFFF3F4F6),
-                    ),
-                    columnSpacing: 16,
-                    columns: [
-                      DataColumn(
-                        label: Text(
-                          'No. Transfer',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: Text(
-                          'Transfer Date',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: Text(
-                          'Outlet/Store',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: Text(
-                          'Action',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ],
-                    rows: _data.map((row) {
-                      return DataRow(
-                        cells: [
-                          DataCell(
-                            Text(
-                              row['no']!,
-                              style: GoogleFonts.poppins(fontSize: 13),
-                            ),
-                          ),
-                          DataCell(
-                            Text(
-                              row['date']!,
-                              style: GoogleFonts.poppins(fontSize: 13),
-                            ),
-                          ),
-                          DataCell(
-                            Text(
-                              row['outlet']!,
-                              style: GoogleFonts.poppins(fontSize: 13),
-                            ),
-                          ),
-                          DataCell(
-                            ElevatedButton(
-                              onPressed: () {},
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFFE91E63),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 8,
-                                ),
-                              ),
-                              child: Text(
-                                'Choose',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    }).toList(),
-                  ),
-                ),
-                SizedBox(height: 18),
-                Row(
-                  children: [
-                    Text(
-                      '1 - 10 of 13 Pages',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: Color(0xFFE91E63),
-                      ),
-                    ),
-                    Spacer(),
-                    Text('Page on', style: GoogleFonts.poppins(fontSize: 13)),
-                    SizedBox(width: 8),
-                    DropdownButton<int>(
-                      value: _page,
-                      items: List.generate(
-                        _totalPages,
-                        (i) => DropdownMenuItem(
-                          value: i + 1,
-                          child: Text('${i + 1}'),
-                        ),
-                      ),
-                      onChanged: (v) => setState(() => _page = v ?? 1),
-                    ),
-                    SizedBox(width: 8),
-                    IconButton(
-                      icon: Icon(Icons.chevron_left),
-                      onPressed: _page > 1
-                          ? () => setState(() => _page--)
-                          : null,
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.chevron_right),
-                      onPressed: _page < _totalPages
-                          ? () => setState(() => _page++)
-                          : null,
-                    ),
-                  ],
-                ),
-                SizedBox(height: 18),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(
-                        'Close',
-                        style: GoogleFonts.poppins(
-                          color: Color(0xFFE91E63),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+    final deepPink = Color(0xFFE91E63);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Grid 2 kolom: No. Transfer Out, Transfer Date, Source, Destination
+        Row(
+          children: [
+            Expanded(
+              child: _modernDropdown(
+                label: 'No. Transfer Out',
+                value: 'TO-2024-0125',
+                items: ['TO-2024-0125', 'TO-2024-0126'],
+                onChanged: (v) {},
+                readOnly: true,
+              ),
             ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _ListTransferInModal extends StatefulWidget {
-  @override
-  State<_ListTransferInModal> createState() => _ListTransferInModalState();
-}
-
-class _ListTransferInModalState extends State<_ListTransferInModal> {
-  final List<Map<String, String>> _data = [
-    {'no': 'TI-2024-0126', 'date': '16/03/2024', 'outlet': 'HAUS Bandung'},
-    {'no': 'TI-2024-0127', 'date': '16/03/2024', 'outlet': 'HAUS Surabaya'},
-    {'no': 'TI-2024-0128', 'date': '16/03/2024', 'outlet': 'HAUS Medan'},
-  ];
-  int _page = 1;
-  int _totalPages = 1;
-
-  void _showAddTransferInForm(BuildContext context, Map<String, String> data) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _AddTransferInFormModal(data: data),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: SingleChildScrollView(
-            controller: scrollController,
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'List Transfer In',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 20,
-                  ),
-                ),
-                SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: Color(0xFFE91E63),
-                          ),
-                          hintText: 'Search',
-                          hintStyle: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: Colors.grey[400],
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: Icon(Icons.filter_alt, color: Color(0xFFE91E63)),
-                      label: Text(
-                        'Filter',
-                        style: GoogleFonts.poppins(color: Color(0xFFE91E63)),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Color(0xFFE91E63)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          vertical: 14,
-                          horizontal: 18,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 18),
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemCount: _data.length,
-                  separatorBuilder: (_, __) => SizedBox(height: 12),
-                  itemBuilder: (context, i) {
-                    final row = _data[i];
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: Color(0xFFF9FAFB),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Color(0xFFE5E7EB)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.04),
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _LabelValue(label: 'No. Transfer', value: row['no']!),
-                                  SizedBox(height: 4),
-                                  _LabelValue(label: 'Transfer Date', value: row['date']!),
-                                  SizedBox(height: 4),
-                                  _LabelValue(label: 'Outlet/Store', value: row['outlet']!),
-                                ],
-                              ),
-                            ),
-                            SizedBox(width: 8),
-                            Column(
-                              children: [
-                                ElevatedButton(
-                                  onPressed: () => _showAddTransferInForm(context, row),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Color(0xFFE91E63),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 10,
-                                    ),
-                                    elevation: 0,
-                                  ),
-                                  child: Text(
-                                    'Choose',
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                SizedBox(height: 18),
-                Row(
-                  children: [
-                    Text(
-                      '1 - 10 of 13 Pages',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: Color(0xFFE91E63),
-                      ),
-                    ),
-                    Spacer(),
-                    Text('Page on', style: GoogleFonts.poppins(fontSize: 13)),
-                    SizedBox(width: 8),
-                    DropdownButton<int>(
-                      value: _page,
-                      items: List.generate(
-                        _totalPages,
-                        (i) => DropdownMenuItem(
-                          value: i + 1,
-                          child: Text('${i + 1}'),
-                        ),
-                      ),
-                      onChanged: (v) => setState(() => _page = v ?? 1),
-                    ),
-                    SizedBox(width: 8),
-                    IconButton(
-                      icon: Icon(Icons.chevron_left),
-                      onPressed: _page > 1
-                          ? () => setState(() => _page--)
-                          : null,
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.chevron_right),
-                      onPressed: _page < _totalPages
-                          ? () => setState(() => _page++)
-                          : null,
-                    ),
-                  ],
-                ),
-                SizedBox(height: 18),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(
-                        'Close',
-                        style: GoogleFonts.poppins(
-                          color: Color(0xFFE91E63),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            SizedBox(width: 16),
+            Expanded(
+              child: _modernTextField(
+                label: 'Transfer Date',
+                initialValue: '15/03/2024',
+                readOnly: true,
+                prefixIcon: Icons.calendar_today,
+              ),
             ),
+          ],
+        ),
+        SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _modernDropdown(
+                label: 'Source Location',
+                value: 'HAUS Jakarta',
+                items: ['HAUS Jakarta', 'HAUS Bandung'],
+                onChanged: (v) {},
+                readOnly: true,
+              ),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: _modernDropdown(
+                label: 'Destination Location',
+                value: 'HAUS Tanggerang',
+                items: ['HAUS Tanggerang', 'HAUS Surabaya'],
+                onChanged: (v) {},
+                readOnly: true,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 24),
+        // Item Section
+        Text(
+          'Item',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+            color: Colors.grey[800],
           ),
-        );
-      },
-    );
-  }
-}
-
-class _AddTransferInFormModal extends StatelessWidget {
-  final Map<String, String> data;
-  const _AddTransferInFormModal({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    final TextEditingController notesController = TextEditingController();
-    return DraggableScrollableSheet(
-      initialChildSize: 0.95,
-      minChildSize: 0.7,
-      maxChildSize: 0.98,
-      expand: false,
-      builder: (context, scrollController) {
-        return Container(
+        ),
+        SizedBox(height: 8),
+        Container(
+          padding: EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
           ),
-          child: SingleChildScrollView(
-            controller: scrollController,
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Add Transfer In',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 20,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _modernDropdown(
+                label: 'Item Name',
+                value: 'Bubuk Vanilla',
+                items: ['Bubuk Vanilla', 'Bubuk Coklat'],
+                onChanged: (v) {},
+                readOnly: true,
+              ),
+              SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _modernTextField(
+                      label: 'Qty',
+                      initialValue: '100',
+                      readOnly: true,
+                      isNumber: true,
+                    ),
                   ),
-                ),
-                SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _FormFieldBox(
-                        label: 'No. Transfer In',
-                        child: TextFormField(
-                          initialValue: data['no'] ?? '',
-                          decoration: InputDecoration(border: InputBorder.none),
-                          readOnly: true,
-                        ),
-                      ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: _modernDropdown(
+                      label: 'Unit',
+                      value: 'PCS',
+                      items: ['PCS', 'BOX', 'KG'],
+                      onChanged: (v) {},
+                      readOnly: true,
                     ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: _FormFieldBox(
-                        label: 'Receipt Date',
-                        child: TextFormField(
-                          initialValue: data['date'] ?? '',
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            suffixIcon: Icon(Icons.calendar_today, size: 18),
-                          ),
-                          readOnly: true,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _FormFieldBox(
-                        label: 'No. Transfer Out',
-                        child: TextFormField(
-                          initialValue: 'TO-2024-0125',
-                          decoration: InputDecoration(border: InputBorder.none),
-                          readOnly: true,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: _FormFieldBox(
-                        label: 'Transfer Date',
-                        child: TextFormField(
-                          initialValue: '15/03/2024',
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            suffixIcon: Icon(Icons.calendar_today, size: 18),
-                          ),
-                          readOnly: true,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _FormFieldBox(
-                        label: 'Source Location',
-                        child: TextFormField(
-                          initialValue: 'HAUS Jakarta',
-                          decoration: InputDecoration(border: InputBorder.none),
-                          readOnly: true,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: _FormFieldBox(
-                        label: 'Destination Source',
-                        child: TextFormField(
-                          initialValue: 'HAUS Tangerang',
-                          decoration: InputDecoration(border: InputBorder.none),
-                          readOnly: true,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: _FormFieldBox(
-                        label: 'Received by',
-                        child: DropdownButtonFormField<String>(
-                          value: 'John Doe',
-                          items: [
-                            DropdownMenuItem(value: 'John Doe', child: Text('John Doe')),
-                            DropdownMenuItem(value: 'Jane Smith', child: Text('Jane Smith')),
-                          ],
-                          onChanged: (v) {},
-                          decoration: InputDecoration(border: InputBorder.none),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 18),
-                Text('Item', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                SizedBox(height: 8),
-                Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Color(0xFFE5E7EB)),
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: DropdownButtonFormField<String>(
-                          value: 'Bubuk Vanilla',
-                          items: [
-                            DropdownMenuItem(value: 'Bubuk Vanilla', child: Text('Bubuk Vanilla')),
-                            DropdownMenuItem(value: 'Bubuk Coklat', child: Text('Bubuk Coklat')),
-                          ],
-                          onChanged: (v) {},
-                          decoration: InputDecoration(border: InputBorder.none, labelText: 'Item Name'),
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: TextFormField(
-                          initialValue: '100',
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            labelText: 'Transfer Qty',
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: TextFormField(
-                          initialValue: '100',
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            labelText: 'Received Qty',
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          value: 'PCS',
-                          items: [
-                            DropdownMenuItem(value: 'PCS', child: Text('PCS')),
-                            DropdownMenuItem(value: 'BOX', child: Text('BOX')),
-                          ],
-                          onChanged: (v) {},
-                          decoration: InputDecoration(border: InputBorder.none, labelText: 'Unit'),
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      IconButton(
-                        icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 18),
-                Text('Upload File', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                SizedBox(height: 8),
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Color(0xFFE5E7EB)),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.upload_file, color: Color(0xFFE91E63)),
-                      SizedBox(width: 8),
-                      Expanded(child: Text('Choose File...', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[600]))),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 12),
-                Container(
-                  width: 180,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
+                ],
+              ),
+              SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () {},
+                icon: Icon(Icons.delete, color: Colors.white),
+                label: Text('Remove'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Center(child: Text('Preview File', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]))),
+                  padding: EdgeInsets.symmetric(vertical: 14),
+                  textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                  elevation: 0,
                 ),
-                SizedBox(height: 18),
-                Text('Notes', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                SizedBox(height: 8),
-                TextFormField(
-                  controller: notesController,
-                  minLines: 2,
-                  maxLines: 4,
-                  decoration: InputDecoration(
-                    hintText: 'Pengiriman Stock Bubuk Vanilla ke Haus Tangerang',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 24),
+        // Upload File
+        Text(
+          'Upload File',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+            color: Colors.grey[800],
+          ),
+        ),
+        SizedBox(height: 8),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            border: Border.all(color: Colors.grey[300]!),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.upload_file, color: Colors.grey[600]),
+              SizedBox(width: 12),
+              Text(
+                'Choose File...',
+                style: GoogleFonts.poppins(
+                  color: Colors.grey[700],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          'Supported formats: JPG, PNG, PDF (Max. 5MB)',
+          style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[500]),
+        ),
+        SizedBox(height: 12),
+        // File Preview Dummy
+        Container(
+          height: 80,
+          width: double.infinity,
+          margin: EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
+          child: Row(
+            children: [
+              SizedBox(width: 12),
+              Icon(Icons.insert_drive_file, color: deepPink),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'DELIVERY NOTE\nDN-24015.PNG',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.grey[800],
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text('Close', style: GoogleFonts.poppins(color: Color(0xFFE91E63), fontWeight: FontWeight.w500)),
-                    ),
-                    SizedBox(width: 12),
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFFE91E63),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                      ),
-                      child: Text('Create', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
-                    ),
-                  ],
+              ),
+              Text(
+                '24/04/2024',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.grey[600],
                 ),
-              ],
-            ),
+              ),
+              SizedBox(width: 12),
+            ],
           ),
-        );
-      },
+        ),
+        SizedBox(height: 8),
+        // Notes
+        Text(
+          'Notes',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+            color: Colors.grey[800],
+          ),
+        ),
+        SizedBox(height: 8),
+        TextFormField(
+          initialValue: '',
+          maxLines: 2,
+          decoration: InputDecoration(
+            hintText: 'Enter notes / remarks',
+            hintStyle: GoogleFonts.poppins(
+              color: Colors.grey[400],
+              fontSize: 13,
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: deepPink),
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+        ),
+      ],
     );
   }
-}
 
-class _FormFieldBox extends StatelessWidget {
-  final String label;
-  final Widget child;
-  const _FormFieldBox({required this.label, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 4),
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-      decoration: BoxDecoration(
-        color: Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 6, left: 2, bottom: 2),
-            child: Text(
-              label,
-              style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600], fontWeight: FontWeight.w500),
-            ),
-          ),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _LabelValue extends StatelessWidget {
-  final String label;
-  final String value;
-  const _LabelValue({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _modernTextField({
+    required String label,
+    String? initialValue,
+    bool readOnly = false,
+    IconData? prefixIcon,
+    bool isNumber = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: GoogleFonts.poppins(
-            fontSize: 11,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w400,
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
+            color: Colors.grey[700],
           ),
         ),
-        Text(
-          value,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            color: Colors.grey[900],
-            fontWeight: FontWeight.w600,
+        SizedBox(height: 8),
+        TextFormField(
+          initialValue: initialValue,
+          readOnly: readOnly,
+          keyboardType: isNumber ? TextInputType.number : null,
+          decoration: InputDecoration(
+            hintText: label,
+            hintStyle: GoogleFonts.poppins(
+              color: Colors.grey[400],
+              fontSize: 13,
+            ),
+            prefixIcon: prefixIcon != null
+                ? Icon(prefixIcon, size: 18, color: Colors.grey[600])
+                : null,
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Color(0xFFE91E63)),
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _modernDropdown({
+    required String label,
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+    bool readOnly = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
+            color: Colors.grey[700],
+          ),
+        ),
+        SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: value,
+          isExpanded: true,
+          items: items
+              .map(
+                (e) => DropdownMenuItem(
+                  value: e,
+                  child: Text(e, style: GoogleFonts.poppins(fontSize: 13)),
+                ),
+              )
+              .toList(),
+          onChanged: readOnly ? null : onChanged,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Color(0xFFE91E63)),
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+          style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[800]),
         ),
       ],
     );

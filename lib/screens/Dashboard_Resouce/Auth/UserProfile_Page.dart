@@ -40,7 +40,7 @@ class _UserProfilePageState extends State<UserprofilePage> {
             color: Colors.white,
           ),
         ),
-        backgroundColor: const Color(0xFF880E4F),
+        backgroundColor: const Color(0xFFE91E63),
         elevation: 4,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -59,7 +59,7 @@ class _UserProfilePageState extends State<UserprofilePage> {
                   children: [
                     CircleAvatar(
                       radius: 54,
-                      backgroundColor: Color(0xFF880E4F).withOpacity(0.1),
+                      backgroundColor: Color(0xFFE91E63).withOpacity(0.1),
                       backgroundImage: AssetImage(
                         'assets/avatar_placeholder.png',
                       ), // Ganti sesuai asset Anda
@@ -73,7 +73,7 @@ class _UserProfilePageState extends State<UserprofilePage> {
                         },
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Color(0xFF880E4F),
+                            color: Color(0xFFE91E63),
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 2),
                           ),
@@ -168,7 +168,7 @@ class _UserProfilePageState extends State<UserprofilePage> {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF880E4F),
+                    backgroundColor: Color(0xFFE91E63),
                     padding: EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -200,7 +200,7 @@ class _UserProfilePageState extends State<UserprofilePage> {
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w600,
             fontSize: 14,
-            color: Color(0xFF880E4F),
+            color: Color(0xFFE91E63),
           ),
         ),
         const SizedBox(height: 6),
@@ -212,7 +212,7 @@ class _UserProfilePageState extends State<UserprofilePage> {
             color: textColor ?? Colors.black, // Gunakan warna jika ada
           ),
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: Color(0xFF880E4F)),
+            prefixIcon: Icon(icon, color: Color(0xFFE91E63)),
             hintText: hint,
             filled: true,
             fillColor: readOnly ? Colors.grey[100] : Colors.grey[50],
@@ -222,7 +222,7 @@ class _UserProfilePageState extends State<UserprofilePage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Color(0xFF880E4F)),
+              borderSide: BorderSide(color: Color(0xFFE91E63)),
             ),
             contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 12),
           ),
