@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/Email_Page.dart';
+import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/Notification_Page.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Purchasing/GRPO_Page.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/MaterialCalculate_Page.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/StockOpname_Page.dart';
@@ -35,6 +37,12 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   void initState() {
     super.initState();
     _selectedIndex = widget.selectedIndex;
+    // Set expanded menu otomatis sesuai submenu yang sedang selected
+    if ([11, 12].contains(_selectedIndex)) {
+      _expandedMenuIndex = PURCHASING_MENU;
+    } else if ([21, 22, 23, 24, 25].contains(_selectedIndex)) {
+      _expandedMenuIndex = STOCK_MANAGEMENT_MENU;
+    }
   }
 
   final Color primaryColor = const Color(0xFFF8BBD0);
@@ -46,8 +54,22 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
 
   final AuthService _authService = AuthService();
 
-  bool _isMenuActive(int index) {
+  bool _isMainMenuActive(int index) {
+    return false;
+  }
+
+  bool _isSubMenuActive(int index) {
+    // Hover dinonaktifkan jika parent menu expanded (Purchasing)
+    if (_expandedMenuIndex == PURCHASING_MENU && (index == 11 || index == 12)) {
+      return _selectedIndex == index;
+    }
     return _selectedIndex == index || _hoveredIndex == index;
+  }
+
+  bool _isMenuExpanded(int menuIndex, List<int> submenuIndexes) {
+    return _expandedMenuIndex == menuIndex ||
+        submenuIndexes.contains(_selectedIndex) ||
+        submenuIndexes.contains(_hoveredIndex);
   }
 
   @override
@@ -56,6 +78,9 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60),
         child: AppBar(
+          backgroundColor: const Color(0xFFE91E63),
+          elevation: 4,
+          centerTitle: true,
           leading: Builder(
             builder: (context) => IconButton(
               icon: const Icon(Icons.menu, color: Colors.white),
@@ -64,28 +89,89 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
               },
             ),
           ),
-          title: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0),
-            child: Text(
-              'Direct Purchase',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-                color: Colors.white,
-              ),
+          title: Text(
+            'Direct Purchase',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Colors.white,
             ),
           ),
-          backgroundColor: const Color(0xFF880E4F),
-          elevation: 4,
           actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: IconButton(
-                icon: Icon(Icons.filter_alt, color: Colors.white),
-                onPressed: () {
-                  // Filter action here
-                },
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => NotificationPage()),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Icon(
+                        Icons.notifications_none,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => EmailPage()),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Icon(
+                        Icons.mail_outline,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () {
+                      setState(() {
+                        _isProfileMenuOpen = !_isProfileMenuOpen;
+                        _isStoreMenuOpen = false;
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: CircleAvatar(
+                        backgroundColor: Colors.white,
+                        radius: 16,
+                        child: Text(
+                          'J',
+                          style: TextStyle(
+                            color: Color(0xFFE91E63),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
             ),
           ],
         ),
@@ -172,7 +258,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                       _buildExpandableMenu(
                         icon: Icons.shopping_cart_outlined,
                         title: 'Purchasing',
-                        isExpanded: _selectedIndex == PURCHASING_MENU,
+                        isExpanded: _isMenuExpanded(PURCHASING_MENU, [11, 12]),
                         menuIndex: PURCHASING_MENU,
                         children: [
                           _buildSubMenuItem('Direct Purchase', 11),
@@ -187,7 +273,13 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                       _buildExpandableMenu(
                         icon: Icons.inventory_2_outlined,
                         title: 'Stock Management',
-                        isExpanded: _selectedIndex == STOCK_MANAGEMENT_MENU,
+                        isExpanded: _isMenuExpanded(STOCK_MANAGEMENT_MENU, [
+                          21,
+                          22,
+                          23,
+                          24,
+                          25,
+                        ]),
                         menuIndex: STOCK_MANAGEMENT_MENU,
                         children: [
                           _buildSubMenuItem('Material Request', 21),
@@ -534,43 +626,37 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     required int index,
     required VoidCallback onTap,
   }) {
-    final isActive = _isMenuActive(index);
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hoveredIndex = index),
-      onExit: (_) => setState(() => _hoveredIndex = null),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: ListTile(
-          leading: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isActive ? deepPink.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: isActive ? deepPink : Colors.grey,
-              size: 20,
-            ),
+    final isActive = _isMainMenuActive(index);
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isActive
+                ? deepPink.withOpacity(0.1)
+                : Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
           ),
-          title: Text(
-            title,
-            style: GoogleFonts.poppins(
-              color: isActive ? deepPink : Colors.grey,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              fontSize: 14,
-            ),
-          ),
-          selected: isActive,
-          onTap: onTap,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          dense: true,
+          child: Icon(icon, color: isActive ? deepPink : Colors.grey, size: 20),
         ),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(
+            color: isActive ? deepPink : Colors.grey,
+            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            fontSize: 14,
+          ),
+        ),
+        selected: isActive,
+        onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        dense: true,
       ),
     );
   }
@@ -663,10 +749,23 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     bool isMobile = false,
     VoidCallback? closeDrawer,
   }) {
-    final isActive = _isMenuActive(index);
+    final isActive = _isSubMenuActive(index);
     return MouseRegion(
-      onEnter: (_) => setState(() => _hoveredIndex = index),
-      onExit: (_) => setState(() => _hoveredIndex = null),
+      onEnter: (_) {
+        // Nonaktifkan hover jika submenu sedang selected atau parent menu expanded (Purchasing)
+        if (_selectedIndex != index &&
+            !(_expandedMenuIndex == PURCHASING_MENU &&
+                (index == 11 || index == 12))) {
+          setState(() => _hoveredIndex = index);
+        }
+      },
+      onExit: (_) {
+        if (_selectedIndex != index &&
+            !(_expandedMenuIndex == PURCHASING_MENU &&
+                (index == 11 || index == 12))) {
+          setState(() => _hoveredIndex = null);
+        }
+      },
       child: Container(
         margin: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
         decoration: BoxDecoration(
@@ -677,7 +776,9 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
           leading: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: isActive ? deepPink.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+              color: isActive
+                  ? deepPink.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -697,16 +798,16 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
           selected: isActive,
           onTap: () {
             if (_selectedIndex != index) {
-              Navigator.pushReplacement(
-                context,
-                _getPageRouteByIndex(index),
-              );
+              Navigator.pushReplacement(context, _getPageRouteByIndex(index));
               if (isMobile && closeDrawer != null) closeDrawer();
             }
           },
           dense: true,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 4,
+          ),
         ),
       ),
     );
@@ -715,23 +816,41 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   Route _getPageRouteByIndex(int index) {
     switch (index) {
       case 0:
-        return MaterialPageRoute(builder: (context) => DashboardPage(selectedIndex :0));
+        return MaterialPageRoute(
+          builder: (context) => DashboardPage(selectedIndex: 0),
+        );
       case 11:
-        return MaterialPageRoute(builder: (context) => DirectPurchasePage(selectedIndex: 11));
+        return MaterialPageRoute(
+          builder: (context) => DirectPurchasePage(selectedIndex: 11),
+        );
       case 12:
-        return MaterialPageRoute(builder: (context) => GRPO_Page(selectedIndex: 12));
+        return MaterialPageRoute(
+          builder: (context) => GRPO_Page(selectedIndex: 12),
+        );
       case 21:
-        return MaterialPageRoute(builder: (context) => MaterialRequestPage(selectedIndex: 21));
+        return MaterialPageRoute(
+          builder: (context) => MaterialRequestPage(selectedIndex: 21),
+        );
       case 22:
-        return MaterialPageRoute(builder: (context) => StockOpnamePage(selectedIndex: 22));
+        return MaterialPageRoute(
+          builder: (context) => StockOpnamePage(selectedIndex: 22),
+        );
       case 23:
-        return MaterialPageRoute(builder: (context) => TransferStockPage(selectedIndex: 23));
+        return MaterialPageRoute(
+          builder: (context) => TransferStockPage(selectedIndex: 23),
+        );
       case 24:
-        return MaterialPageRoute(builder: (context) => WastePage(selectedIndex: 24));
+        return MaterialPageRoute(
+          builder: (context) => WastePage(selectedIndex: 24),
+        );
       case 25:
-        return MaterialPageRoute(builder: (context) => MaterialCalculatePage(selectedIndex: 25));
+        return MaterialPageRoute(
+          builder: (context) => MaterialCalculatePage(selectedIndex: 25),
+        );
       default:
-        return MaterialPageRoute(builder: (context) => DirectPurchasePage(selectedIndex: 11));
+        return MaterialPageRoute(
+          builder: (context) => DirectPurchasePage(selectedIndex: 11),
+        );
     }
   }
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/Help_Page.dart';
+import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/Notification_Page.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Purchasing/DirectPurchase_Page.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Purchasing/GRPO_Page.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/MaterialCalculate_Page.dart';
@@ -111,7 +113,10 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
   final AuthService _authService = AuthService();
 
   int? _hoveredIndex;
-  bool _isMenuActive(int index) {
+  bool _isMainMenuActive(int index) {
+    return _selectedIndex == index;
+  }
+  bool _isSubMenuActive(int index) {
     return _selectedIndex == index || _hoveredIndex == index;
   }
 
@@ -192,52 +197,69 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
       key: _scaffoldKey,
       drawer: Drawer(child: _buildSidebar()),
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(55),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFFE91E63), Color(0xFFFF4081)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Color(0xFFE91E63).withOpacity(0.2),
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              ),
-            ],
+        preferredSize: Size.fromHeight(60),
+        child: AppBar(
+          backgroundColor: const Color(0xFFE91E63),
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () {
+              _scaffoldKey.currentState?.openDrawer();
+            },
           ),
-          child: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.menu, color: Colors.white),
+          title: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Text(
+              'Material Request',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                fontSize: 20,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.notifications, color: Colors.white),
               onPressed: () {
-                _scaffoldKey.currentState?.openDrawer();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => NotificationPage()),
+                );
               },
             ),
-            title: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Text(
-                'Material Request',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 20,
-                  color: Colors.white,
+            IconButton(
+              icon: const Icon(Icons.mail_outline, color: Colors.white),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => EmailPage()),
+                );
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isProfileMenuOpen = !_isProfileMenuOpen;
+                    _isStoreMenuOpen = false;
+                  });
+                },
+                child: const CircleAvatar(
+                  backgroundColor: Colors.white,
+                  radius: 16,
+                  child: Text(
+                    'J',
+                    style: TextStyle(
+                      color: Color(0xFFE91E63),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
             ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 12.0),
-                child: IconButton(
-                  icon: Icon(Icons.filter_alt, color: Colors.white),
-                  onPressed: () {},
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
       ),
       backgroundColor: Color(0xFFF8F9FA),
@@ -246,44 +268,64 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 16.0, bottom: 20.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.08),
-                      blurRadius: 6,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: Color(0xFFE91E63),
-                      size: 20,
-                    ),
-                    hintText: 'Search by NO. Tanggal, Outlet/Store, Qty, etc',
-                    hintStyle: GoogleFonts.poppins(
-                      color: Colors.grey[400],
-                      fontSize: 13,
-                    ),
-                    border: OutlineInputBorder(
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.06),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    contentPadding: EdgeInsets.symmetric(
-                      vertical: 14,
-                      horizontal: 16,
+                    child: TextField(
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.search, color: Color(0xFFE91E63)),
+                        hintText: 'Cari material request',
+                        hintStyle: GoogleFonts.poppins(
+                          color: Colors.grey[600],
+                          fontSize: 13,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          vertical: 14,
+                          horizontal: 16,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
+                SizedBox(width: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.08),
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.filter_alt, color: Color(0xFFE91E63)),
+                    onPressed: () {
+                      // Filter action
+                    },
+                  ),
+                ),
+              ],
             ),
+            SizedBox(height: 16),
             Container(
               padding: EdgeInsets.all(3),
               decoration: BoxDecoration(
@@ -477,12 +519,12 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
 
   Widget _buildSidebar() {
     return Container(
-      color: Colors.white,
-      child: Column(
-        children: [
-          Container(
+        color: Colors.white,
+              child: Column(
+                children: [
+                      Container(
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-            decoration: BoxDecoration(
+                        decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
                   color: Colors.grey.withOpacity(0.1),
@@ -491,38 +533,38 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
               ),
             ),
             child: Row(
-              children: [
+                    children: [
                 Image.asset(
                   'assets/images/icons-haus.png',
                   height: 36,
                   width: 36,
                 ),
                 const SizedBox(width: 12),
-                Text(
+                      Text(
                   'haus! Inventory',
-                  style: GoogleFonts.poppins(
+                        style: GoogleFonts.poppins(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                     color: deepPink,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ),
           _buildStoreDropdown(),
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Column(
-                children: [
+                    children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
                     child: Row(
                       children: [
-                        Text(
+                      Text(
                           'GENERAL',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
                             color: Colors.black54,
                             letterSpacing: 1,
                             fontWeight: FontWeight.w600,
@@ -533,10 +575,10 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
                           height: 1,
                           width: 100,
                           color: Colors.grey.withOpacity(0.2),
-                        ),
-                      ],
-                    ),
                   ),
+                ],
+              ),
+            ),
                   _buildMenuItem(
                     icon: Icons.dashboard_outlined,
                     title: 'Dashboard',
@@ -550,7 +592,7 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
                     title: 'Purchasing',
                     isExpanded: _selectedIndex == PURCHASING_MENU,
                     menuIndex: PURCHASING_MENU,
-                    children: [
+              children: [
                       _buildSubMenuItem('Direct Purchase', 11),
                       _buildSubMenuItem('GRPO', 12),
                     ],
@@ -564,7 +606,7 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
                     title: 'Stock Management',
                     isExpanded: _selectedIndex == STOCK_MANAGEMENT_MENU,
                     menuIndex: STOCK_MANAGEMENT_MENU,
-                    children: [
+                  children: [
                       _buildSubMenuItem('Material Request', 21),
                       _buildSubMenuItem('Material Calculate', 25),
                       _buildSubMenuItem('Stock Opname', 22),
@@ -588,17 +630,17 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
                     child: Row(
                       children: [
-                        Text(
+                Text(
                           'TOOLS',
-                          style: GoogleFonts.poppins(
+                  style: GoogleFonts.poppins(
                             fontSize: 12,
                             color: Colors.black54,
                             letterSpacing: 1,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                         const Spacer(),
-                        Container(
+                Container(
                           height: 1,
                           width: 100,
                           color: Colors.grey.withOpacity(0.2),
@@ -621,15 +663,15 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
                     onTap: () {
                       _navigateToPage(5);
                     },
-                  ),
-                ],
-              ),
+                                        ),
+                                      ],
+                                    ),
             ),
           ),
           _buildProfileDropdown(),
-        ],
-      ),
-    );
+                                  ],
+                                ),
+                              );
   }
 
   Widget _buildMenuItem({
@@ -638,46 +680,42 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
     required int index,
     required VoidCallback onTap,
   }) {
-    final isActive = _isMenuActive(index);
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hoveredIndex = index),
-      onExit: (_) => setState(() => _hoveredIndex = null),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: ListTile(
-          leading: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isActive ? deepPink.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: isActive ? deepPink : Colors.grey,
-              size: 20,
-            ),
-          ),
-          title: Text(
-            title,
-            style: GoogleFonts.poppins(
-              color: isActive ? deepPink : Colors.grey,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              fontSize: 14,
-            ),
-          ),
-          selected: isActive,
-          onTap: onTap,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          dense: true,
-        ),
+    final isActive = _isMainMenuActive(index);
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
       ),
-    );
-  }
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isActive ? deepPink.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: isActive ? deepPink : Colors.grey,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(
+            color: isActive ? deepPink : Colors.grey,
+            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            fontSize: 14,
+          ),
+        ),
+        selected: isActive,
+        onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        dense: true,
+                                ),
+                              );
+                            }
 
   Widget _buildExpandableMenu({
     required IconData icon,
@@ -690,9 +728,9 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
   }) {
     final isMenuExpanded = _expandedMenuIndex == menuIndex;
 
-    return Column(
+                              return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+                                children: [
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
@@ -706,8 +744,8 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
                 color: isExpanded
                     ? deepPink.withOpacity(0.1)
                     : Colors.grey.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
               child: Icon(
                 icon,
                 color: isExpanded ? deepPink : Colors.grey,
@@ -727,14 +765,14 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
               color: isExpanded ? deepPink : Colors.grey,
             ),
             onTap: () {
-              setState(() {
+                                      setState(() {
                 if (_expandedMenuIndex == menuIndex) {
                   _expandedMenuIndex = null;
                 } else {
                   _expandedMenuIndex = menuIndex;
                 }
-              });
-            },
+                                      });
+                                    },
             dense: true,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -756,10 +794,10 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: children,
-            ),
-          ),
-      ],
-    );
+                                    ),
+                                  ),
+                                ],
+                              );
   }
 
   Widget _buildSubMenuItem(
@@ -768,7 +806,7 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
     bool isMobile = false,
     VoidCallback? closeDrawer,
   }) {
-    final isActive = _isMenuActive(index);
+    final isActive = _isSubMenuActive(index);
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredIndex = index),
       onExit: (_) => setState(() => _hoveredIndex = null),
@@ -793,7 +831,7 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
           ),
           title: Text(
             title,
-            style: GoogleFonts.poppins(
+                                        style: GoogleFonts.poppins(
               fontSize: 13,
               color: isActive ? deepPink : Colors.black87,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
@@ -906,25 +944,25 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
                         : Colors.orange.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
+                        child: Text(
                     status,
-                    style: GoogleFonts.poppins(
+                          style: GoogleFonts.poppins(
                       color: status == 'Approved' ? Colors.green : Colors.orange,
                       fontWeight: FontWeight.w500,
-                      fontSize: 12,
-                    ),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
             const SizedBox(height: 10),
-            Row(
-              children: [
+                Row(
+                  children: [
                 Icon(Icons.calendar_today, size: 16, color: Colors.grey[500]),
                 const SizedBox(width: 4),
                 Text(
                   date,
-                  style: GoogleFonts.poppins(
+                        style: GoogleFonts.poppins(
                     fontSize: 12,
                     color: Colors.grey[700],
                   ),
@@ -948,7 +986,7 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
                 const SizedBox(width: 4),
                 Text(
                   'Qty: $qty',
-                  style: GoogleFonts.poppins(
+                        style: GoogleFonts.poppins(
                     fontSize: 12,
                     color: Colors.grey[700],
                   ),
@@ -961,13 +999,13 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     color: Colors.grey[700],
-                  ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -977,10 +1015,10 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
-        children: [
+      children: [
           Icon(Icons.store, color: deepPink, size: 22),
           const SizedBox(width: 10),
-          Text(
+        Text(
             'Select Store',
             style: GoogleFonts.poppins(
               fontSize: 15,
@@ -1017,11 +1055,11 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
           const SizedBox(width: 12),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
                   'User Name',
-                  style: GoogleFonts.poppins(
+          style: GoogleFonts.poppins(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                     color: Colors.black87,
@@ -1030,7 +1068,7 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
                 Text(
                   'user@email.com',
                   style: GoogleFonts.poppins(
-                    fontSize: 12,
+                fontSize: 12,
                     color: Colors.grey[600],
                   ),
                 ),
