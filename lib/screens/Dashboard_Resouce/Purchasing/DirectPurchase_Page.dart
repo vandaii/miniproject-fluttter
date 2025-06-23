@@ -13,6 +13,9 @@ import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/W
 import 'package:miniproject_flutter/screens/DashboardPage.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/LoginPage.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
+import 'package:intl/intl.dart';
 
 class DirectPurchasePage extends StatefulWidget {
   final int selectedIndex;
@@ -33,6 +36,13 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   late int _selectedIndex;
   int? _hoveredIndex;
 
+  // Tambahan untuk integrasi API
+  final AuthService _authService = AuthService();
+  List<dynamic> _directPurchases = [];
+  bool _isLoading = false;
+  String? _errorMessage;
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +53,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     } else if ([21, 22, 23, 24, 25].contains(_selectedIndex)) {
       _expandedMenuIndex = STOCK_MANAGEMENT_MENU;
     }
+    _fetchDirectPurchases();
   }
 
   final Color primaryColor = const Color(0xFFF8BBD0);
@@ -51,8 +62,6 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
 
   static const int PURCHASING_MENU = 1;
   static const int STOCK_MANAGEMENT_MENU = 2;
-
-  final AuthService _authService = AuthService();
 
   bool _isMainMenuActive(int index) {
     // Aktif jika salah satu submenu dari menu utama sedang selected
@@ -75,8 +84,64 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
         submenuIndexes.contains(_hoveredIndex);
   }
 
-  void _showAddDirectPurchaseForm() {
-    showModalBottomSheet(
+  Future<void> _fetchDirectPurchases() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      // Untuk tab "Approved", kita filter di backend dengan status 'Approved'.
+      // Untuk tab "Outstanding", kita ambil semua data dan filter di sisi klien.
+      // CATATAN: Ini bukan solusi ideal karena paginasi. Jika satu halaman data
+      // dari server isinya item yang sudah 'Approved' semua, maka daftar 'Outstanding'
+      // bisa terlihat kosong sesaat. Solusi terbaik adalah mengubah backend
+      // agar mendukung filter beberapa status sekaligus.
+      final status = isOutstandingSelected ? null : 'Approved';
+
+      final data = await _authService.getDirectPurchases(
+        search: _searchQuery.isNotEmpty ? _searchQuery : null,
+        status: status, // Akan mengirim null untuk tab outstanding
+      );
+
+      List<dynamic> allPurchases = data['data'] ?? [];
+
+      setState(() {
+        // Jika di tab Outstanding, kita filter secara manual di sini
+        if (isOutstandingSelected) {
+          _directPurchases = allPurchases.where((item) {
+            final itemStatus = item['status'] as String?;
+            // Item dianggap outstanding jika statusnya BUKAN 'Approved'.
+            return itemStatus != null && itemStatus != 'Approved';
+          }).toList();
+        } else {
+          _directPurchases = allPurchases;
+        }
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Gagal memuat data: ${e.toString()}';
+      });
+    }
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {
+      _searchQuery = value;
+    });
+    _fetchDirectPurchases();
+  }
+
+  void _onTabChanged(bool outstanding) {
+    setState(() {
+      isOutstandingSelected = outstanding;
+    });
+    _fetchDirectPurchases();
+  }
+
+  void _showAddDirectPurchaseForm() async {
+    final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -95,10 +160,17 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
               ),
             ],
           ),
-          child: const _AddDirectPurchaseFormContent(),
+          child: _AddDirectPurchaseFormContent(
+            onSuccess: () {
+              Navigator.pop(context, true);
+            },
+          ),
         );
       },
     );
+    if (result == true) {
+      _fetchDirectPurchases();
+    }
   }
 
   @override
@@ -418,6 +490,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                         ],
                       ),
                       child: TextField(
+                        onChanged: _onSearchChanged,
                         decoration: InputDecoration(
                           prefixIcon: Icon(
                             Icons.search,
@@ -462,7 +535,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                     ),
                     child: IconButton(
                       icon: Icon(Icons.filter_alt, color: Colors.white),
-                      onPressed: () {},
+                      onPressed: _fetchDirectPurchases,
                     ),
                   ),
                 ],
@@ -474,11 +547,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
               children: [
                 // Outstanding Button
                 GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      isOutstandingSelected = true;
-                    });
-                  },
+                  onTap: () => _onTabChanged(true),
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                     decoration: BoxDecoration(
@@ -520,11 +589,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                 const SizedBox(width: 18),
                 // Approved Button
                 GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      isOutstandingSelected = false;
-                    });
-                  },
+                  onTap: () => _onTabChanged(false),
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                     decoration: BoxDecoration(
@@ -566,35 +631,23 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
               ],
             ),
             const SizedBox(height: 20),
-            // Display content based on the selected tab (Outstanding or Approved)
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: isOutstandingSelected
-                      ? [
-                          _buildDirectPurchaseCard(
-                            'DP-2023-1',
-                            'Supplier 1',
-                            '15/03/2024',
-                            'Pending Area Manager',
-                          ),
-                          _buildDirectPurchaseCard(
-                            'DP-2023-2',
-                            'Supplier 2',
-                            '16/03/2024',
-                            'Approved Area Manager',
-                          ),
-                        ]
-                      : [
-                          _buildDirectPurchaseCard(
-                            'DP-2023-3',
-                            'Supplier 3',
-                            '17/03/2024',
-                            'Approved Accounting',
-                          ),
-                        ],
-                ),
-              ),
+              child: _isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : _errorMessage != null
+                  ? Center(child: Text(_errorMessage!))
+                  : _directPurchases.isEmpty
+                  ? Center(child: Text('Tidak ada data'))
+                  : RefreshIndicator(
+                      onRefresh: _fetchDirectPurchases,
+                      child: ListView.builder(
+                        itemCount: _directPurchases.length,
+                        itemBuilder: (context, index) {
+                          final item = _directPurchases[index];
+                          return _buildDirectPurchaseCardFromApi(item);
+                        },
+                      ),
+                    ),
             ),
           ],
         ),
@@ -604,43 +657,39 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
         child: FloatingActionButton(
           onPressed: _showAddDirectPurchaseForm,
           backgroundColor: const Color(0xFFE91E63),
-          child: const Icon(Icons.add, size: 30), // + icon
+          child: const Icon(Icons.add, size: 30),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
-  // Helper function to build the card layout for each direct purchase item
-  Widget _buildDirectPurchaseCard(
-    String id,
-    String supplier,
-    String date,
-    String status,
-  ) {
-    // Pilih warna, icon, dan teks status
+  Widget _buildDirectPurchaseCardFromApi(dynamic item) {
+    print(item); // Debug: cek field yang tersedia
+    // Mapping status dan badge
+    String status = item['status'] ?? '';
     Color badgeColor;
     Color badgeTextColor;
     IconData badgeIcon;
     String badgeText;
-    if (status == 'Pending Area Manager') {
-      badgeColor = const Color(0xFFFFF9C4); // kuning muda
-      badgeTextColor = const Color(0xFFFBC02D); // kuning tua
+    if (status == 'pending_area_manager') {
+      badgeColor = const Color(0xFFFFF9C4);
+      badgeTextColor = const Color(0xFFFBC02D);
       badgeIcon = Icons.hourglass_top_rounded;
       badgeText = 'Pending Area Manager';
-    } else if (status == 'Approved Area Manager') {
-      badgeColor = const Color(0xFF90CAF9); // biru muda
-      badgeTextColor = const Color(0xFF1565C0); // biru tua
+    } else if (status == 'approved_area_manager') {
+      badgeColor = const Color(0xFF90CAF9);
+      badgeTextColor = const Color(0xFF1565C0);
       badgeIcon = Icons.verified_user_rounded;
       badgeText = 'Approved Area Manager';
-    } else if (status == 'Approved Accounting') {
-      badgeColor = const Color(0xFFC8E6C9); // hijau muda
-      badgeTextColor = const Color(0xFF388E3C); // hijau tua
+    } else if (status == 'approved_accounting') {
+      badgeColor = const Color(0xFFC8E6C9);
+      badgeTextColor = const Color(0xFF388E3C);
       badgeIcon = Icons.verified_rounded;
       badgeText = 'Approved Accounting';
     } else {
-      badgeColor = const Color(0xFFF8BBD0); // pink muda
-      badgeTextColor = const Color(0xFFE91E63); // pink tua
+      badgeColor = const Color(0xFFF8BBD0);
+      badgeTextColor = const Color(0xFFE91E63);
       badgeIcon = Icons.info_outline_rounded;
       badgeText = status;
     }
@@ -656,7 +705,6 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Data utama rata kiri
                 RichText(
                   text: TextSpan(
                     children: [
@@ -669,7 +717,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                         ),
                       ),
                       TextSpan(
-                        text: id,
+                        text: getNoDirect(item),
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.normal,
                           fontSize: 15,
@@ -698,7 +746,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                             ),
                           ),
                           TextSpan(
-                            text: supplier,
+                            text: item['supplier'] ?? '-',
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.normal,
                               fontSize: 14,
@@ -733,7 +781,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                             ),
                           ),
                           TextSpan(
-                            text: date,
+                            text: getDate(item),
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.normal,
                               fontSize: 14,
@@ -783,7 +831,6 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
               ],
             ),
           ),
-          // Status badge di pojok kanan atas
           Positioned(
             top: 14,
             right: 18,
@@ -1025,8 +1072,8 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                   _expandedMenuIndex = STOCK_MANAGEMENT_MENU;
                 }
               });
-              Navigator.pushReplacement(context, _getPageRouteByIndex(index));
-              if (isMobile && closeDrawer != null) closeDrawer();
+              // Navigator.pushReplacement(context, _getPageRouteByIndex(index));
+              // if (isMobile && closeDrawer != null) closeDrawer();
             }
           },
           dense: true,
@@ -1040,46 +1087,46 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     );
   }
 
-  Route _getPageRouteByIndex(int index) {
-    switch (index) {
-      case 0:
-        return MaterialPageRoute(
-          builder: (context) => DashboardPage(selectedIndex: 0),
-        );
-      case 11:
-        return MaterialPageRoute(
-          builder: (context) => DirectPurchasePage(selectedIndex: 11),
-        );
-      case 12:
-        return MaterialPageRoute(
-          builder: (context) => GRPO_Page(selectedIndex: 12),
-        );
-      case 21:
-        return MaterialPageRoute(
-          builder: (context) => MaterialRequestPage(selectedIndex: 21),
-        );
-      case 22:
-        return MaterialPageRoute(
-          builder: (context) => StockOpnamePage(selectedIndex: 22),
-        );
-      case 23:
-        return MaterialPageRoute(
-          builder: (context) => TransferStockPage(selectedIndex: 23),
-        );
-      case 24:
-        return MaterialPageRoute(
-          builder: (context) => WastePage(selectedIndex: 24),
-        );
-      case 25:
-        return MaterialPageRoute(
-          builder: (context) => MaterialCalculatePage(selectedIndex: 25),
-        );
-      default:
-        return MaterialPageRoute(
-          builder: (context) => DirectPurchasePage(selectedIndex: 11),
-        );
-    }
-  }
+  // Route _getPageRouteByIndex(int index) {
+  //   switch (index) {
+  //     case 0:
+  //       return MaterialPageRoute(
+  //         builder: (context) => DashboardPage(selectedIndex: 0),
+  //       );
+  //     case 11:
+  //       return MaterialPageRoute(
+  //         builder: (context) => DirectPurchasePage(selectedIndex: 11),
+  //       );
+  //     case 12:
+  //       return MaterialPageRoute(
+  //         builder: (context) => GRPO_Page(selectedIndex: 12),
+  //       );
+  //     case 21:
+  //       return MaterialPageRoute(
+  //         builder: (context) => MaterialRequestPage(selectedIndex: 21),
+  //       );
+  //     case 22:
+  //       return MaterialPageRoute(
+  //         builder: (context) => StockOpnamePage(selectedIndex: 22),
+  //       );
+  //     case 23:
+  //       return MaterialPageRoute(
+  //         builder: (context) => TransferStockPage(selectedIndex: 23),
+  //       );
+  //     case 24:
+  //       return MaterialPageRoute(
+  //         builder: (context) => WastePage(selectedIndex: 24),
+  //       );
+  //     case 25:
+  //       return MaterialPageRoute(
+  //         builder: (context) => MaterialCalculatePage(selectedIndex: 25),
+  //       );
+  //     default:
+  //       return MaterialPageRoute(
+  //         builder: (context) => DirectPurchasePage(selectedIndex: 11),
+  //       );
+  //   }
+  // }
 
   void _navigateToPage(int index) {
     switch (index) {
@@ -1143,6 +1190,17 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
           ),
         );
         break;
+      case 4:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => NotificationPage()),
+        );
+        break;
+      case 5:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HelpPage()),
+        );
     }
   }
 
@@ -1465,10 +1523,37 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       }
     }
   }
+
+  String getNoDirect(dynamic item) {
+    return item['no_direct'] ??
+        item['no_direct_purchase'] ??
+        item['noDirect'] ??
+        item['noDirectPurchase'] ??
+        item['direct_number'] ??
+        '-';
+  }
+
+  String getDate(dynamic item) {
+    String? rawDate =
+        item['tanggal'] ??
+        item['purchase_date'] ??
+        item['date'] ??
+        item['created_at'] ??
+        item['createdAt'];
+    if (rawDate == null) return '-';
+    try {
+      DateTime dt = DateTime.parse(rawDate);
+      return DateFormat('dd/MM/yyyy').format(dt);
+    } catch (e) {
+      return rawDate;
+    }
+  }
 }
 
 class _AddDirectPurchaseFormContent extends StatefulWidget {
-  const _AddDirectPurchaseFormContent({Key? key}) : super(key: key);
+  final VoidCallback onSuccess;
+  const _AddDirectPurchaseFormContent({Key? key, required this.onSuccess})
+    : super(key: key);
 
   @override
   State<_AddDirectPurchaseFormContent> createState() =>
@@ -1481,8 +1566,13 @@ class _AddDirectPurchaseFormContentState
   DateTime? _purchaseDate;
   String? _expenseType = 'Inventory';
   final List<Map<String, dynamic>> _items = [];
+  final TextEditingController _supplierController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
+  List<File> _files = [];
+  bool _isSubmitting = false;
 
   final Color deepPink = const Color.fromARGB(255, 233, 30, 99);
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -1521,7 +1611,111 @@ class _AddDirectPurchaseFormContentState
       item['qty'].dispose();
       item['price'].dispose();
     }
+    _supplierController.dispose();
+    _notesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickFiles() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'svg'],
+      );
+      if (result != null) {
+        setState(() {
+          _files = result.paths.map((path) => File(path!)).toList();
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking files: ${e.toString()}')),
+      );
+    }
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_purchaseDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Tanggal pembelian wajib diisi'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    if (_supplierController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Supplier wajib diisi'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    if (_items.any((item) => item['name'].text.trim().isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Nama item wajib diisi'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    setState(() => _isSubmitting = true);
+    try {
+      double totalAmount = 0.0;
+      for (var item in _items) {
+        final qty = int.tryParse(item['qty'].text.trim()) ?? 0;
+        final price = double.tryParse(item['price'].text.trim()) ?? 0.0;
+        totalAmount += qty * price;
+      }
+
+      final items = _items
+          .map(
+            (item) => {
+              'item_name': item['name'].text.trim(),
+              'item_description': item['description'].text.trim(),
+              'quantity': int.tryParse(item['qty'].text.trim()) ?? 1,
+              'price': double.tryParse(item['price'].text.trim()) ?? 0.0,
+              'unit': item['unit'],
+            },
+          )
+          .toList();
+      final dateStr =
+          '${_purchaseDate!.year}-${_purchaseDate!.month.toString().padLeft(2, '0')}-${_purchaseDate!.day.toString().padLeft(2, '0')}';
+      await _authService.createDirectPurchase(
+        date: dateStr,
+        supplier: _supplierController.text.trim(),
+        expenseType: _expenseType ?? 'Inventory',
+        items: items,
+        totalAmount: totalAmount,
+        note: _notesController.text.trim(),
+        purchaseProofs: _files.isNotEmpty ? _files : null,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Berhasil menambah direct purchase'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        widget.onSuccess();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menambah: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -1628,6 +1822,7 @@ class _AddDirectPurchaseFormContentState
         Expanded(
           child: _buildModernTextField(
             label: 'Supplier/Store',
+            controller: _supplierController,
             prefixIcon: Icons.store,
           ),
         ),
@@ -1789,40 +1984,84 @@ class _AddDirectPurchaseFormContentState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Upload Purchase Proof',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w500,
-            fontSize: 13,
-            color: Colors.grey[700],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-          decoration: BoxDecoration(
-            color: Colors.grey[50],
-            border: Border.all(color: Colors.grey[300]!),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.upload_file, color: Colors.grey[600]),
-              const SizedBox(width: 12),
-              Text(
-                'Choose File to Upload',
-                style: GoogleFonts.poppins(
-                  color: Colors.grey[700],
-                  fontWeight: FontWeight.w500,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Upload Purchase Proof',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
+                color: Colors.grey[700],
+              ),
+            ),
+            if (_files.isNotEmpty)
+              TextButton(
+                onPressed: () => setState(() => _files.clear()),
+                child: Text(
+                  'Clear',
+                  style: GoogleFonts.poppins(
+                    color: Colors.red,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-            ],
+          ],
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: _pickFiles,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.upload_file, color: Colors.grey[600]),
+                const SizedBox(width: 12),
+                Text(
+                  _files.isEmpty
+                      ? 'Choose File to Upload'
+                      : '${_files.length} file(s) selected',
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
+        if (_files.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Wrap(
+              spacing: 8.0,
+              runSpacing: 4.0,
+              children: _files
+                  .map(
+                    (file) => Chip(
+                      label: Text(
+                        file.path.split(Platform.pathSeparator).last,
+                        style: GoogleFonts.poppins(fontSize: 12),
+                      ),
+                      onDeleted: () {
+                        setState(() {
+                          _files.remove(file);
+                        });
+                      },
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
         const SizedBox(height: 4),
         Text(
-          'Supported formats: JPG, PNG, PDF (Max. 5MB)',
+          'Supported formats: JPG, PNG, GIF, SVG (Max. 5MB)',
           style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[500]),
         ),
       ],
@@ -1834,6 +2073,7 @@ class _AddDirectPurchaseFormContentState
       label: 'Notes',
       hint: 'Masukkan catatan / remarks',
       maxLines: 3,
+      controller: _notesController,
     );
   }
 
@@ -1899,10 +2139,17 @@ class _AddDirectPurchaseFormContentState
           const SizedBox(width: 16),
           Expanded(
             child: ElevatedButton(
-              onPressed: () {
-                // Add logic
-              },
-              child: const Text('Add'),
+              onPressed: _isSubmitting ? null : _submit,
+              child: _isSubmitting
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text('Add'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: deepPink,
                 foregroundColor: Colors.white,
