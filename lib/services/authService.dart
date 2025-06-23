@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 
 class AuthService {
-  final String baseUrl = 'http://192.168.1.7:8000/api';
+  final String baseUrl = 'http://192.168.216.84:8000/api';
   final FlutterSecureStorage storage = FlutterSecureStorage();
 
   http.Client client = IOClient(
@@ -76,8 +76,8 @@ class AuthService {
       final resData = jsonDecode(response.body);
       print('Login Response: $resData');
 
-      if (response.statusCode == 200 && resData['access_token'] != null) {
-        await storage.write(key: 'token', value: resData['access_token']);
+      if (response.statusCode == 200 && resData['token'] != null) {
+        await storage.write(key: 'token', value: resData['token']);
         return true;
       } else {
         print('Login failed: ${resData['message']}');
