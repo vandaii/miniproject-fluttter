@@ -1534,9 +1534,10 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   }
 
   String getDate(dynamic item) {
-    String? rawDate =
-        item['tanggal'] ??
+    String? rawDate = item['tanggal'] ??
         item['purchase_date'] ??
+        item['tanggal_beli'] ??
+        item['tgl'] ??
         item['date'] ??
         item['created_at'] ??
         item['createdAt'];
