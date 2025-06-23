@@ -3,31 +3,35 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Purchasing/GRPO_Page.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/MaterialCalculate_Page.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/StockOpname_Page.dart';
+import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/Waste_Page.dart';
 import 'Dashboard_Resouce/Purchasing/DirectPurchase_Page.dart';
 import 'Dashboard_Resouce/Stock_Management/TransferStock_Page.dart';
 import 'Dashboard_Resouce/Stock_Management/MaterialRequest_Page.dart';
 import 'Dashboard_Resouce/Auth/UserProfile_Page.dart';
-import 'Dashboard_Resouce/Stock_Management/Waste_Page.dart';
 import 'Dashboard_Resouce/Auth/Help_Page.dart';
 import 'Dashboard_Resouce/Auth/Notification_Page.dart';
 import 'Dashboard_Resouce/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/LoginPage.dart';
+import 'package:flutter/rendering.dart';
+import 'dart:ui';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key, required int selectedIndex});
+  final int selectedIndex;
+  const DashboardPage({super.key, required this.selectedIndex});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
 class _DashboardPageState extends State<DashboardPage>
-    with SingleTickerProviderStateMixin {
-  int _selectedIndex = 0;
+    with TickerProviderStateMixin {
+  late int _selectedIndex;
   bool _isSidebarExpanded = true;
   bool _isProfileMenuOpen = false;
   bool _isStoreMenuOpen = false;
-  int? _expandedMenuIndex; // Untuk menyimpan index menu yang sedang terbuka
+  int? _expandedMenuIndex;
+  bool _isSearchActive = false;
 
   int _selectedOpenItemTab = 0; // 0: PO, 1: Direct Purchase, 2: Transfer Out
 
@@ -41,6 +45,37 @@ class _DashboardPageState extends State<DashboardPage>
   static const int STOCK_MANAGEMENT_MENU = 2;
 
   final AuthService _authService = AuthService();
+
+  late AnimationController _searchAnimationController;
+  late AnimationController _notificationAnimationController;
+
+  OverlayEntry? _notificationOverlayEntry;
+  final GlobalKey _notificationIconKey = GlobalKey();
+
+  // Data notifikasi (diambil dari Notification_Page.dart)
+  final List<Map<String, dynamic>> notifications = [
+    {
+      'icon': Icons.shopping_cart,
+      'title': 'Purchase Approved',
+      'message': 'Your direct purchase request has been approved.',
+      'time': '2 min ago',
+      'color': Color(0xFFE91E63),
+    },
+    {
+      'icon': Icons.assignment_turned_in,
+      'title': 'GRPO Received',
+      'message': 'Goods receipt has been completed for PO-2023-12.',
+      'time': '10 min ago',
+      'color': Color(0xFFE91E63),
+    },
+    {
+      'icon': Icons.warning_amber_rounded,
+      'title': 'Stock Low',
+      'message': 'Stock for Item ABC is below minimum level.',
+      'time': '1 hour ago',
+      'color': Color(0xFFE91E63),
+    },
+  ];
 
   // Dummy data untuk masing-masing tab
   final List<List<DataRow>> _openItemRows = [
@@ -135,11 +170,342 @@ class _DashboardPageState extends State<DashboardPage>
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.selectedIndex;
+    _searchAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _notificationAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
   }
 
   @override
   void dispose() {
+    _searchAnimationController.dispose();
+    _notificationAnimationController.dispose();
+    // Pastikan overlay dihapus saat widget di-dispose
+    if (_notificationOverlayEntry != null) {
+      _notificationOverlayEntry!.remove();
+      _notificationOverlayEntry = null;
+    }
     super.dispose();
+  }
+
+  void _toggleSearch() {
+    if (_searchAnimationController.isAnimating) return;
+
+    setState(() {
+      _isSearchActive = !_isSearchActive;
+      if (_isSearchActive) {
+        _searchAnimationController.forward();
+      } else {
+        _searchAnimationController.reverse();
+      }
+    });
+  }
+
+  // --- Notification Overlay Logic ---
+  void _toggleNotificationOverlay() {
+    if (_notificationAnimationController.isAnimating) return;
+
+    if (_notificationOverlayEntry == null) {
+      _showNotificationBubble();
+    } else {
+      _removeNotificationOverlay();
+    }
+  }
+
+  void _removeNotificationOverlay() {
+    if (_notificationOverlayEntry != null) {
+      _notificationAnimationController.reverse().then((_) {
+        if (_notificationOverlayEntry != null &&
+            _notificationOverlayEntry!.mounted) {
+          _notificationOverlayEntry!.remove();
+          _notificationOverlayEntry = null;
+        }
+      });
+    }
+  }
+
+  void _showNotificationBubble() {
+    final RenderBox renderBox =
+        _notificationIconKey.currentContext!.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final position = renderBox.localToGlobal(Offset.zero);
+
+    _notificationOverlayEntry = OverlayEntry(
+      builder: (context) => _buildNotificationBubble(position, size),
+    );
+
+    Overlay.of(context).insert(_notificationOverlayEntry!);
+    _notificationAnimationController.forward();
+  }
+
+  Widget _buildNotificationBubble(Offset position, Size size) {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: _removeNotificationOverlay,
+            behavior: HitTestBehavior.opaque,
+            child: Container(color: Colors.transparent),
+          ),
+        ),
+        Positioned(
+          top: position.dy + size.height + 10,
+          right: 16,
+          child: AnimatedBuilder(
+            animation: _notificationAnimationController,
+            builder: (context, child) {
+              final animValue = _notificationAnimationController.value;
+              final scale = 0.9 + 0.1 * Curves.easeOutExpo.transform(animValue);
+              final slide = Offset(
+                (1 - animValue) * 0.08,
+                (1 - animValue) * -0.08,
+              );
+              return Opacity(
+                opacity: animValue,
+                child: Transform.translate(
+                  offset: Offset(slide.dx * 270, slide.dy * 180),
+                  child: Transform.scale(
+                    scale: scale,
+                    alignment: Alignment.topRight,
+                    child: child,
+                  ),
+                ),
+              );
+            },
+            child: _buildNotificationBubbleContent(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNotificationBubbleContent() {
+    final List<Map<String, dynamic>> previewNotifs = notifications
+        .take(4)
+        .toList();
+    return Material(
+      color: Colors.white.withOpacity(0.98),
+      elevation: 16,
+      shadowColor: Colors.black.withOpacity(0.10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        width: 250,
+        constraints: BoxConstraints(maxHeight: 180),
+        padding: const EdgeInsets.only(top: 10, bottom: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Triangle
+            Container(
+              margin: const EdgeInsets.only(right: 16, bottom: 2),
+              child: ClipPath(
+                clipper: TriangleClipper(),
+                child: Container(color: Colors.white, height: 10, width: 18),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
+              child: Text(
+                'Notifikasi',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
+            if (previewNotifs.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 16,
+                ),
+                child: Text(
+                  'Belum ada notifikasi.',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              )
+            else
+              Flexible(
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  itemCount: previewNotifs.length,
+                  separatorBuilder: (_, __) =>
+                      Divider(height: 1, color: Colors.grey.shade100),
+                  itemBuilder: (context, i) =>
+                      _buildNotificationBubbleItem(previewNotifs[i]),
+                ),
+              ),
+            const SizedBox(height: 2),
+            InkWell(
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+              onTap: () {
+                _removeNotificationOverlay();
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => NotificationPage()),
+                  );
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                alignment: Alignment.center,
+                child: Text(
+                  'Lihat Semua Notifikasi',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold,
+                    color: deepPink,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationBubbleItem(Map<String, dynamic> notif) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            backgroundColor: (notif['color'] as Color).withOpacity(0.13),
+            child: Icon(notif['icon'], color: notif['color'], size: 16),
+            radius: 13,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  notif['title'],
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: notif['color'],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  notif['message'],
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.5,
+                    color: Colors.grey[800],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  notif['time'],
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    color: Colors.grey[400],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnimatedSearchBar() {
+    return SizeTransition(
+      sizeFactor: CurvedAnimation(
+        parent: _searchAnimationController,
+        curve: Curves.easeInOutCubic,
+      ),
+      axisAlignment: -1.0,
+      child: Padding(
+        padding: const EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 12,
+          bottom: 12,
+        ),
+        child: _buildModernSearchBar(),
+      ),
+    );
+  }
+
+  Widget _buildModernSearchBar() {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(24.0),
+      elevation: 8.0,
+      shadowColor: Colors.black.withOpacity(0.12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: FadeTransition(
+          opacity: CurvedAnimation(
+            parent: _searchAnimationController,
+            curve: const Interval(0.4, 1.0, curve: Curves.easeOut),
+          ),
+          child: SlideTransition(
+            position:
+                Tween<Offset>(
+                  begin: const Offset(0.0, 0.5), // Slide from bottom
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: _searchAnimationController,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
+            child: Row(
+              children: [
+                Icon(Icons.search, color: deepPink.withOpacity(0.8), size: 24),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TextField(
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      color: Colors.black87,
+                    ),
+                    decoration: InputDecoration.collapsed(
+                      hintText: 'Search anything...',
+                      hintStyle: GoogleFonts.poppins(
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  color: Colors.grey.shade500,
+                  splashRadius: 20,
+                  onPressed: _toggleSearch,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _toggleMenu(int menuIndex) {
@@ -217,6 +583,8 @@ class _DashboardPageState extends State<DashboardPage>
     }
   }
 
+  //content season
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -235,40 +603,42 @@ class _DashboardPageState extends State<DashboardPage>
       body: SafeArea(
         child: Stack(
           children: [
-            // Main Content
+            // Main Content Area
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               margin: isMobile
                   ? EdgeInsets.zero
                   : EdgeInsets.only(left: _isSidebarExpanded ? 250 : 70),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    _buildHeader(screenWidth, isMobile),
-                    const SizedBox(height: 10),
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Divider(
-                        color: Colors.grey.withOpacity(0.13),
-                        thickness: 1.2,
-                        height: 0,
+              child: Column(
+                children: [
+                  // Header (will not be blurred)
+                  _buildHeader(screenWidth, isMobile),
+                  _buildAnimatedSearchBar(),
+                  // Scrollable Content
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Divider(
+                              color: Colors.grey.withOpacity(0.13),
+                              thickness: 1.2,
+                              height: 0,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildTaskSection(),
+                          const SizedBox(height: 16),
+                          _buildOutstandingCards(),
+                          const SizedBox(height: 16),
+                          _buildOpenItemList(),
+                          const SizedBox(height: 12),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 18),
-                    // Search bar di luar header
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 20),
-                      child: _buildSearchBar(),
-                    ),
-                    const SizedBox(height: 24),
-                    _buildTaskSection(),
-                    const SizedBox(height: 16),
-                    _buildOutstandingCards(),
-                    const SizedBox(height: 16),
-                    _buildOpenItemList(),
-                    const SizedBox(height: 12),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             // Sidebar (hanya tampil di desktop/tablet)
@@ -294,6 +664,7 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
+  // content widgets
   Widget _buildSidebarContent({
     bool isMobile = false,
     VoidCallback? closeDrawer,
@@ -574,9 +945,14 @@ class _DashboardPageState extends State<DashboardPage>
                 fontSize: 14,
               ),
             ),
-            trailing: Icon(
-              isMenuExpanded ? Icons.expand_less : Icons.expand_more,
-              color: isExpanded ? deepPink : Colors.grey,
+            trailing: AnimatedRotation(
+              turns: isMenuExpanded ? 0.5 : 0.0,
+              duration: Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+              child: Icon(
+                Icons.expand_more,
+                color: isExpanded ? deepPink : Colors.grey,
+              ),
             ),
             onTap: () {
               _toggleMenu(menuIndex);
@@ -724,254 +1100,111 @@ class _DashboardPageState extends State<DashboardPage>
 
   Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
     return Container(
-      padding: EdgeInsets.fromLTRB(
-        10,
-        isMobile ? 5 : 10,
-        20,
-        isMobile ? 5 : 10,
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 14 : 32,
+        vertical: isMobile ? 20 : 24,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        border: Border(
+          bottom: BorderSide(color: Colors.grey.withOpacity(0.15), width: 1.5),
+        ),
       ),
-      child: Column(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  if (isMobile)
-                    Builder(
-                      builder: (context) => IconButton(
-                        icon: Icon(Icons.menu, color: Colors.black),
-                        onPressed: () {
-                          Scaffold.of(context).openDrawer();
-                        },
-                      ),
-                    ),
-                  Text(
-                    'Dashboard',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
-                      color: deepPink,
-                    ),
-                  ),
-                ],
+          if (isMobile)
+            Builder(
+              builder: (context) => IconButton(
+                icon: const Icon(Icons.menu, color: Colors.black54),
+                onPressed: () {
+                  Scaffold.of(context).openDrawer();
+                },
               ),
-              _buildProfileIcons(),
+            ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Dashboard',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold,
+                    fontSize: isMobile ? 22 : 28,
+                    color: Colors.black87,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: isMobile ? 8 : 18),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _modernHeaderIcon(icon: Icons.search, onTap: _toggleSearch),
+              SizedBox(width: isMobile ? 8 : 14),
+              SizedBox(
+                key: _notificationIconKey,
+                child: _modernHeaderIcon(
+                  icon: Icons.notifications_none_outlined,
+                  onTap: _toggleNotificationOverlay,
+                ),
+              ),
+              SizedBox(width: isMobile ? 8 : 14),
+              _modernHeaderIcon(
+                icon: Icons.mail_outline,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => EmailPage()),
+                  );
+                },
+              ),
+              SizedBox(width: isMobile ? 8 : 14),
+              _modernHeaderAvatar(),
             ],
           ),
-          const SizedBox(height: 4),
         ],
       ),
     );
   }
 
-  Widget _buildProfileIcons() {
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => NotificationPage()),
-            );
-          },
-          child: const Icon(Icons.notifications, color: Colors.black),
-        ),
-        const SizedBox(width: 12),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => EmailPage()),
-            );
-          },
-          child: const Icon(Icons.mail_outline, color: Colors.black),
-        ),
-        const SizedBox(width: 12),
-        GestureDetector(
-          onTap: () {
-            _showProfileMenu(context);
-          },
-          child: const CircleAvatar(
-            backgroundImage: AssetImage('assets/images/avatar.jpg'),
-            radius: 15,
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showProfileMenu(BuildContext context) {
-    final RenderBox button = context.findRenderObject() as RenderBox;
-    final RenderBox overlay =
-        Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
-    final RelativeRect position = RelativeRect.fromRect(
-      Rect.fromPoints(
-        button.localToGlobal(Offset.zero, ancestor: overlay),
-        button.localToGlobal(
-          button.size.bottomRight(Offset.zero),
-          ancestor: overlay,
-        ),
-      ),
-      Offset.zero & overlay.size,
-    );
-
-    showMenu(
-      context: context,
-      position: position,
-      color: Colors.white,
-      elevation: 8,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      items: [
-        PopupMenuItem(
-          height: 40,
-          child: _buildProfileMenuItem(
-            Icons.person_outline,
-            'Profile',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const UserprofilePage(),
-                ),
-              );
-            },
-          ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const UserprofilePage()),
-            );
-          },
-        ),
-        PopupMenuItem(
-          height: 40,
-          child: _buildProfileMenuItem(
-            Icons.settings_outlined,
-            'Settings',
-            onTap: () {
-              // Handle settings
-            },
-          ),
-          onTap: () {
-            // Handle settings
-          },
-        ),
-        PopupMenuItem(
-          height: 40,
-          child: _buildProfileMenuItem(
-            Icons.help_outline,
-            'Help & Support',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => HelpPage()),
-              );
-            },
-          ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => HelpPage()),
-            );
-          },
-        ),
-        PopupMenuItem(
-          height: 40,
-          child: _buildProfileMenuItem(
-            Icons.logout,
-            'Logout',
-            isLogout: true,
-            onTap: () async {
-              await _handleLogout();
-            },
-          ),
-          onTap: () async {
-            await _handleLogout();
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Material(
-      elevation: 2,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.07),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: TextField(
-          style: GoogleFonts.poppins(fontSize: 16),
-          decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 18,
-              horizontal: 0,
-            ),
-            prefixIcon: Icon(Icons.search, color: deepPink, size: 26),
-            hintText: 'Search transactions',
-            hintStyle: GoogleFonts.poppins(
-              fontSize: 16,
-              color: Colors.black38,
-              fontWeight: FontWeight.w500,
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.grey.shade200, width: 2),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: deepPink, width: 2.2),
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.grey.shade200, width: 2),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _actionButton(IconData icon, String label) {
-    return Column(
-      children: [
-        Container(
+  Widget _modernHeaderIcon({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 180),
+          curve: Curves.easeInOut,
+          padding: EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: primaryColor,
-            borderRadius: BorderRadius.circular(12),
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200.withOpacity(0.8)),
           ),
-          padding: const EdgeInsets.all(12),
-          child: Icon(icon, color: deepPink, size: 28),
+          child: Icon(icon, color: Colors.black54, size: 22),
         ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
+      ),
+    );
+  }
+
+  Widget _modernHeaderAvatar() {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          _showProfileMenu(context);
+        },
+        child: CircleAvatar(
+          backgroundImage: AssetImage('assets/images/avatar.jpg'),
+          radius: 20,
         ),
-      ],
+      ),
     );
   }
 
@@ -1774,4 +2007,112 @@ class _DashboardPageState extends State<DashboardPage>
       ),
     );
   }
+
+  void _showProfileMenu(BuildContext context) {
+    final RenderBox button = context.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(Offset.zero, ancestor: overlay),
+        button.localToGlobal(
+          button.size.bottomRight(Offset.zero),
+          ancestor: overlay,
+        ),
+      ),
+      Offset.zero & overlay.size,
+    );
+
+    showMenu(
+      context: context,
+      position: position,
+      color: Colors.white,
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      items: [
+        PopupMenuItem(
+          height: 40,
+          child: _buildProfileMenuItem(
+            Icons.person_outline,
+            'Profile',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const UserprofilePage(),
+                ),
+              );
+            },
+          ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const UserprofilePage()),
+            );
+          },
+        ),
+        PopupMenuItem(
+          height: 40,
+          child: _buildProfileMenuItem(
+            Icons.settings_outlined,
+            'Settings',
+            onTap: () {
+              // Handle settings
+            },
+          ),
+          onTap: () {
+            // Handle settings
+          },
+        ),
+        PopupMenuItem(
+          height: 40,
+          child: _buildProfileMenuItem(
+            Icons.help_outline,
+            'Help & Support',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => HelpPage()),
+              );
+            },
+          ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => HelpPage()),
+            );
+          },
+        ),
+        PopupMenuItem(
+          height: 40,
+          child: _buildProfileMenuItem(
+            Icons.logout,
+            'Logout',
+            isLogout: true,
+            onTap: () async {
+              await _handleLogout();
+            },
+          ),
+          onTap: () async {
+            await _handleLogout();
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class TriangleClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.moveTo(0, size.height);
+    path.lineTo(size.width / 2, 0);
+    path.lineTo(size.width, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(TriangleClipper oldClipper) => false;
 }

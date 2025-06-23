@@ -41,7 +41,7 @@ class EmailPage extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-        backgroundColor: const Color(0xFF880E4F),
+        backgroundColor: const Color(0xFFE91E63),
         elevation: 4,
       ),
       backgroundColor: const Color(0xFFF3F4F6),
