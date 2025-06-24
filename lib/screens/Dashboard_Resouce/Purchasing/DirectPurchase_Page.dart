@@ -674,21 +674,21 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     Color badgeTextColor;
     IconData badgeIcon;
     String badgeText;
-    if (status == 'pending_area_manager') {
-      badgeColor = const Color(0xFFFFF9C4);
-      badgeTextColor = const Color(0xFFFBC02D);
+    if (status == 'Pending Area Manager') {
+      badgeColor = const Color.fromARGB(255, 255, 247, 173);
+      badgeTextColor = const Color.fromARGB(255, 244, 183, 29);
       badgeIcon = Icons.hourglass_top_rounded;
       badgeText = 'Pending Area Manager';
-    } else if (status == 'approved_area_manager') {
+    } else if (status == 'Approved Area Manager') {
       badgeColor = const Color.fromARGB(255, 144, 202, 249);
       badgeTextColor = const Color.fromARGB(255, 21, 101, 192);
       badgeIcon = Icons.verified_user_rounded;
       badgeText = 'Approved Area Manager';
-    } else if (status == 'approved_accounting') {
+    } else if (status == 'Approved') {
       badgeColor = const Color(0xFFC8E6C9);
       badgeTextColor = const Color(0xFF388E3C);
       badgeIcon = Icons.verified_rounded;
-      badgeText = 'Approved Accounting';
+      badgeText = 'Approved';
     } else {
       badgeColor = const Color(0xFFF8BBD0);
       badgeTextColor = const Color(0xFFE91E63);

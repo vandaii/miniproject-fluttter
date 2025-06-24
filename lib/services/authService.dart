@@ -7,7 +7,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 
 class AuthService {
-  final String baseUrl = 'http://192.168.216.84:8000/api';
+  final String baseUrl = 'http://192.168.209.143:8000/api';
   final FlutterSecureStorage storage = FlutterSecureStorage();
 
   http.Client client = IOClient(
