@@ -1232,8 +1232,8 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                   _expandedMenuIndex = STOCK_MANAGEMENT_MENU;
                 }
               });
-              // Navigator.pushReplacement(context, _getPageRouteByIndex(index));
-              // if (isMobile && closeDrawer != null) closeDrawer();
+              Navigator.pushReplacement(context, _getPageRouteByIndex(index));
+              if (isMobile && closeDrawer != null) closeDrawer();
             }
           },
           dense: true,
@@ -1247,46 +1247,46 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     );
   }
 
-  // Route _getPageRouteByIndex(int index) {
-  //   switch (index) {
-  //     case 0:
-  //       return MaterialPageRoute(
-  //         builder: (context) => DashboardPage(selectedIndex: 0),
-  //       );
-  //     case 11:
-  //       return MaterialPageRoute(
-  //         builder: (context) => DirectPurchasePage(selectedIndex: 11),
-  //       );
-  //     case 12:
-  //       return MaterialPageRoute(
-  //         builder: (context) => GRPO_Page(selectedIndex: 12),
-  //       );
-  //     case 21:
-  //       return MaterialPageRoute(
-  //         builder: (context) => MaterialRequestPage(selectedIndex: 21),
-  //       );
-  //     case 22:
-  //       return MaterialPageRoute(
-  //         builder: (context) => StockOpnamePage(selectedIndex: 22),
-  //       );
-  //     case 23:
-  //       return MaterialPageRoute(
-  //         builder: (context) => TransferStockPage(selectedIndex: 23),
-  //       );
-  //     case 24:
-  //       return MaterialPageRoute(
-  //         builder: (context) => WastePage(selectedIndex: 24),
-  //       );
-  //     case 25:
-  //       return MaterialPageRoute(
-  //         builder: (context) => MaterialCalculatePage(selectedIndex: 25),
-  //       );
-  //     default:
-  //       return MaterialPageRoute(
-  //         builder: (context) => DirectPurchasePage(selectedIndex: 11),
-  //       );
-  //   }
-  // }
+  Route _getPageRouteByIndex(int index) {
+    switch (index) {
+      case 0:
+        return MaterialPageRoute(
+          builder: (context) => DashboardPage(selectedIndex: 0),
+        );
+      case 11:
+        return MaterialPageRoute(
+          builder: (context) => DirectPurchasePage(selectedIndex: 11),
+        );
+      case 12:
+        return MaterialPageRoute(
+          builder: (context) => GRPO_Page(selectedIndex: 12),
+        );
+      case 21:
+        return MaterialPageRoute(
+          builder: (context) => MaterialRequestPage(selectedIndex: 21),
+        );
+      case 22:
+        return MaterialPageRoute(
+          builder: (context) => StockOpnamePage(selectedIndex: 22),
+        );
+      case 23:
+        return MaterialPageRoute(
+          builder: (context) => TransferStockPage(selectedIndex: 23),
+        );
+      case 24:
+        return MaterialPageRoute(
+          builder: (context) => WastePage(selectedIndex: 24),
+        );
+      case 25:
+        return MaterialPageRoute(
+          builder: (context) => MaterialCalculatePage(selectedIndex: 25),
+        );
+      default:
+        return MaterialPageRoute(
+          builder: (context) => DirectPurchasePage(selectedIndex: 11),
+        );
+    }
+  }
 
   // Todo : Routing navigation page for each page
   void _navigateToPage(int index) {
