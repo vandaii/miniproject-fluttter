@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'package:google_fonts/google_fonts.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
@@ -14,8 +15,28 @@ import 'package:miniproject_flutter/screens/DashboardPage.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
 import 'package:file_picker/file_picker.dart';
+=======
+>>>>>>> front
 import 'dart:io';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Purchasing/GRPO_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialCalculate_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/StockOpname_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/TransferStock_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialRequest_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/UserProfile_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/Help_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/Waste_Page.dart';
+import 'package:miniproject_flutter/screens/DashboardPage.dart';
+import 'package:miniproject_flutter/services/DirectService.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:miniproject_flutter/services/authService.dart';
 import 'package:intl/intl.dart';
+// import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 
 class DirectPurchasePage extends StatefulWidget {
   final int selectedIndex;
@@ -37,11 +58,12 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   int? _hoveredIndex;
 
   // Tambahan untuk integrasi API
-  final AuthService _authService = AuthService();
+  final DirectService _directService = DirectService();
   List<dynamic> _directPurchases = [];
   bool _isLoading = false;
   String? _errorMessage;
   String _searchQuery = '';
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -90,15 +112,9 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       _errorMessage = null;
     });
     try {
-      // Untuk tab "Approved", kita filter di backend dengan status 'Approved'.
-      // Untuk tab "Outstanding", kita ambil semua data dan filter di sisi klien.
-      // CATATAN: Ini bukan solusi ideal karena paginasi. Jika satu halaman data
-      // dari server isinya item yang sudah 'Approved' semua, maka daftar 'Outstanding'
-      // bisa terlihat kosong sesaat. Solusi terbaik adalah mengubah backend
-      // agar mendukung filter beberapa status sekaligus.
       final status = isOutstandingSelected ? null : 'Approved';
 
-      final data = await _authService.getDirectPurchases(
+      final data = await _directService.getDirectPurchases(
         search: _searchQuery.isNotEmpty ? _searchQuery : null,
         status: status, // Akan mengirim null untuk tab outstanding
       );
@@ -174,6 +190,8 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   }
 
   @override
+  //===================================================================================================================== //
+  //Todo:Rangkaian fungsi dan styling untuk header dan item lain
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
@@ -315,10 +333,11 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                   ],
                 ),
               ),
-              // Info toko dengan dropdown
+
+              //todo: Info toko dengan dropdown
               if (_isSidebarExpanded) _buildStoreDropdown(),
 
-              // Menu Items dengan Expanded
+              //todo: Menu Items dengan Expanded
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
@@ -667,14 +686,14 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
 
   Widget _buildDirectPurchaseCardFromApi(dynamic item) {
     // Todo : checking for status item
-    print(item); // Debug: cek field yang tersedia
+    // print(item);
     // Mapping status dan badge
     String status = item['status'] ?? '';
     Color badgeColor;
     Color badgeTextColor;
     IconData badgeIcon;
     String badgeText;
-    if (status == 'pending_area_manager') {
+    if (status == 'Pending Area Manager') {
       badgeColor = const Color(0xFFFFF9C4);
       badgeTextColor = const Color(0xFFFBC02D);
       badgeIcon = Icons.hourglass_top_rounded;
@@ -701,30 +720,122 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: const EdgeInsets.only(bottom: 16),
       color: Colors.white,
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // No Direct dan tombol copy di satu baris
+            Row(
               children: [
+                Text(
+                  'No Direct: ',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: Color(0xFFE91E63),
+                  ),
+                ),
+                Expanded(
+                  child: Tooltip(
+                    message: getNoDirect(item),
+                    child: Text(
+                      getNoDirect(item),
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.normal,
+                        fontSize: 15,
+                        color: Color(0xFFE91E63),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.copy, size: 18, color: Color(0xFFE91E63)),
+                  tooltip: 'Copy No Direct',
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: getNoDirect(item)));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('No Direct berhasil disalin!'),
+                        backgroundColor: Colors.green,
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints(),
+                ),
+              ],
+            ),
+            // Badge status di baris berikutnya, rata kanan
+            Row(
+              children: [
+                Spacer(),
+                Container(
+                  constraints: const BoxConstraints(maxWidth: 140),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: badgeColor,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: badgeColor.withOpacity(0.18),
+                        blurRadius: 4,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(badgeIcon, color: badgeTextColor, size: 16),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          badgeText,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                            color: badgeTextColor,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.store, color: Color(0xFFE91E63), size: 16),
+                SizedBox(width: 6),
                 RichText(
                   text: TextSpan(
                     children: [
                       TextSpan(
-                        text: 'No Direct: ',
+                        text: 'Supplier: ',
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: Color(0xFFE91E63),
+                          fontSize: 14,
+                          color: Colors.grey[800],
                         ),
                       ),
                       TextSpan(
-                        text: getNoDirect(item),
+                        text: item['supplier'] ?? '-',
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.normal,
-                          fontSize: 15,
-                          color: Color(0xFFE91E63),
+                          fontSize: 14,
+                          color: Colors.grey[800],
                         ),
                       ),
                     ],
@@ -732,149 +843,71 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.store, color: Color(0xFFE91E63), size: 16),
-                    SizedBox(width: 6),
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: 'Supplier: ',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: Colors.grey[800],
-                            ),
-                          ),
-                          TextSpan(
-                            text: item['supplier'] ?? '-',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.normal,
-                              fontSize: 14,
-                              color: Colors.grey[800],
-                            ),
-                          ),
-                        ],
+              ],
+            ),
+            SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(Icons.calendar_today, color: Color(0xFFE91E63), size: 16),
+                SizedBox(width: 6),
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Date: ',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Colors.grey[900],
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-                SizedBox(height: 6),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.calendar_today,
-                      color: Color(0xFFE91E63),
-                      size: 16,
-                    ),
-                    SizedBox(width: 6),
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: 'Date: ',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: Colors.grey[900],
-                            ),
-                          ),
-                          TextSpan(
-                            text: getDate(item),
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.normal,
-                              fontSize: 14,
-                              color: Colors.grey[900],
-                            ),
-                          ),
-                        ],
+                      TextSpan(
+                        text: getDate(item),
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.normal,
+                          fontSize: 14,
+                          color: Colors.grey[900],
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: OutlinedButton.icon(
-                    onPressed: () => _showDetailPopup(item),
-                    icon: Icon(
-                      Icons.info_outline_rounded,
-                      color: Color(0xFFE91E63),
-                      size: 18,
-                    ),
-                    label: Text(
-                      'Detail',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFFE91E63),
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      side: BorderSide(color: Color(0xFFE91E63), width: 2),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 14,
-                      ),
-                      elevation: 0,
-                      minimumSize: Size(120, 44),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
+                    ],
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
-          ),
-          Positioned(
-            top: 14,
-            right: 18,
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 120),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: badgeColor,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: badgeColor.withOpacity(0.18),
-                    blurRadius: 4,
-                    offset: Offset(0, 1),
+            SizedBox(height: 16),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: OutlinedButton.icon(
+                onPressed: () => _showDetailPopup(item),
+                icon: Icon(
+                  Icons.info_outline_rounded,
+                  color: Color(0xFFE91E63),
+                  size: 18,
+                ),
+                label: Text(
+                  'Detail',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFE91E63),
                   ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Icon(badgeIcon, color: badgeTextColor, size: 16),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      badgeText,
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 12,
-                        color: badgeTextColor,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: true,
-                    ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  side: BorderSide(color: Color(0xFFE91E63), width: 2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                ],
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  elevation: 0,
+                  minimumSize: Size(120, 44),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -902,6 +935,8 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                 ),
               ],
             ),
+
+            // todo : styling for detail popup items
             child: Form(
               key: _detailKey,
               child: Padding(
@@ -940,6 +975,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                       ),
                       _buildDetailRow('Status', item['status'] ?? '-'),
                       _buildDetailRow('Note', item['note'] ?? '-'),
+                      _buildDetailRow('Image', item['purchase_proof']),
                       SizedBox(height: 12),
                       Text(
                         'Items:',
@@ -952,12 +988,12 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                                     vertical: 4.0,
                                   ),
                                   child: Text(
-                                    '- ${itm['itemName'] ?? itm['item_name'] ?? '-'} | Qty: ${itm['quantity']} | Price: ${itm['price']} | Total: ${itm['totalPrice'] ?? itm['total_price']}',
+                                    '- ${itm['itemName'] ?? itm['item_name'] ?? '-'} | Qty: ${itm['quantity']} | Price: ${itm['price']} | Total: ${itm['totalPrice'] ?? itm['total_price']} ',
                                     style: GoogleFonts.poppins(fontSize: 13),
                                   ),
                                 ),
                               )
-                              ?.toList() ??
+                              .toList() ??
                           []),
                       SizedBox(height: 18),
                       if ((item['status'] ?? '').toLowerCase() ==
@@ -1018,7 +1054,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   Future<void> _approveDirectPurchase(dynamic item) async {
     try {
       final id = item['id'];
-      await _authService.approveByAreaManager(id, true);
+      await _directService.approveByAreaManager(id, true);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Berhasil approve!'),
@@ -1232,8 +1268,8 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                   _expandedMenuIndex = STOCK_MANAGEMENT_MENU;
                 }
               });
-              // Navigator.pushReplacement(context, _getPageRouteByIndex(index));
-              // if (isMobile && closeDrawer != null) closeDrawer();
+              Navigator.pushReplacement(context, _getPageRouteByIndex(index));
+              if (isMobile && closeDrawer != null) closeDrawer();
             }
           },
           dense: true,
@@ -1247,48 +1283,49 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     );
   }
 
-  // Route _getPageRouteByIndex(int index) {
-  //   switch (index) {
-  //     case 0:
-  //       return MaterialPageRoute(
-  //         builder: (context) => DashboardPage(selectedIndex: 0),
-  //       );
-  //     case 11:
-  //       return MaterialPageRoute(
-  //         builder: (context) => DirectPurchasePage(selectedIndex: 11),
-  //       );
-  //     case 12:
-  //       return MaterialPageRoute(
-  //         builder: (context) => GRPO_Page(selectedIndex: 12),
-  //       );
-  //     case 21:
-  //       return MaterialPageRoute(
-  //         builder: (context) => MaterialRequestPage(selectedIndex: 21),
-  //       );
-  //     case 22:
-  //       return MaterialPageRoute(
-  //         builder: (context) => StockOpnamePage(selectedIndex: 22),
-  //       );
-  //     case 23:
-  //       return MaterialPageRoute(
-  //         builder: (context) => TransferStockPage(selectedIndex: 23),
-  //       );
-  //     case 24:
-  //       return MaterialPageRoute(
-  //         builder: (context) => WastePage(selectedIndex: 24),
-  //       );
-  //     case 25:
-  //       return MaterialPageRoute(
-  //         builder: (context) => MaterialCalculatePage(selectedIndex: 25),
-  //       );
-  //     default:
-  //       return MaterialPageRoute(
-  //         builder: (context) => DirectPurchasePage(selectedIndex: 11),
-  //       );
-  //   }
-  // }
+  //Todo : Routing navigation page for each menu
+  Route _getPageRouteByIndex(int index) {
+    switch (index) {
+      case 0:
+        return MaterialPageRoute(
+          builder: (context) => DashboardPage(selectedIndex: 0),
+        );
+      case 11:
+        return MaterialPageRoute(
+          builder: (context) => DirectPurchasePage(selectedIndex: 11),
+        );
+      case 12:
+        return MaterialPageRoute(
+          builder: (context) => GRPO_Page(selectedIndex: 12),
+        );
+      case 21:
+        return MaterialPageRoute(
+          builder: (context) => MaterialRequestPage(selectedIndex: 21),
+        );
+      case 22:
+        return MaterialPageRoute(
+          builder: (context) => StockOpnamePage(selectedIndex: 22),
+        );
+      case 23:
+        return MaterialPageRoute(
+          builder: (context) => TransferStockPage(selectedIndex: 23),
+        );
+      case 24:
+        return MaterialPageRoute(
+          builder: (context) => WastePage(selectedIndex: 24),
+        );
+      case 25:
+        return MaterialPageRoute(
+          builder: (context) => MaterialCalculatePage(selectedIndex: 25),
+        );
+      default:
+        return MaterialPageRoute(
+          builder: (context) => DirectPurchasePage(selectedIndex: 11),
+        );
+    }
+  }
 
-  // Todo : Routing navigation page for each page
+  // Todo :Routing navigation page for each dropdown page
   void _navigateToPage(int index) {
     switch (index) {
       case 0: // Dashboard
@@ -1365,6 +1402,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     }
   }
 
+  //Todo : Icons
   IconData _getSubMenuIcon(int index) {
     switch (index) {
       case 11: // Direct Purchase
@@ -1385,7 +1423,6 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
         return Icons.circle_outlined;
     }
   }
-  // =========================================================================================== //
 
   Widget _buildStoreDropdown() {
     return Container(
@@ -1737,6 +1774,7 @@ class _AddDirectPurchaseFormContentState
 
   final Color deepPink = const Color.fromARGB(255, 233, 30, 99);
   final AuthService _authService = AuthService();
+  final DirectService _directService = DirectService();
 
   @override
   void initState() {
@@ -1850,7 +1888,7 @@ class _AddDirectPurchaseFormContentState
           .toList();
       final dateStr =
           '${_purchaseDate!.year}-${_purchaseDate!.month.toString().padLeft(2, '0')}-${_purchaseDate!.day.toString().padLeft(2, '0')}';
-      await _authService.createDirectPurchase(
+      await _directService.createDirectPurchase(
         date: dateStr,
         supplier: _supplierController.text.trim(),
         expenseType: _expenseType ?? 'Inventory',

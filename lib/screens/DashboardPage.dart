@@ -13,8 +13,8 @@ import 'Resource/Auth/Notification_Page.dart';
 import 'Resource/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
-import 'package:flutter/rendering.dart';
-import 'dart:ui';
+// import 'package:flutter/rendering.dart;
+// import 'dart:ui';
 
 class DashboardPage extends StatefulWidget {
   final int selectedIndex;
@@ -236,14 +236,14 @@ class _DashboardPageState extends State<DashboardPage>
     final position = renderBox.localToGlobal(Offset.zero);
 
     _notificationOverlayEntry = OverlayEntry(
-      builder: (context) => _buildNotificationBubble(position, size),
+      builder: (context) => _buildNotificationBubbleAnimated(position, size),
     );
 
     Overlay.of(context).insert(_notificationOverlayEntry!);
     _notificationAnimationController.forward();
   }
 
-  Widget _buildNotificationBubble(Offset position, Size size) {
+  Widget _buildNotificationBubbleAnimated(Offset position, Size size) {
     return Stack(
       children: [
         Positioned.fill(
@@ -260,20 +260,17 @@ class _DashboardPageState extends State<DashboardPage>
             animation: _notificationAnimationController,
             builder: (context, child) {
               final animValue = _notificationAnimationController.value;
-              final scale = 0.9 + 0.1 * Curves.easeOutExpo.transform(animValue);
-              final slide = Offset(
-                (1 - animValue) * 0.08,
-                (1 - animValue) * -0.08,
-              );
-              return Opacity(
-                opacity: animValue,
-                child: Transform.translate(
-                  offset: Offset(slide.dx * 270, slide.dy * 180),
-                  child: Transform.scale(
-                    scale: scale,
-                    alignment: Alignment.topRight,
-                    child: child,
+              return FadeTransition(
+                opacity: _notificationAnimationController,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.85, end: 1.0).animate(
+                    CurvedAnimation(
+                      parent: _notificationAnimationController,
+                      curve: Curves.easeOutBack,
+                    ),
                   ),
+                  alignment: Alignment.topRight,
+                  child: child,
                 ),
               );
             },
@@ -288,14 +285,16 @@ class _DashboardPageState extends State<DashboardPage>
     final List<Map<String, dynamic>> previewNotifs = notifications
         .take(4)
         .toList();
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
     return Material(
       color: Colors.white.withOpacity(0.98),
       elevation: 16,
       shadowColor: Colors.black.withOpacity(0.10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
-        width: 250,
-        constraints: BoxConstraints(maxHeight: 180),
+        width: isMobile ? screenWidth * 0.85 : 250,
+        constraints: BoxConstraints(maxHeight: isMobile ? 220 : 180),
         padding: const EdgeInsets.only(top: 10, bottom: 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -452,13 +451,18 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   Widget _buildModernSearchBar() {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(24.0),
-      elevation: 8.0,
-      shadowColor: Colors.black.withOpacity(0.12),
+      elevation: 12.0,
+      shadowColor: deepPink.withOpacity(0.10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 10 : 20,
+          vertical: isMobile ? 8 : 12,
+        ),
         child: FadeTransition(
           opacity: CurvedAnimation(
             parent: _searchAnimationController,
@@ -477,26 +481,31 @@ class _DashboardPageState extends State<DashboardPage>
                 ),
             child: Row(
               children: [
-                Icon(Icons.search, color: deepPink.withOpacity(0.8), size: 24),
-                const SizedBox(width: 16),
-                Expanded(
+                Icon(
+                  Icons.search,
+                  color: deepPink.withOpacity(0.8),
+                  size: isMobile ? 20 : 24,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
                   child: TextField(
                     style: GoogleFonts.poppins(
-                      fontSize: 16,
+                      fontSize: isMobile ? 14 : 16,
                       color: Colors.black87,
                     ),
                     decoration: InputDecoration.collapsed(
                       hintText: 'Search anything...',
                       hintStyle: GoogleFonts.poppins(
                         color: Colors.grey.shade500,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 IconButton(
                   icon: const Icon(Icons.close),
-                  color: Colors.grey.shade500,
+                  color: deepPink,
                   splashRadius: 20,
                   onPressed: _toggleSearch,
                 ),
@@ -822,6 +831,7 @@ class _DashboardPageState extends State<DashboardPage>
                     index: 4,
                     onTap: () {
                       setState(() => _selectedIndex = 4);
+                      _navigateToPage(4);
                       if (isMobile && closeDrawer != null) closeDrawer();
                     },
                   ),
@@ -831,6 +841,7 @@ class _DashboardPageState extends State<DashboardPage>
                     index: 5,
                     onTap: () {
                       setState(() => _selectedIndex = 5);
+                      _navigateToPage(5);
                       if (isMobile && closeDrawer != null) closeDrawer();
                     },
                   ),
@@ -862,6 +873,7 @@ class _DashboardPageState extends State<DashboardPage>
           borderRadius: BorderRadius.circular(8),
         ),
         child: ListTile(
+          horizontalTitleGap: 12,
           leading: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -923,6 +935,7 @@ class _DashboardPageState extends State<DashboardPage>
             borderRadius: BorderRadius.circular(8),
           ),
           child: ListTile(
+            horizontalTitleGap: 12,
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -995,6 +1008,7 @@ class _DashboardPageState extends State<DashboardPage>
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
+        horizontalTitleGap: 12,
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
@@ -1074,6 +1088,19 @@ class _DashboardPageState extends State<DashboardPage>
           context,
           MaterialPageRoute(builder: (context) => MaterialCalculatePage()),
         );
+        break;
+      case 4: // Account & Settings
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const UserprofilePage()),
+        );
+        break;
+      case 5: // Help
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => HelpPage()),
+        );
+        break;
     }
   }
 
@@ -1101,13 +1128,29 @@ class _DashboardPageState extends State<DashboardPage>
   Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 14 : 32,
-        vertical: isMobile ? 20 : 24,
+        horizontal: isMobile ? 8 : 24,
+        vertical: isMobile ? 12 : 18,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
+        gradient: RadialGradient(
+          center: const Alignment(0, -1.5), // Center of the glow
+          radius: 1.2,
+          colors: [
+            lightPink.withOpacity(0.6), // Glow color
+            Colors.white, // Fading to white
+          ],
+          stops: const [0.0, 0.8],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
         border: Border(
-          bottom: BorderSide(color: Colors.grey.withOpacity(0.15), width: 1.5),
+          bottom: BorderSide(color: Colors.grey.shade200, width: 1),
         ),
       ),
       child: Row(
@@ -1122,48 +1165,72 @@ class _DashboardPageState extends State<DashboardPage>
                 },
               ),
             ),
+          // Judul halaman
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Dashboard',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    fontSize: isMobile ? 22 : 28,
-                    color: Colors.black87,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+            child: Container(
+              alignment: Alignment.centerLeft,
+              padding: EdgeInsets.only(left: isMobile ? 4 : 8),
+              child: Text(
+                'Dashboard',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: isMobile ? 20 : 26,
+                  color: Colors.black.withOpacity(0.8),
                 ),
-              ],
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
           SizedBox(width: isMobile ? 8 : 18),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _modernHeaderIcon(icon: Icons.search, onTap: _toggleSearch),
-              SizedBox(width: isMobile ? 8 : 14),
-              SizedBox(
-                key: _notificationIconKey,
-                child: _modernHeaderIcon(
-                  icon: Icons.notifications_none_outlined,
-                  onTap: _toggleNotificationOverlay,
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 6 : 10,
+              vertical: isMobile ? 6 : 8,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
                 ),
-              ),
-              SizedBox(width: isMobile ? 8 : 14),
-              _modernHeaderIcon(
-                icon: Icons.mail_outline,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => EmailPage()),
-                  );
-                },
-              ),
-              SizedBox(width: isMobile ? 8 : 14),
-              _modernHeaderAvatar(),
-            ],
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _modernHeaderIcon(
+                  icon: Icons.search,
+                  onTap: _toggleSearch,
+                  isMobile: isMobile,
+                ),
+                SizedBox(width: isMobile ? 6 : 10),
+                SizedBox(
+                  key: _notificationIconKey,
+                  child: _modernHeaderIcon(
+                    icon: Icons.notifications_none_outlined,
+                    onTap: _toggleNotificationOverlay,
+                    badge: notifications.isNotEmpty,
+                    isMobile: isMobile,
+                  ),
+                ),
+                SizedBox(width: isMobile ? 6 : 10),
+                _modernHeaderIcon(
+                  icon: Icons.mail_outline,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => EmailPage()),
+                    );
+                  },
+                  isMobile: isMobile,
+                ),
+                SizedBox(width: isMobile ? 6 : 10),
+                _modernHeaderAvatar(isMobile: isMobile),
+              ],
+            ),
           ),
         ],
       ),
@@ -1173,6 +1240,8 @@ class _DashboardPageState extends State<DashboardPage>
   Widget _modernHeaderIcon({
     required IconData icon,
     required VoidCallback onTap,
+    bool badge = false,
+    bool isMobile = false,
   }) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -1181,28 +1250,67 @@ class _DashboardPageState extends State<DashboardPage>
         child: AnimatedContainer(
           duration: Duration(milliseconds: 180),
           curve: Curves.easeInOut,
-          padding: EdgeInsets.all(10),
+          padding: EdgeInsets.all(isMobile ? 7 : 9),
           decoration: BoxDecoration(
             color: Colors.grey.shade100,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.grey.shade200.withOpacity(0.8)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
           ),
-          child: Icon(icon, color: Colors.black54, size: 22),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(icon, color: Colors.black54, size: isMobile ? 20 : 22),
+              if (badge)
+                Positioned(
+                  right: -2,
+                  top: -2,
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: deepPink,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _modernHeaderAvatar() {
+  Widget _modernHeaderAvatar({bool isMobile = false}) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () {
           _showProfileMenu(context);
         },
-        child: CircleAvatar(
-          backgroundImage: AssetImage('assets/images/avatar.jpg'),
-          radius: 20,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: deepPink.withOpacity(0.2), width: 2),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: deepPink.withOpacity(0.08),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: CircleAvatar(
+            backgroundImage: AssetImage('assets/images/avatar.jpg'),
+            radius: isMobile ? 18 : 20,
+          ),
         ),
       ),
     );
