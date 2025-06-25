@@ -9,27 +9,37 @@ import 'package:miniproject_flutter/screens/Resource/Auth/UserProfile_Page.dart'
 import 'package:miniproject_flutter/screens/Resource/Auth/Help_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/Waste_Page.dart';
 import 'package:miniproject_flutter/services/authService.dart';
+import 'package:miniproject_flutter/services/GrpoService.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 
 class GRPO_Page extends StatefulWidget {
   final int selectedIndex;
   const GRPO_Page({this.selectedIndex = 12, Key? key}) : super(key: key);
 
   @override
-  _GrpoPageState createState() => _GrpoPageState();
+  GrpoPageState createState() => GrpoPageState();
 }
 
-class _GrpoPageState extends State<GRPO_Page> {
-  bool isOutstandingSelected =
-      true; // Track selected tab (Outstanding or Approved)
+class GrpoPageState extends State<GRPO_Page> {
+  bool isOutstandingSelected = true;
   bool _isSidebarExpanded = true;
   bool _isProfileMenuOpen = false;
   bool _isStoreMenuOpen = false;
   int? _expandedMenuIndex;
   int? _hoveredIndex;
   int get _selectedIndex => widget.selectedIndex;
+
+  // Tambahan untuk integrasi API
+  final GrpoService _grpoService = GrpoService();
+  List<dynamic> _shippingPOs = [];
+  List<dynamic> _receivedGrpos = [];
+  bool _isLoading = false;
+  String? _errorMessage;
+  String _searchQuery = '';
 
   final Color primaryColor = const Color(0xFFF8BBD0);
   final Color deepPink = const Color.fromARGB(255, 233, 30, 99);
@@ -40,16 +50,174 @@ class _GrpoPageState extends State<GRPO_Page> {
 
   final AuthService _authService = AuthService();
 
-  bool _isMainMenuActive(int index) {
-    return _selectedIndex == index;
+  @override
+  void initState() {
+    super.initState();
+    if (_selectedIndex == 11 || _selectedIndex == 12) {
+      _expandedMenuIndex = PURCHASING_MENU;
+    }
+    _fetchData();
   }
 
-  bool _isSubMenuActive(int index) {
-    return _selectedIndex == index || _hoveredIndex == index;
+  Future<void> _fetchData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      print(
+        'Fetching data for tab: ${isOutstandingSelected ? "Shipping" : "Received"}',
+      );
+
+      // Fetch semua data GRPO terlebih dahulu
+      final allData = await _grpoService.fetchAllGrpo();
+      print('All GRPO data received: ${allData.length} items');
+
+      // Debug: print struktur data pertama
+      if (allData.isNotEmpty) {
+        print('Sample data structure: ${allData.first}');
+      }
+
+      setState(() {
+        // Filter data berdasarkan status
+        if (isOutstandingSelected) {
+          // Tab Shipping - ambil data yang statusnya shipping/pending
+          _shippingPOs = allData.where((item) {
+            final status = item['status']?.toString().toLowerCase() ?? '';
+            return status.contains('shipping') ||
+                status.contains('pending') ||
+                status == '' ||
+                status == 'null';
+          }).toList();
+        } else {
+          // Tab Received - ambil data yang statusnya received/completed
+          _receivedGrpos = allData.where((item) {
+            final status = item['status']?.toString().toLowerCase() ?? '';
+            return status.contains('received') ||
+                status.contains('completed') ||
+                status.contains('approved');
+          }).toList();
+        }
+        _isLoading = false;
+      });
+
+      print(
+        'Filtered data - Shipping: ${_shippingPOs.length}, Received: ${_receivedGrpos.length}',
+      );
+    } catch (e) {
+      print('Error fetching data: $e');
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Gagal memuat data: ${e.toString()}';
+      });
+    }
   }
 
-  void _showAddGRPOForm() {
-    showModalBottomSheet(
+  Future<void> _fetchAllData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      print('Fetching all GRPO data...');
+
+      // Fetch semua data GRPO
+      final allData = await _grpoService.fetchAllGrpo();
+      print('All GRPO data received: ${allData.length} items');
+
+      // Filter data untuk kedua tab
+      final shippingData = allData.where((item) {
+        final status = item['status']?.toString().toLowerCase() ?? '';
+        return status.contains('shipping') ||
+            status.contains('pending') ||
+            status == '' ||
+            status == 'null';
+      }).toList();
+
+      final receivedData = allData.where((item) {
+        final status = item['status']?.toString().toLowerCase() ?? '';
+        return status.contains('received') ||
+            status.contains('completed') ||
+            status.contains('approved');
+      }).toList();
+
+      print(
+        'Filtered data - Shipping: ${shippingData.length}, Received: ${receivedData.length}',
+      );
+
+      setState(() {
+        _shippingPOs = shippingData;
+        _receivedGrpos = receivedData;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching all data: $e');
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Gagal memuat data: ${e.toString()}';
+      });
+    }
+  }
+
+  Future<void> _searchData() async {
+    if (_searchQuery.trim().isEmpty) {
+      _fetchData();
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final data = await _grpoService.searchGrpo(keyword: _searchQuery);
+      print('Search result: ${data.length} items');
+
+      setState(() {
+        if (isOutstandingSelected) {
+          // Filter search result untuk tab shipping
+          _shippingPOs = data.where((item) {
+            final status = item['status']?.toString().toLowerCase() ?? '';
+            return status.contains('shipping') ||
+                status.contains('pending') ||
+                status == '' ||
+                status == 'null';
+          }).toList();
+        } else {
+          // Filter search result untuk tab received
+          _receivedGrpos = data.where((item) {
+            final status = item['status']?.toString().toLowerCase() ?? '';
+            return status.contains('received') ||
+                status.contains('completed') ||
+                status.contains('approved');
+          }).toList();
+        }
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Gagal mencari data: ${e.toString()}';
+      });
+    }
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {
+      _searchQuery = value;
+    });
+    _searchData();
+  }
+
+  void _onTabChanged(bool outstanding) {
+    setState(() {
+      isOutstandingSelected = outstanding;
+    });
+    _fetchData();
+  }
+
+  void _showAddGRPOForm() async {
+    final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -68,10 +236,19 @@ class _GrpoPageState extends State<GRPO_Page> {
               ),
             ],
           ),
-          child: _AddGRPOFormContent(),
+          child: _AddGRPOFormContent(
+            onSuccess: () {
+              Navigator.pop(context, true);
+            },
+          ),
         );
       },
     );
+    if (result == true) {
+      print('GRPO added successfully, refreshing data...');
+      // Refresh data seperti di DirectPurchase Page
+      _fetchData();
+    }
   }
 
   Widget _buildTextField(String label) {
@@ -85,8 +262,6 @@ class _GrpoPageState extends State<GRPO_Page> {
       ),
     );
   }
-
-  //header
 
   @override
   Widget build(BuildContext context) {
@@ -341,7 +516,7 @@ class _GrpoPageState extends State<GRPO_Page> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search Bar Section (duplikasi desain Direct Purchase)
+            // Search Bar Section
             Padding(
               padding: const EdgeInsets.only(top: 24.0, bottom: 16.0),
               child: Row(
@@ -364,6 +539,7 @@ class _GrpoPageState extends State<GRPO_Page> {
                         ],
                       ),
                       child: TextField(
+                        onChanged: _onSearchChanged,
                         decoration: InputDecoration(
                           prefixIcon: Icon(
                             Icons.search,
@@ -408,13 +584,13 @@ class _GrpoPageState extends State<GRPO_Page> {
                     ),
                     child: IconButton(
                       icon: Icon(Icons.filter_alt, color: Colors.white),
-                      onPressed: () {},
+                      onPressed: _fetchData,
                     ),
                   ),
                 ],
               ),
             ),
-            // Taskbar Outstanding/Received (pertahankan logika GRPO)
+            // Taskbar Outstanding/Received
             Container(
               padding: EdgeInsets.all(3),
               decoration: BoxDecoration(
@@ -432,11 +608,7 @@ class _GrpoPageState extends State<GRPO_Page> {
                 children: [
                   Expanded(
                     child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          isOutstandingSelected = true;
-                        });
-                      },
+                      onTap: () => _onTabChanged(true),
                       child: Container(
                         padding: EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
@@ -460,7 +632,7 @@ class _GrpoPageState extends State<GRPO_Page> {
                             ),
                           ],
                           border: Border.all(
-                          color: isOutstandingSelected
+                            color: isOutstandingSelected
                                 ? Colors.transparent
                                 : Color(0xFFE91E63),
                             width: 2,
@@ -484,11 +656,7 @@ class _GrpoPageState extends State<GRPO_Page> {
                   const SizedBox(width: 18),
                   Expanded(
                     child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          isOutstandingSelected = false;
-                        });
-                      },
+                      onTap: () => _onTabChanged(false),
                       child: Container(
                         padding: EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
@@ -512,7 +680,7 @@ class _GrpoPageState extends State<GRPO_Page> {
                             ),
                           ],
                           border: Border.all(
-                          color: !isOutstandingSelected
+                            color: !isOutstandingSelected
                                 ? Colors.transparent
                                 : Color(0xFFE91E63),
                             width: 2,
@@ -537,43 +705,37 @@ class _GrpoPageState extends State<GRPO_Page> {
               ),
             ),
             const SizedBox(height: 20),
-            // Card List (duplikasi desain Direct Purchase, data tetap GRPO)
+            // Card List
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: isOutstandingSelected
-                      ? [
-                          _buildShippingCard(
-                            'PO-2023-1',
-                            'Supplier 1',
-                            '24/04/2025',
-                            'Shipping',
-                          ),
-                          _buildShippingCard(
-                            'PO-2023-2',
-                            'Supplier 2',
-                            '25/04/2025',
-                            'Shipping',
-                          ),
-                        ]
-                      : [
-                          _buildReceivedCard(
-                            'GRPO-2023-1',
-                            'PO-2023-1',
-                            'Supplier 1',
-                            '24/04/2025',
-                            'Received',
-                          ),
-                          _buildReceivedCard(
-                            'GRPO-2023-2',
-                            'PO-2023-2',
-                            'Supplier 2',
-                            '25/04/2025',
-                            'Received',
-                          ),
-                        ],
-                ),
-              ),
+              child: _isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : _errorMessage != null
+                  ? Center(child: Text(_errorMessage!))
+                  : isOutstandingSelected
+                  ? (_shippingPOs.isEmpty
+                        ? Center(child: Text('Tidak ada data shipping'))
+                        : RefreshIndicator(
+                            onRefresh: _fetchData,
+                            child: ListView.builder(
+                              itemCount: _shippingPOs.length,
+                              itemBuilder: (context, index) {
+                                final item = _shippingPOs[index];
+                                return _buildShippingCardFromApi(item);
+                              },
+                            ),
+                          ))
+                  : (_receivedGrpos.isEmpty
+                        ? Center(child: Text('Tidak ada data received'))
+                        : RefreshIndicator(
+                            onRefresh: _fetchData,
+                            child: ListView.builder(
+                              itemCount: _receivedGrpos.length,
+                              itemBuilder: (context, index) {
+                                final item = _receivedGrpos[index];
+                                return _buildReceivedCardFromApi(item);
+                              },
+                            ),
+                          )),
             ),
           ],
         ),
@@ -604,16 +766,7 @@ class _GrpoPageState extends State<GRPO_Page> {
     );
   }
 
-  Widget _buildShippingCard(
-    String poNumber,
-    String supplier,
-    String receiveDate,
-    String status,
-  ) {
-    Color badgeColor = const Color(0xFFFFF9C4);
-    Color badgeTextColor = const Color(0xFFFBC02D);
-    IconData badgeIcon = Icons.local_shipping_rounded;
-    String badgeText = status;
+  Widget _buildShippingCardFromApi(dynamic item) {
     return Card(
       elevation: 8,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -639,7 +792,7 @@ class _GrpoPageState extends State<GRPO_Page> {
                         ),
                       ),
                       TextSpan(
-                        text: poNumber,
+                        text: item['noPo'] ?? item['no_po'] ?? '-',
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.normal,
                           fontSize: 15,
@@ -670,7 +823,10 @@ class _GrpoPageState extends State<GRPO_Page> {
                               ),
                             ),
                             TextSpan(
-                              text: supplier,
+                              text:
+                                  item['supplier'] ??
+                                  item['supplier_name'] ??
+                                  '-',
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.normal,
                                 fontSize: 14,
@@ -708,7 +864,7 @@ class _GrpoPageState extends State<GRPO_Page> {
                               ),
                             ),
                             TextSpan(
-                              text: receiveDate,
+                              text: item['receive_date'] ?? '-',
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.normal,
                                 fontSize: 14,
@@ -767,11 +923,11 @@ class _GrpoPageState extends State<GRPO_Page> {
               constraints: const BoxConstraints(maxWidth: 120),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: badgeColor,
+                color: const Color(0xFFFFF9C4),
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: badgeColor.withOpacity(0.18),
+                    color: const Color(0xFFFFF9C4).withOpacity(0.18),
                     blurRadius: 4,
                     offset: Offset(0, 1),
                   ),
@@ -781,15 +937,19 @@ class _GrpoPageState extends State<GRPO_Page> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Icon(badgeIcon, color: badgeTextColor, size: 16),
+                  Icon(
+                    Icons.local_shipping_rounded,
+                    color: const Color(0xFFFBC02D),
+                    size: 16,
+                  ),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
-                      badgeText,
+                      'Shipping',
                       style: GoogleFonts.poppins(
                         fontWeight: FontWeight.w500,
                         fontSize: 12,
-                        color: badgeTextColor,
+                        color: const Color(0xFFFBC02D),
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -805,17 +965,7 @@ class _GrpoPageState extends State<GRPO_Page> {
     );
   }
 
-  Widget _buildReceivedCard(
-    String grpoNumber,
-    String poNumber,
-    String supplier,
-    String receiveDate,
-    String status,
-  ) {
-    Color badgeColor = const Color(0xFF90CAF9);
-    Color badgeTextColor = const Color(0xFF1565C0);
-    IconData badgeIcon = Icons.verified_rounded;
-    String badgeText = status;
+  Widget _buildReceivedCardFromApi(dynamic item) {
     return Card(
       elevation: 8,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -841,7 +991,7 @@ class _GrpoPageState extends State<GRPO_Page> {
                         ),
                       ),
                       TextSpan(
-                        text: grpoNumber,
+                        text: item['grpo_number'] ?? item['no_grpo'] ?? '-',
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.normal,
                           fontSize: 15,
@@ -866,7 +1016,7 @@ class _GrpoPageState extends State<GRPO_Page> {
                         ),
                       ),
                       TextSpan(
-                        text: poNumber,
+                        text: item['no_po'] ?? item['po_number'] ?? '-',
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.normal,
                           fontSize: 14,
@@ -897,7 +1047,10 @@ class _GrpoPageState extends State<GRPO_Page> {
                               ),
                             ),
                             TextSpan(
-                              text: supplier,
+                              text:
+                                  item['supplier'] ??
+                                  item['supplier_name'] ??
+                                  '-',
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.normal,
                                 fontSize: 14,
@@ -935,7 +1088,7 @@ class _GrpoPageState extends State<GRPO_Page> {
                               ),
                             ),
                             TextSpan(
-                              text: receiveDate,
+                              text: item['receive_date'] ?? '-',
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.normal,
                                 fontSize: 14,
@@ -994,11 +1147,11 @@ class _GrpoPageState extends State<GRPO_Page> {
               constraints: const BoxConstraints(maxWidth: 120),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: badgeColor,
+                color: const Color(0xFF90CAF9),
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: badgeColor.withOpacity(0.18),
+                    color: const Color(0xFF90CAF9).withOpacity(0.18),
                     blurRadius: 4,
                     offset: Offset(0, 1),
                   ),
@@ -1008,15 +1161,19 @@ class _GrpoPageState extends State<GRPO_Page> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Icon(badgeIcon, color: badgeTextColor, size: 16),
+                  Icon(
+                    Icons.verified_rounded,
+                    color: const Color(0xFF1565C0),
+                    size: 16,
+                  ),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
-                      badgeText,
+                      'Received',
                       style: GoogleFonts.poppins(
                         fontWeight: FontWeight.w500,
                         fontSize: 12,
-                        color: badgeTextColor,
+                        color: const Color(0xFF1565C0),
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -1082,6 +1239,15 @@ class _GrpoPageState extends State<GRPO_Page> {
     required int menuIndex,
   }) {
     final isMenuExpanded = _expandedMenuIndex == menuIndex;
+    // Cek jika ada submenu yang sedang aktif pada menu ini
+    bool isAnySubMenuActive = false;
+    if (menuIndex == PURCHASING_MENU) {
+      isAnySubMenuActive = [11, 12].contains(_selectedIndex);
+    } else if (menuIndex == STOCK_MANAGEMENT_MENU) {
+      isAnySubMenuActive = [21, 22, 23, 24, 25].contains(_selectedIndex);
+    }
+    // Jika ada submenu aktif, nonaktifkan hover/active background pada parent
+    final bool highlightParent = isExpanded && !isAnySubMenuActive;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1089,35 +1255,39 @@ class _GrpoPageState extends State<GRPO_Page> {
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: isMenuExpanded ? lightPink.withOpacity(0.3) : Colors.transparent,
+            color: highlightParent
+                ? lightPink.withOpacity(0.3)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: ListTile(
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isMenuExpanded
+                color: highlightParent
                     ? deepPink.withOpacity(0.1)
                     : Colors.grey.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 icon,
-                color: isMenuExpanded ? deepPink : Colors.grey,
+                color: highlightParent ? deepPink : Colors.grey,
                 size: 20,
               ),
             ),
             title: Text(
               title,
               style: GoogleFonts.poppins(
-                color: isMenuExpanded ? deepPink : Colors.grey,
-                fontWeight: isMenuExpanded ? FontWeight.bold : FontWeight.normal,
+                color: highlightParent ? deepPink : Colors.grey,
+                fontWeight: highlightParent
+                    ? FontWeight.bold
+                    : FontWeight.normal,
                 fontSize: 14,
               ),
             ),
             trailing: Icon(
               isMenuExpanded ? Icons.expand_less : Icons.expand_more,
-              color: isMenuExpanded ? deepPink : Colors.grey,
+              color: highlightParent ? deepPink : Colors.grey,
             ),
             onTap: () {
               setState(() {
@@ -1637,10 +1807,20 @@ class _GrpoPageState extends State<GRPO_Page> {
       }
     }
   }
+
+  bool _isMainMenuActive(int index) {
+    return _selectedIndex == index;
+  }
+
+  bool _isSubMenuActive(int index) {
+    return _selectedIndex == index || _hoveredIndex == index;
+  }
 }
 
 class _AddGRPOFormContent extends StatefulWidget {
-  const _AddGRPOFormContent({Key? key}) : super(key: key);
+  final VoidCallback onSuccess;
+  const _AddGRPOFormContent({Key? key, required this.onSuccess})
+    : super(key: key);
 
   @override
   State<_AddGRPOFormContent> createState() => _AddGRPOFormContentState();
@@ -1655,7 +1835,12 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
   final TextEditingController _shipperController = TextEditingController();
   String? _receiveBy = 'John Doe';
   final TextEditingController _supplierController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
   final List<Map<String, dynamic>> _items = [];
+  List<File> _files = [];
+  bool _isSubmitting = false;
+
+  final GrpoService _grpoService = GrpoService();
 
   @override
   void initState() {
@@ -1685,6 +1870,25 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
     }
   }
 
+  Future<void> _pickFiles() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'svg'],
+      );
+      if (result != null) {
+        setState(() {
+          _files = result.paths.map((path) => File(path!)).toList();
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking files: ${e.toString()}')),
+      );
+    }
+  }
+
   @override
   void dispose() {
     for (var item in _items) {
@@ -1696,7 +1900,121 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
     _grpoController.dispose();
     _shipperController.dispose();
     _supplierController.dispose();
+    _notesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    // Validasi field wajib
+    if (_poController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No. PO wajib diisi'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    if (_receiveDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Tanggal receive wajib diisi'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    if (_shipperController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Shipper wajib diisi'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    if (_items.any(
+      (item) =>
+          item['code'].text.trim().isEmpty || item['name'].text.trim().isEmpty,
+    )) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Item code dan name wajib diisi'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      // Test koneksi terlebih dahulu
+      final isConnected = await _grpoService.testConnection();
+      if (!isConnected) {
+        throw Exception(
+          'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.',
+        );
+      }
+
+      // Format items sesuai backend
+      final items = _items
+          .map(
+            (item) => {
+              'item_code': item['code'].text.trim(),
+              'item_name': item['name'].text.trim(),
+              'quantity': int.tryParse(item['qty'].text.trim()) ?? 1,
+              'unit': item['unit'] ?? 'PCS',
+            },
+          )
+          .toList();
+
+      // Format date sesuai backend (YYYY-MM-DD)
+      final dateStr =
+          '${_receiveDate!.year}-${_receiveDate!.month.toString().padLeft(2, '0')}-${_receiveDate!.day.toString().padLeft(2, '0')}';
+
+      print('Submitting GRPO with data:');
+      print('no_po: ${_poController.text.trim()}');
+      print('receive_date: $dateStr');
+      print('expense_type: ${_expenseType ?? 'Inventory'}');
+      print('shipper_name: ${_shipperController.text.trim()}');
+      print('notes: ${_notesController.text.trim()}');
+      print('items: $items');
+      print('files count: ${_files.length}');
+
+      await _grpoService.createGrpo(
+        noPo: _poController.text.trim(),
+        receiveDate: dateStr,
+        expenseType: _expenseType ?? 'Inventory',
+        shipperName: _shipperController.text.trim(),
+        packingSlipFiles: _files,
+        notes: _notesController.text.trim(),
+        items: items,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Berhasil menambah GRPO'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        widget.onSuccess();
+      }
+    } catch (e) {
+      print('Error in _submit: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menambah: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -1704,12 +2022,12 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Column(
-      children: [
-        // Header
-        Container(
+        children: [
+          // Header
+          Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          decoration: BoxDecoration(
-            color: Colors.white,
+            decoration: BoxDecoration(
+              color: Colors.white,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(24),
               ),
@@ -1723,22 +2041,22 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
                   color: Colors.grey[800],
                 ),
               ),
-              ),
+            ),
           ),
           const Divider(height: 1, color: Color.fromARGB(255, 230, 230, 230)),
           // Form
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
               child: Form(
                 key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSection(
-                      title: "Basic Information",
-                  icon: Icons.info_outline,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _buildSection(
+                      title: "Basic Information",
+                      icon: Icons.info_outline,
+                      children: [
                         Row(
                           children: [
                             Expanded(
@@ -1751,19 +2069,19 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
                             const SizedBox(width: 16),
                             Expanded(
                               child: _buildModernTextField(
-                      label: 'NO. GRPO',
+                                label: 'NO. GRPO',
                                 controller: _grpoController,
                                 hint: 'GR-123',
                               ),
                             ),
                           ],
-                    ),
-                    const SizedBox(height: 16),
+                        ),
+                        const SizedBox(height: 16),
                         Row(
                           children: [
                             Expanded(
                               child: _buildModernTextField(
-                      label: 'Receive Date',
+                                label: 'Receive Date',
                                 readOnly: true,
                                 controller: TextEditingController(
                                   text: _receiveDate == null
@@ -1784,7 +2102,7 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
                                     });
                                   }
                                 },
-                      prefixIcon: Icons.calendar_today,
+                                prefixIcon: Icons.calendar_today,
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -1804,19 +2122,19 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
                               ),
                             ),
                           ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildModernTextField(
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildModernTextField(
                                 label: 'Shipper by',
                                 controller: _shipperController,
                                 hint: 'Harries',
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
                               child: _buildModernDropdown(
                                 label: 'Receive by',
                                 value: _receiveBy,
@@ -1829,10 +2147,10 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
                                   }
                                 },
                                 prefixIcon: Icons.person,
-                          ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
                         const SizedBox(height: 16),
                         _buildModernTextField(
                           label: 'Supplier',
@@ -1840,36 +2158,33 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
                           hint: 'MTP',
                           readOnly: true,
                         ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                _buildSection(
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _buildSection(
                       title: 'Item',
                       icon: Icons.inventory_2_outlined,
-                      children: [
-                        _buildItemTable(),
-                      ],
+                      children: [_buildItemTable()],
                     ),
                     const SizedBox(height: 24),
                     _buildSection(
                       title: 'Upload Packing Slip',
                       icon: Icons.upload_file,
-                      children: [
-                        _buildFileUploadSection(),
-                      ],
+                      children: [_buildFileUploadSection()],
                     ),
                     const SizedBox(height: 24),
                     _buildSection(
                       title: 'Notes',
-                  icon: Icons.note_alt_outlined,
-                  children: [
-                    _buildModernTextField(
-                      label: 'Notes',
+                      icon: Icons.note_alt_outlined,
+                      children: [
+                        _buildModernTextField(
+                          label: 'Notes',
+                          controller: _notesController,
                           hint: 'Masukan catatan / remarks',
-                      maxLines: 3,
+                          maxLines: 3,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
                   ],
                 ),
               ),
@@ -1949,24 +2264,39 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
         Row(
           children: [
             OutlinedButton.icon(
-              onPressed: _items.length > 1 ? () => _removeItem(_items.length - 1) : null,
+              onPressed: _items.length > 1
+                  ? () => _removeItem(_items.length - 1)
+                  : null,
               icon: const Icon(Icons.delete, color: Colors.red),
-              label: const Text('Remove Item', style: TextStyle(color: Colors.red)),
+              label: const Text(
+                'Remove Item',
+                style: TextStyle(color: Colors.red),
+              ),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Colors.red),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
             ),
             const Spacer(),
             FilledButton.icon(
-              onPressed: _addItem,
+              onPressed: _isSubmitting ? null : _submit,
               icon: const Icon(Icons.add),
-              label: const Text('Add Item'),
+              label: const Text('Add'),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 233, 30, 99),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ],
@@ -1977,41 +2307,86 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
 
   Widget _buildFileUploadSection() {
     return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-        Text(
-          'Choose File...',
-          style: GoogleFonts.poppins(
-            color: Colors.grey[700],
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 8),
-              Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                decoration: BoxDecoration(
-            color: Colors.grey[50],
-            border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.upload_file, color: Colors.grey[600]),
-              const SizedBox(width: 12),
-              Text(
-                'Choose File to Upload',
-                style: GoogleFonts.poppins(
-                  color: Colors.grey[700],
-                  fontWeight: FontWeight.w500,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Upload Packing Slip',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
+                color: Colors.grey[700],
+              ),
+            ),
+            if (_files.isNotEmpty)
+              TextButton(
+                onPressed: () => setState(() => _files.clear()),
+                child: Text(
+                  'Clear',
+                  style: GoogleFonts.poppins(
+                    color: Colors.red,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-            ],
+          ],
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: _pickFiles,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.upload_file, color: Colors.grey[600]),
+                const SizedBox(width: 12),
+                Text(
+                  _files.isEmpty
+                      ? 'Choose File to Upload'
+                      : '${_files.length} file(s) selected',
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
+        if (_files.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Wrap(
+              spacing: 8.0,
+              runSpacing: 4.0,
+              children: _files
+                  .map(
+                    (file) => Chip(
+                      label: Text(
+                        file.path.split(Platform.pathSeparator).last,
+                        style: GoogleFonts.poppins(fontSize: 12),
+                      ),
+                      onDeleted: () {
+                        setState(() {
+                          _files.remove(file);
+                        });
+                      },
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
         const SizedBox(height: 4),
         Text(
-          'Supported formats: JPG, PNG, PDF (Max. 5MB)',
+          'Supported formats: JPG, PNG, GIF, SVG (Max. 5MB)',
           style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[500]),
         ),
       ],
@@ -2032,14 +2407,14 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (label.isNotEmpty)
-        Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w500,
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w500,
               fontSize: 13,
-            color: Colors.grey[700],
+              color: Colors.grey[700],
+            ),
           ),
-        ),
         if (label.isNotEmpty) const SizedBox(height: 8),
         TextFormField(
           controller: controller,
@@ -2068,7 +2443,9 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: const Color.fromARGB(255, 233, 30, 99)),
+              borderSide: BorderSide(
+                color: const Color.fromARGB(255, 233, 30, 99),
+              ),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -2128,7 +2505,9 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: const Color.fromARGB(255, 233, 30, 99)),
+              borderSide: BorderSide(
+                color: const Color.fromARGB(255, 233, 30, 99),
+              ),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -2158,7 +2537,11 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
         children: [
           Row(
             children: [
-              Icon(icon, color: const Color.fromARGB(255, 233, 30, 99), size: 20),
+              Icon(
+                icon,
+                color: const Color.fromARGB(255, 233, 30, 99),
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -2210,10 +2593,17 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
           const SizedBox(width: 16),
           Expanded(
             child: ElevatedButton(
-              onPressed: () {
-                // Add logic
-              },
-              child: const Text('Add'),
+              onPressed: _isSubmitting ? null : _submit,
+              child: _isSubmitting
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text('Add'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 233, 30, 99),
                 foregroundColor: Colors.white,
@@ -2222,7 +2612,12 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 elevation: 2,
-                shadowColor: const Color.fromARGB(255, 233, 30, 99).withOpacity(0.3),
+                shadowColor: const Color.fromARGB(
+                  255,
+                  233,
+                  30,
+                  99,
+                ).withOpacity(0.3),
               ),
             ),
           ),
