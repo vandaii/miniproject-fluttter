@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/Email_Page.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/Help_Page.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/Notification_Page.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Purchasing/DirectPurchase_Page.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Purchasing/GRPO_Page.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/MaterialCalculate_Page.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/MaterialRequest_Page.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/TransferStock_Page.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/Waste_Page.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/UserProfile_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/Help_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Purchasing/DirectPurchase_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Purchasing/GRPO_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialCalculate_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialRequest_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/TransferStock_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/Waste_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/UserProfile_Page.dart';
 import 'package:miniproject_flutter/screens/DashboardPage.dart';
 import 'package:miniproject_flutter/services/authService.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/LoginPage.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
 
 class StockOpnamePage extends StatefulWidget {
   final int selectedIndex;
