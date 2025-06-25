@@ -13,6 +13,7 @@ import 'package:miniproject_flutter/services/GrpoService.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
+import 'package:miniproject_flutter/screens/DashboardPage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 
@@ -792,7 +793,7 @@ class GrpoPageState extends State<GRPO_Page> {
                         ),
                       ),
                       TextSpan(
-                        text: item['noPo'] ?? item['no_po'] ?? '-',
+                        text: item['noPO'] ?? '-',
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.normal,
                           fontSize: 15,
@@ -823,10 +824,7 @@ class GrpoPageState extends State<GRPO_Page> {
                               ),
                             ),
                             TextSpan(
-                              text:
-                                  item['supplier'] ??
-                                  item['supplier_name'] ??
-                                  '-',
+                              text: item['supplier'] ?? '-',
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.normal,
                                 fontSize: 14,
@@ -864,7 +862,7 @@ class GrpoPageState extends State<GRPO_Page> {
                               ),
                             ),
                             TextSpan(
-                              text: item['receive_date'] ?? '-',
+                              text: item['receiveDate'] ?? '-',
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.normal,
                                 fontSize: 14,
@@ -883,7 +881,7 @@ class GrpoPageState extends State<GRPO_Page> {
                 Align(
                   alignment: Alignment.bottomRight,
                   child: OutlinedButton.icon(
-                    onPressed: () {},
+                    onPressed: () => _showDetailGrpo(item),
                     icon: Icon(
                       Icons.info_outline_rounded,
                       color: Color(0xFFE91E63),
@@ -991,7 +989,7 @@ class GrpoPageState extends State<GRPO_Page> {
                         ),
                       ),
                       TextSpan(
-                        text: item['grpo_number'] ?? item['no_grpo'] ?? '-',
+                        text: item['noGRPO'] ?? '-',
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.normal,
                           fontSize: 15,
@@ -1016,7 +1014,7 @@ class GrpoPageState extends State<GRPO_Page> {
                         ),
                       ),
                       TextSpan(
-                        text: item['no_po'] ?? item['po_number'] ?? '-',
+                        text: item['noPO'] ?? '-',
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.normal,
                           fontSize: 14,
@@ -1047,10 +1045,7 @@ class GrpoPageState extends State<GRPO_Page> {
                               ),
                             ),
                             TextSpan(
-                              text:
-                                  item['supplier'] ??
-                                  item['supplier_name'] ??
-                                  '-',
+                              text: item['supplier'] ?? '-',
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.normal,
                                 fontSize: 14,
@@ -1088,7 +1083,7 @@ class GrpoPageState extends State<GRPO_Page> {
                               ),
                             ),
                             TextSpan(
-                              text: item['receive_date'] ?? '-',
+                              text: item['receiveDate'] ?? '-',
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.normal,
                                 fontSize: 14,
@@ -1107,7 +1102,7 @@ class GrpoPageState extends State<GRPO_Page> {
                 Align(
                   alignment: Alignment.bottomRight,
                   child: OutlinedButton.icon(
-                    onPressed: () {},
+                    onPressed: () => _showDetailGrpo(item),
                     icon: Icon(
                       Icons.info_outline_rounded,
                       color: Color(0xFFE91E63),
@@ -1184,6 +1179,179 @@ class GrpoPageState extends State<GRPO_Page> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  // Detail modal mirip DirectPurchasePage
+  void _showDetailGrpo(dynamic item) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return AnimatedPadding(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          padding: MediaQuery.of(context).viewInsets,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: Offset(0, -5),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 60,
+                        height: 6,
+                        margin: EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      'Detail GRPO',
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFE91E63),
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    _buildDetailRow('No GRPO', item['noGRPO'] ?? '-'),
+                    _buildDetailRow('No PO', item['noPO'] ?? '-'),
+                    _buildDetailRow('Receive Date', item['receiveDate'] ?? '-'),
+                    _buildDetailRow('Supplier', item['supplier'] ?? '-'),
+                    _buildDetailRow('Shipper', item['shipperName'] ?? '-'),
+                    _buildDetailRow('Expense Type', item['expenseType'] ?? '-'),
+                    _buildDetailRow('Notes', item['notes'] ?? '-'),
+                    SizedBox(height: 12),
+                    Text(
+                      'Items:',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                    ),
+                    ...((item['items'] as List?)
+                            ?.map(
+                              (itm) => Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 4.0,
+                                ),
+                                child: Text(
+                                  '- ${itm['itemName'] ?? '-'} | Qty: ${itm['quantity']} | Unit: ${itm['unit']}',
+                                  style: GoogleFonts.poppins(fontSize: 13),
+                                ),
+                              ),
+                            )
+                            .toList() ??
+                        []),
+                    SizedBox(height: 12),
+                    if (item['packingSlip'] != null)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Packing Slip:',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            item['packingSlip'].toString(),
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ],
+                      ),
+                    // CTA Received
+                    if ((item['purchaseOrderStatus'] ?? '')
+                            .toString()
+                            .toLowerCase() !=
+                        'received')
+                      Padding(
+                        padding: const EdgeInsets.only(top: 18.0),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            icon: Icon(Icons.check, color: Colors.white),
+                            label: Text('Mark as Received'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF388E3C),
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: () async {
+                              try {
+                                Navigator.of(context).pop();
+                                await GrpoService().markAsReceived(
+                                  item['noGRPO'],
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'GRPO berhasil di-mark as Received',
+                                    ),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                                _fetchData();
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Gagal update status: ' + e.toString(),
+                                    ),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              '$label:',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+            ),
+          ),
+          Expanded(child: Text(value, style: GoogleFonts.poppins())),
         ],
       ),
     );
@@ -1386,7 +1554,7 @@ class GrpoPageState extends State<GRPO_Page> {
     switch (index) {
       case 0:
         return MaterialPageRoute(
-          builder: (context) => DirectPurchasePage(selectedIndex: 0),
+          builder: (context) => DashboardPage(selectedIndex: 0),
         );
       case 11:
         return MaterialPageRoute(
@@ -1429,7 +1597,7 @@ class GrpoPageState extends State<GRPO_Page> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => DirectPurchasePage(selectedIndex: 0),
+            builder: (context) => DashboardPage(selectedIndex: 0),
           ),
         );
         break;

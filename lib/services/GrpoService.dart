@@ -277,4 +277,17 @@ class GrpoService {
       rethrow;
     }
   }
+
+  /// Mark GRPO as Received
+  Future<void> markAsReceived(String noGRPO) async {
+    final token = await storage.read(key: 'token');
+    final response = await client.post(
+      Uri.parse('$baseUrl/grpo/receive'),
+      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+      body: {'noGRPO': noGRPO},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Gagal update status GRPO');
+    }
+  }
 }
