@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+// import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiConfig {
-  static const String baseUrl = 'http://192.168.1.15:8000/api';
+  static const String baseUrl = 'http://192.168.1.11:8000/api';
 
   static http.Client client = IOClient(
     HttpClient()
