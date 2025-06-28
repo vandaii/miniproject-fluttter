@@ -12,8 +12,7 @@ class AuthService {
   final http.Client client = ApiConfig.client;
   final String baseUrl = ApiConfig.baseUrl;
 
-
-//Untuk pemanggilan API Login dan Registrasi dari backend ke frontend
+  //Untuk pemanggilan API Login dan Registrasi dari backend ke frontend
   Future<bool> register({
     required String employeeId,
     required String name,
@@ -177,6 +176,4 @@ class AuthService {
       return null;
     }
   }
-
-
 }

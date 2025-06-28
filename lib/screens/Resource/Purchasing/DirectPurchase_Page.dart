@@ -694,20 +694,25 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     IconData badgeIcon;
     String badgeText;
     if (status == 'Pending Area Manager') {
+<<<<<<< HEAD:lib/screens/Dashboard_Resouce/Purchasing/DirectPurchase_Page.dart
+      badgeColor = const Color.fromARGB(255, 255, 247, 173);
+      badgeTextColor = const Color.fromARGB(255, 244, 183, 29);
+=======
       badgeColor = const Color(0xFFFFF9C4);
       badgeTextColor = const Color(0xFFFBC02D);
+>>>>>>> 98b629f7dd79157f3b277c7ace6b44561eae4546:lib/screens/Resource/Purchasing/DirectPurchase_Page.dart
       badgeIcon = Icons.hourglass_top_rounded;
       badgeText = 'Pending Area Manager';
-    } else if (status == 'approved_area_manager') {
+    } else if (status == 'Approved Area Manager') {
       badgeColor = const Color.fromARGB(255, 144, 202, 249);
       badgeTextColor = const Color.fromARGB(255, 21, 101, 192);
       badgeIcon = Icons.verified_user_rounded;
       badgeText = 'Approved Area Manager';
-    } else if (status == 'approved_accounting') {
+    } else if (status == 'Approved') {
       badgeColor = const Color(0xFFC8E6C9);
       badgeTextColor = const Color(0xFF388E3C);
       badgeIcon = Icons.verified_rounded;
-      badgeText = 'Approved Accounting';
+      badgeText = 'Approved';
     } else {
       badgeColor = const Color(0xFFF8BBD0);
       badgeTextColor = const Color(0xFFE91E63);
@@ -1283,7 +1288,10 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     );
   }
 
+<<<<<<< HEAD:lib/screens/Dashboard_Resouce/Purchasing/DirectPurchase_Page.dart
+=======
   //Todo : Routing navigation page for each menu
+>>>>>>> 98b629f7dd79157f3b277c7ace6b44561eae4546:lib/screens/Resource/Purchasing/DirectPurchase_Page.dart
   Route _getPageRouteByIndex(int index) {
     switch (index) {
       case 0:
