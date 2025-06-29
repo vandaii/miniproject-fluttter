@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Purchasing/GRPO_Page.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/MaterialCalculate_Page.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/StockOpname_Page.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/Waste_Page.dart';
-import 'Dashboard_Resouce/Purchasing/DirectPurchase_Page.dart';
-import 'Dashboard_Resouce/Stock_Management/TransferStock_Page.dart';
-import 'Dashboard_Resouce/Stock_Management/MaterialRequest_Page.dart';
-import 'Dashboard_Resouce/Auth/UserProfile_Page.dart';
-import 'Dashboard_Resouce/Auth/Help_Page.dart';
-import 'Dashboard_Resouce/Auth/Notification_Page.dart';
-import 'Dashboard_Resouce/Auth/Email_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Purchasing/GRPO_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialCalculate_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/StockOpname_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/Waste_Page.dart';
+import 'Resource/Purchasing/DirectPurchase_Page.dart';
+import 'Resource/Stock_Management/TransferStock_Page.dart';
+import 'Resource/Stock_Management/MaterialRequest_Page.dart';
+import 'Resource/Auth/UserProfile_Page.dart';
+import 'Resource/Auth/Help_Page.dart';
+import 'Resource/Auth/Notification_Page.dart';
+import 'Resource/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/services/authService.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Auth/LoginPage.dart';
-import 'package:flutter/rendering.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
+import 'package:miniproject_flutter/s'
 import 'dart:ui';
 
 class DashboardPage extends StatefulWidget {
@@ -52,7 +52,7 @@ class _DashboardPageState extends State<DashboardPage>
   OverlayEntry? _notificationOverlayEntry;
   final GlobalKey _notificationIconKey = GlobalKey();
 
-  // Data notifikasi (diambil dari Notification_Page.dart)
+  // Data notifikasi (diambil dari Notification_Page.dart) 
   final List<Map<String, dynamic>> notifications = [
     {
       'icon': Icons.shopping_cart,
@@ -162,6 +162,10 @@ class _DashboardPageState extends State<DashboardPage>
   // Tambahkan state untuk hover
   int? _hoveredIndex;
 
+  // Tambahkan state untuk animasi icon bar
+  bool _isIconBarOpen = false;
+  bool _isIconBarAnimating = false;
+
   // Fungsi reusable untuk menentukan apakah menu sedang di-hover atau selected
   bool _isMenuActive(int index) {
     return _selectedIndex == index || _hoveredIndex == index;
@@ -236,14 +240,14 @@ class _DashboardPageState extends State<DashboardPage>
     final position = renderBox.localToGlobal(Offset.zero);
 
     _notificationOverlayEntry = OverlayEntry(
-      builder: (context) => _buildNotificationBubble(position, size),
+      builder: (context) => _buildNotificationBubbleAnimated(position, size),
     );
 
     Overlay.of(context).insert(_notificationOverlayEntry!);
     _notificationAnimationController.forward();
   }
 
-  Widget _buildNotificationBubble(Offset position, Size size) {
+  Widget _buildNotificationBubbleAnimated(Offset position, Size size) {
     return Stack(
       children: [
         Positioned.fill(
@@ -260,20 +264,17 @@ class _DashboardPageState extends State<DashboardPage>
             animation: _notificationAnimationController,
             builder: (context, child) {
               final animValue = _notificationAnimationController.value;
-              final scale = 0.9 + 0.1 * Curves.easeOutExpo.transform(animValue);
-              final slide = Offset(
-                (1 - animValue) * 0.08,
-                (1 - animValue) * -0.08,
-              );
-              return Opacity(
-                opacity: animValue,
-                child: Transform.translate(
-                  offset: Offset(slide.dx * 270, slide.dy * 180),
-                  child: Transform.scale(
-                    scale: scale,
-                    alignment: Alignment.topRight,
-                    child: child,
+              return FadeTransition(
+                opacity: _notificationAnimationController,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.85, end: 1.0).animate(
+                    CurvedAnimation(
+                      parent: _notificationAnimationController,
+                      curve: Curves.easeOutBack,
+                    ),
                   ),
+                  alignment: Alignment.topRight,
+                  child: child,
                 ),
               );
             },
@@ -288,14 +289,16 @@ class _DashboardPageState extends State<DashboardPage>
     final List<Map<String, dynamic>> previewNotifs = notifications
         .take(4)
         .toList();
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
     return Material(
       color: Colors.white.withOpacity(0.98),
       elevation: 16,
       shadowColor: Colors.black.withOpacity(0.10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
-        width: 250,
-        constraints: BoxConstraints(maxHeight: 180),
+        width: isMobile ? screenWidth * 0.85 : 250,
+        constraints: BoxConstraints(maxHeight: isMobile ? 220 : 180),
         padding: const EdgeInsets.only(top: 10, bottom: 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -452,13 +455,18 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   Widget _buildModernSearchBar() {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(24.0),
-      elevation: 8.0,
-      shadowColor: Colors.black.withOpacity(0.12),
+      elevation: 12.0,
+      shadowColor: deepPink.withOpacity(0.10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 10 : 20,
+          vertical: isMobile ? 8 : 12,
+        ),
         child: FadeTransition(
           opacity: CurvedAnimation(
             parent: _searchAnimationController,
@@ -477,26 +485,31 @@ class _DashboardPageState extends State<DashboardPage>
                 ),
             child: Row(
               children: [
-                Icon(Icons.search, color: deepPink.withOpacity(0.8), size: 24),
-                const SizedBox(width: 16),
-                Expanded(
+                Icon(
+                  Icons.search,
+                  color: deepPink.withOpacity(0.8),
+                  size: isMobile ? 20 : 24,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
                   child: TextField(
                     style: GoogleFonts.poppins(
-                      fontSize: 16,
+                      fontSize: isMobile ? 14 : 16,
                       color: Colors.black87,
                     ),
                     decoration: InputDecoration.collapsed(
                       hintText: 'Search anything...',
                       hintStyle: GoogleFonts.poppins(
                         color: Colors.grey.shade500,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 IconButton(
                   icon: const Icon(Icons.close),
-                  color: Colors.grey.shade500,
+                  color: deepPink,
                   splashRadius: 20,
                   onPressed: _toggleSearch,
                 ),
@@ -589,6 +602,8 @@ class _DashboardPageState extends State<DashboardPage>
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     bool isMobile = screenWidth < 600;
+
+    double iconBarWidth = _isIconBarOpen ? (isMobile ? 180 : 260) : (isMobile ? 44 : 52);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
@@ -741,7 +756,7 @@ class _DashboardPageState extends State<DashboardPage>
                       ),
                     ),
                   _buildMenuItem(
-                    icon: Icons.dashboard_outlined,
+                    icon: Icons.dashboard_customize_rounded,
                     title: 'Dashboard',
                     index: 0,
                     onTap: () {
@@ -753,7 +768,7 @@ class _DashboardPageState extends State<DashboardPage>
                     },
                   ),
                   _buildExpandableMenu(
-                    icon: Icons.shopping_cart_outlined,
+                    icon: Icons.shopping_bag_rounded,
                     title: 'Purchasing',
                     isExpanded: _selectedIndex == PURCHASING_MENU,
                     menuIndex: PURCHASING_MENU,
@@ -767,7 +782,7 @@ class _DashboardPageState extends State<DashboardPage>
                     isMobile: isMobile,
                   ),
                   _buildExpandableMenu(
-                    icon: Icons.inventory_2_outlined,
+                    icon: Icons.inventory_rounded,
                     title: 'Stock Management',
                     isExpanded: _selectedIndex == STOCK_MANAGEMENT_MENU,
                     menuIndex: STOCK_MANAGEMENT_MENU,
@@ -784,7 +799,7 @@ class _DashboardPageState extends State<DashboardPage>
                     isMobile: isMobile,
                   ),
                   _buildMenuItem(
-                    icon: Icons.assessment_outlined,
+                    icon: Icons.bar_chart_rounded,
                     title: 'Inventory Report',
                     index: 3,
                     onTap: () {
@@ -817,20 +832,22 @@ class _DashboardPageState extends State<DashboardPage>
                       ),
                     ),
                   _buildMenuItem(
-                    icon: Icons.settings_outlined,
+                    icon: Icons.settings_suggest_rounded,
                     title: 'Account & Settings',
                     index: 4,
                     onTap: () {
                       setState(() => _selectedIndex = 4);
+                      _navigateToPage(4);
                       if (isMobile && closeDrawer != null) closeDrawer();
                     },
                   ),
                   _buildMenuItem(
-                    icon: Icons.help_outline,
+                    icon: Icons.help_center_rounded,
                     title: 'Help',
                     index: 5,
                     onTap: () {
                       setState(() => _selectedIndex = 5);
+                      _navigateToPage(5);
                       if (isMobile && closeDrawer != null) closeDrawer();
                     },
                   ),
@@ -845,7 +862,33 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
-  Widget _buildMenuItem({
+ 
+
+  Widget _buildExpandableMenu({
+    required IconData icon,
+    required String title,
+    required bool isExpanded,
+    required List<Widget> children,
+    required VoidCallback onTap,
+    required int menuIndex,
+    bool isMobile = false,
+  }) {
+    final isMenuExpanded = _expandedMenuIndex == menuIndex;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: isExpanded ? lightPink.withOpacity(0.3) : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ListTile(
+            horizontalTitleGap: 12,
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDec  Widget _buildMenuItem({
     required IconData icon,
     required String title,
     required int index,
@@ -862,6 +905,7 @@ class _DashboardPageState extends State<DashboardPage>
           borderRadius: BorderRadius.circular(8),
         ),
         child: ListTile(
+          horizontalTitleGap: 12,
           leading: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -901,31 +945,7 @@ class _DashboardPageState extends State<DashboardPage>
       ),
     );
   }
-
-  Widget _buildExpandableMenu({
-    required IconData icon,
-    required String title,
-    required bool isExpanded,
-    required List<Widget> children,
-    required VoidCallback onTap,
-    required int menuIndex,
-    bool isMobile = false,
-  }) {
-    final isMenuExpanded = _expandedMenuIndex == menuIndex;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: isExpanded ? lightPink.withOpacity(0.3) : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: ListTile(
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
+tion(
                 color: isExpanded
                     ? deepPink.withOpacity(0.1)
                     : Colors.grey.withOpacity(0.1),
@@ -995,6 +1015,7 @@ class _DashboardPageState extends State<DashboardPage>
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
+        horizontalTitleGap: 12,
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
@@ -1074,17 +1095,30 @@ class _DashboardPageState extends State<DashboardPage>
           context,
           MaterialPageRoute(builder: (context) => MaterialCalculatePage()),
         );
+        break;
+      case 4: // Account & Settings
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const UserprofilePage()),
+        );
+        break;
+      case 5: // Help
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => HelpPage()),
+        );
+        break;
     }
   }
 
   IconData _getSubMenuIcon(int index) {
     switch (index) {
       case 11: // Direct Purchase
-        return Icons.shopping_cart_outlined;
+        return Icons.shopping_bag_rounded;
       case 12: // GRPO
         return Icons.receipt_long_outlined;
       case 21: // Material Request
-        return Icons.inventory_2_outlined;
+        return Icons.inventory_rounded;
       case 22: // Stock Opname
         return Icons.checklist_rtl_outlined;
       case 23: // Transfer Stock
@@ -1092,135 +1126,403 @@ class _DashboardPageState extends State<DashboardPage>
       case 24: // Waste
         return Icons.delete_outline;
       case 25: //material calculate
-        return Icons.inventory_2_outlined;
+        return Icons.inventory_rounded;
       default:
         return Icons.circle_outlined;
     }
   }
 
+Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
+  final Color softPink = const Color(0xFFFFB6D5);
+  final Color lightWhite = Colors.white.withOpacity(0.98);
+  double iconBarWidth = _isIconBarOpen ? (isMobile ? 180 : 260) : (isMobile ? 44 : 52);
+
+
+  return Stack(
+    alignment: Alignment.centerRight,
+    children: [
+      // Background header
+      ClipRRect(
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(36),
   Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 14 : 32,
-        vertical: isMobile ? 20 : 24,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Colors.grey.withOpacity(0.15), width: 1.5),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (isMobile)
-            Builder(
-              builder: (context) => IconButton(
-                icon: const Icon(Icons.menu, color: Colors.black54),
-                onPressed: () {
-                  Scaffold.of(context).openDrawer();
-                },
+    final Color softPink = const Color(0xFFFFB6D5);
+    final Color lightWhite = Colors.white.withOpacity(0.98);
+          width: double.infinity,
+    return Stack(
+      alignment: Alignment.centerRight,
+      children: [
+        // Background header
+        ClipRRect(
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(36),
+            bottomRight: Radius.circular(36),
+          ),
+          child: Container(
+            width: double.infinity,
+            height: isMobile ? 80 : 96,
+            decoration: BoxDecoration(
+              color: softPink,
+            ),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: Container(
+                color: Colors.white.withOpacity(0.04),
               ),
             ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+        ),
+        // Konten header
+        ClipRRect(
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(36),
+            bottomRight: Radius.circular(36),
+          ),
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 16 : 32,
+              vertical: isMobile ? 17 : 15,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  'Dashboard',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    fontSize: isMobile ? 22 : 28,
-                    color: Colors.black87,
+                if (isMobile)
+                  Builder(
+                    builder: (context) => IconButton(
+                      icon: const Icon(Icons.grid_view_rounded, color: Colors.black54),
+                      onPressed: () {
+                        Scaffold.of(context).openDrawer();
+                      },
+                    ),
                   ),
-                  overflow: TextOverflow.ellipsis,
+                SizedBox(width: isMobile ? 8 : 14),
+                Expanded(
+                  child: Text(
+                    'Dashboard',
+                    style: GoogleFonts.poppins(
+                width: _isIconBarOpen ? (isMobile ? 180 : 260) : (isMobile ? 56 : 64),es.easeInOutCubic,bold,
+                      fontSize: isMobile ? 18 : 22,
+                      color: Colors.white,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                SizedBox(width: isMobile ? 8 : 14),
+                      offset: _isIconBarOpen ? Offset(0, 0) : Offset(0.5, 0),utCubic,
+                _ModernIconBar(
+                  isMobile: isMobile,
+                        opacity: _isIconBarOpen ? 1.0 : 0.0,st Duration(milliseconds: 300),
+                  notifications: notifications,
+                  onSearch: _toggleSearch,
+                  onNotif: _toggleNotificationOverlay,
+                    AnimatedSlide(
+                      duration: const Duration(milliseconds: 400),
+                      curve: Curves.easeInOutCubic,
+                      offset: !_isIconBarOpen ? Offset(0, 0) : Offset(-0.5, 0),
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 300),
+                        opacity: !_isIconBarOpen ? 1.0 : 0.0,
+                        child: _buildIconBarAvatar(isMobile),
+                      ),
+                    ),
+                  onEmail: () {
+                    Navigator.push(
+                onEnd: () {
+                  setState(() {
+                    _isIconBarAnimating = false;
+                  });
+                },
+                      context,
+                      MaterialPageRoute(builder: (context) => EmailPage()),
+                    );
+                  },
+                  onAvatar: () {
+                    _showProfileMenu(context);
+                  },
                 ),
               ],
             ),
           ),
-          SizedBox(width: isMobile ? 8 : 18),
-          Row(
+        ),
+      ],
+    );
+  }                   boxShadow: [
+                      BoxShadow(
+  // Tambahkan widget baru untuk icon bar modern
+  class _ModernIconBar extends StatefulWidget {
+    final bool isMobile;
+    final Color deepPink;
+    final List<Map<String, dynamic>> notifications;
+    final VoidCallback onSearch;
+    final VoidCallback onNotif;
+    final VoidCallback onEmail;
+    final VoidCallback onAvatar;
+
+    const _ModernIconBar({
+      required this.isMobile,
+      required this.notifications,
+      required this.onSearch,
+                  if (_isIconBarAnimating) return;
+                  setState(() {
+                    _isIconBarOpen = false;
+                    _isIconBarAnimating = true;
+                  });
+      required this.onEmail,
+      required this.onAvatar,
+    });
+
+    @override
+    State<_ModernIconBar> createState() => _ModernIconBarState();
+  }
+
+  class _ModernIconBarState extends State<_ModernIconBar> with SingleTickerProviderStateMixin {
+    bool _showIcons = false;
+    late AnimationController _controller;
+    late Animation<double> _slideAnim;
+    late Animation<double> _fadeAnim;
+
+    @override
+    void initState() {
+            children: [
+      super.initState();
+      _controller = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 400),
+      );
+      _slideAnim = Tween<double>(begin: 40, end: 0).animate(
+        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+      );
+      _fadeAnim = Tween<double>(begin: 0, end: 1).animate(
+        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+      );
+    }
+
+    @override
+    void dispose() {
+      _controller.dispose();
+      super.dispose();
+    }
+
+    void _toggleIcons() {
+      setState(() {
+        _showIcons = !_showIcons;
+        if (_showIcons) {
+          _controller.forward();
+        } else {
+          _controller.reverse();
+        }
+      });
+    }
+
+    @override
+    Widget build(BuildContext context) {
+      final isMobile = widget.isMobile;
+      return Container(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Animated icon bar (slide + fade)
+            AnimatedBuilder(
+              animation: _controller,
+  Widget _buildIconBarAvatar(bool isMobile) {
+    return ClipRRect(
+      key: ValueKey('iconbar-avatar'),
+      borderRadius: BorderRadius.circular(36),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: isMobile ? 8 : 12,
+            vertical: isMobile ? 6 : 8,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.38),
+            borderRadius: BorderRadius.circular(36),
+            border: Border.all(color: Colors.white.withOpacity(0.22), width: 1),
+          ),
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _modernHeaderIcon(icon: Icons.search, onTap: _toggleSearch),
-              SizedBox(width: isMobile ? 8 : 14),
-              SizedBox(
-                key: _notificationIconKey,
-                child: _modernHeaderIcon(
-                  icon: Icons.notifications_none_outlined,
-                  onTap: _toggleNotificationOverlay,
+              GestureDetector(
+                onTap: () {
+                  if (_isIconBarAnimating) return;
+                  setState(() {
+                    _isIconBarOpen = true;
+                    _isIconBarAnimating = true;
+                  });
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.pinkAccent.withOpacity(0.25),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(Icons.arrow_back_ios_new_rounded, color: Colors.pinkAccent, size: isMobile ? 22 : 24),
                 ),
               ),
-              SizedBox(width: isMobile ? 8 : 14),
-              _modernHeaderIcon(
-                icon: Icons.mail_outline,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => EmailPage()),
-                  );
-                },
-              ),
-              SizedBox(width: isMobile ? 8 : 14),
-              _modernHeaderAvatar(),
+              SizedBox(width: isMobile ? 8 : 12),
+              _modernHeaderAvatar(isMobile: isMobile, glass: true),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _modernHeaderIcon({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: Duration(milliseconds: 180),
-          curve: Curves.easeInOut,
-          padding: EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade200.withOpacity(0.8)),
-          ),
-          child: Icon(icon, color: Colors.black54, size: 22),
         ),
       ),
     );
   }
 
-  Widget _modernHeaderAvatar() {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () {
-          _showProfileMenu(context);
-        },
-        child: CircleAvatar(
-          backgroundImage: AssetImage('assets/images/avatar.jpg'),
-          radius: 20,
+              builder: (context, child) {
+                return Row(
+                  children: [
+                    if (_fadeAnim.value > 0)
+                      Opacity(
+                        opacity: _fadeAnim.value,
+                        child: Transform.translate(
+                          offset: Offset(-_slideAnim.value, 0),
+                          child: Row(
+                            children: [
+                              _modernHeaderIcon(
+                                icon: Icons.mail_outline,
+                                onTap: widget.onEmail,
+                                isMobile: isMobile,
+                                color: widget.deepPink,
+                              ),
+                              SizedBox(width: isMobile ? 8 : 12),
+                              _modernHeaderIcon(
+                                icon: Icons.search,
+                                onTap: widget.onSearch,
+                                isMobile: isMobile,
+                                color: widget.deepPink,
+                              ),
+                              SizedBox(width: isMobile ? 8 : 12),
+                              _modernHeaderIcon(
+                                icon: Icons.notifications_none_outlined,
+                                onTap: widget.onNotif,
+                                isMobile: isMobile,
+                                color: widget.deepPink,
+                                badge: widget.notifications.isNotEmpty,
+                              ),
+                              SizedBox(width: isMobile ? 8 : 12),
+                            ],
+                          ),
+                        ),
+                      ),
+                    // Tombol close (>)
+                    if (_showIcons)
+                      GestureDetector(
+                        onTap: _toggleIcons,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                color: widget.deepPink.withOpacity(0.13),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(Icons.chevron_right, color: widget.deepPink, size: isMobile ? 22 : 26),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+            // Tombol open (<) jika icon bar tertutup
+            if (!_showIcons)
+              GestureDetector(
+                onTap: _toggleIcons,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: widget.deepPink.withOpacity(0.13),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(Icons.chevron_left, color: widget.deepPink, size: isMobile ? 22 : 26),
+                ),
+              ),
+            SizedBox(width: isMobile ? 8 : 12),
+            // Avatar
+            GestureDetector(
+              onTap: widget.onAvatar,
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: widget.deepPink.withOpacity(0.2), width: 2),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: widget.deepPink.withOpacity(0.08),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: CircleAvatar(
+                  radius: isMobile ? 18 : 20,
+                  backgroundColor: Colors.white,
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/images/avatar.jpg',
+                      fit: BoxFit.cover,
+                      width: isMobile ? 36 : 40,
+                      height: isMobile ? 36 : 40,
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        Icons.person,
+                        color: Colors.grey[500],
+                        size: isMobile ? 24 : 28,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildTaskSection() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 12,
-            offset: Offset(0, 8),
-          ),
+      );
+    }               blurRadius: 16,
+                  spreadRadius: 0.5,
+    Widget _modernHeaderIcon({
+      required IconData icon,
+      required VoidCallback onTap,
+      bool badge = false,
+      bool isMobile = false,
+      Color? color,
+    }) {
+      return MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                padding: EdgeInsets.all(isMobile ? 7 : 10),
+                decoration: BoxDecoration(
+                  color: color?.withOpacity(0.13) ?? Colors.white.withOpacity(0.13),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: (color ?? Colors.white).withOpacity(0.22)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (color ?? Colors.black).withOpacity(0.13),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(icon, color: color ?? Colors.black87, size: isMobile ? 22 : 26),
+              ),
         ],
       ),
       child: Column(
@@ -1238,56 +1540,8 @@ class _DashboardPageState extends State<DashboardPage>
                 ),
               ),
               GestureDetector(
-                onTap: () {
-                  // Handle "Show All" press
-                },
-                child: Row(
-                  children: [
-                    Text(
-                      "Show All",
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_outward_rounded,
-                      size: 14,
-                      color: const Color.fromARGB(246, 0, 0, 0),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _buildTaskCard(
-            "Stock Opname has not been performed",
-            "12/03/2025 09:42",
-            "High Priority",
-            "Needs Attention",
-          ),
-          const SizedBox(height: 8),
-          _buildTaskCard(
-            "PO-2024-0125 awaiting acceptance from PTK",
-            "12/03/2025 09:42",
-            "Medium Priority",
-            "Waiting for Action",
-          ),
-          const SizedBox(height: 8),
-          _buildTaskCard(
-            "PO-2025-0222 awaiting acceptance from PTK",
-            "12/03/2025 09:42",
-            "High Priority",
-            "Needs Attention",
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTaskCard(
+      );
+    }et _buildTaskCard(
     String taskTitle,
     String date,
     String priority,
@@ -2116,3 +2370,4 @@ class TriangleClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(TriangleClipper oldClipper) => false;
 }
+
