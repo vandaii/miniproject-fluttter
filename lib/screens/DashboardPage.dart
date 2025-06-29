@@ -161,10 +161,6 @@ class _DashboardPageState extends State<DashboardPage>
   // Tambahkan state untuk hover
   int? _hoveredIndex;
 
-  // Tambahkan state untuk animasi icon bar
-  bool _isIconBarOpen = false;
-  bool _isIconBarAnimating = false;
-
   // Fungsi reusable untuk menentukan apakah menu sedang di-hover atau selected
   bool _isMenuActive(int index) {
     return _selectedIndex == index || _hoveredIndex == index;
@@ -602,8 +598,6 @@ class _DashboardPageState extends State<DashboardPage>
     double screenWidth = MediaQuery.of(context).size.width;
     bool isMobile = screenWidth < 600;
 
-    double iconBarWidth = _isIconBarOpen ? (isMobile ? 180 : 260) : (isMobile ? 44 : 52);
-
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       drawer: isMobile
@@ -861,6 +855,7 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
+<<<<<<< Updated upstream
   Widget _buildMenuItem({
     required IconData icon,
     required String title,
@@ -919,6 +914,8 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
+=======
+>>>>>>> Stashed changes
   Widget _buildExpandableMenu({
     required IconData icon,
     required String title,
@@ -1130,6 +1127,7 @@ class _DashboardPageState extends State<DashboardPage>
     }
   }
 
+<<<<<<< Updated upstream
 Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
   final Color softPink = const Color(0xFFFFB6D5);
   final Color lightWhite = Colors.white.withOpacity(0.98);
@@ -1150,6 +1148,20 @@ Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
           height: isMobile ? 80 : 96,
           decoration: BoxDecoration(
             color: softPink,
+=======
+  Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
+    final Color softPink = const Color(0xFFFFB6D5);
+    final Color lightWhite = Colors.white.withOpacity(0.98);
+
+    return Stack(
+      alignment: Alignment.centerRight,
+      children: [
+        // Background header
+        ClipRRect(
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(36),
+            bottomRight: Radius.circular(36),
+>>>>>>> Stashed changes
           ),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
@@ -1171,6 +1183,7 @@ Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
             horizontal: isMobile ? 16 : 32,
             vertical: isMobile ? 17 : 15,
           ),
+<<<<<<< Updated upstream
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -1325,8 +1338,52 @@ Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
   }
 
   Widget _buildIconBarAvatar(bool isMobile) {
+=======
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 16 : 32,
+              vertical: isMobile ? 17 : 15,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (isMobile)
+                  Builder(
+                    builder: (context) => IconButton(
+                      icon: const Icon(Icons.grid_view_rounded, color: Colors.black54),
+                      onPressed: () {
+                        Scaffold.of(context).openDrawer();
+                      },
+                    ),
+                  ),
+                SizedBox(width: isMobile ? 8 : 14),
+                Expanded(
+                  child: Text(
+                    'Dashboard',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      fontSize: isMobile ? 18 : 22,
+                      color: Colors.white,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                SizedBox(width: isMobile ? 8 : 14),
+                // Icon bar yang langsung tampil semua
+                _buildIconBarFull(isMobile),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIconBarFull(bool isMobile) {
+>>>>>>> Stashed changes
     return ClipRRect(
-      key: ValueKey('iconbar-avatar'),
+      key: ValueKey('iconbar-full'),
       borderRadius: BorderRadius.circular(36),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
@@ -1343,27 +1400,37 @@ Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              GestureDetector(
-                onTap: () {
-                  if (_isIconBarAnimating) return;
-                  setState(() {
-                    _isIconBarOpen = true;
-                    _isIconBarAnimating = true;
-                  });
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.pinkAccent.withOpacity(0.25),
-                        blurRadius: 8,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(Icons.arrow_back_ios_new_rounded, color: Colors.pinkAccent, size: isMobile ? 22 : 24),
+              _modernHeaderIcon(
+                icon: Icons.search,
+                onTap: _toggleSearch,
+                isMobile: isMobile,
+                glass: true,
+                iconSize: isMobile ? 22 : 24,
+              ),
+              SizedBox(width: isMobile ? 8 : 12),
+              SizedBox(
+                key: _notificationIconKey,
+                child: _modernHeaderIcon(
+                  icon: Icons.notifications_none_outlined,
+                  onTap: _toggleNotificationOverlay,
+                  badge: notifications.isNotEmpty,
+                  isMobile: isMobile,
+                  glass: true,
+                  iconSize: isMobile ? 22 : 24,
                 ),
+              ),
+              SizedBox(width: isMobile ? 8 : 12),
+              _modernHeaderIcon(
+                icon: Icons.mail_outline,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => EmailPage()),
+                  );
+                },
+                isMobile: isMobile,
+                glass: true,
+                iconSize: isMobile ? 22 : 24,
               ),
               SizedBox(width: isMobile ? 8 : 12),
               _modernHeaderAvatar(isMobile: isMobile, glass: true),
@@ -2377,6 +2444,64 @@ Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String title,
+    required int index,
+    required VoidCallback onTap,
+  }) {
+    final isActive = _isMenuActive(index);
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredIndex = index),
+      onExit: (_) => setState(() => _hoveredIndex = null),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: ListTile(
+          horizontalTitleGap: 12,
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isActive
+                  ? deepPink.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: isActive ? deepPink : Colors.grey,
+              size: 20,
+            ),
+          ),
+          title: Text(
+            title,
+            style: GoogleFonts.poppins(
+              color: isActive ? deepPink : Colors.grey,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              fontSize: 14,
+            ),
+          ),
+          selected: isActive,
+          onTap: () {
+            if (_selectedIndex != index) {
+              setState(() => _selectedIndex = index);
+              _navigateToPage(index);
+            }
+          },
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
+          dense: true,
+        ),
+      ),
     );
   }
 }
