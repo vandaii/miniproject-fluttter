@@ -856,6 +856,7 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   Widget _buildMenuItem({
     required IconData icon,
     required String title,
@@ -914,6 +915,8 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
   Widget _buildExpandableMenu({
@@ -1128,6 +1131,7 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
   final Color softPink = const Color(0xFFFFB6D5);
   final Color lightWhite = Colors.white.withOpacity(0.98);
@@ -1149,6 +1153,8 @@ Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
           decoration: BoxDecoration(
             color: softPink,
 =======
+=======
+>>>>>>> Stashed changes
   Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
     final Color softPink = const Color(0xFFFFB6D5);
     final Color lightWhite = Colors.white.withOpacity(0.98);
@@ -1381,6 +1387,9 @@ Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
   }
 
   Widget _buildIconBarFull(bool isMobile) {
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     return ClipRRect(
       key: ValueKey('iconbar-full'),
