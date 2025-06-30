@@ -671,10 +671,10 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     // print(item);
     // Mapping status dan badge
     String status = item['status'] ?? '';
-    Color badgeColor;
-    Color badgeTextColor;
-    IconData badgeIcon;
-    String badgeText;
+    Color badgeColor = Colors.grey.shade200;
+    Color badgeTextColor = Colors.grey.shade800;
+    IconData badgeIcon = Icons.info_outline_rounded;
+    String badgeText = status;
     if (status == 'Pending Area Manager') {
       badgeColor = const Color(0xFFFFF9C4);
       badgeTextColor = const Color(0xFFFBC02D);
@@ -689,11 +689,6 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       badgeColor = const Color(0xFFC8E6C9);
       badgeTextColor = const Color(0xFF388E3C);
       badgeIcon = Icons.verified_rounded;
-      badgeText = 'Approved';
-    } else {
-      badgeColor = const Color(0xFFF8BBD0);
-      badgeTextColor = const Color(0xFFE91E63);
-      badgeIcon = Icons.info_outline_rounded;
       badgeText = status;
     }
     // todo : card index
@@ -1266,44 +1261,46 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   }
 
   //Todo : Routing navigation page for each menu
-  // Route _getPageRouteByIndex(int index) {
-  //       return MaterialPageRoute(
-  //       )
-  //     case 11:
-  //       return MaterialPageRoute(
-  //         builder: (context) => DirectPurchasePage(selectedIndex: 11),
-  //       )
-  //     case 12:
-  //       return MaterialPageRoute(
-  //         builder: (context) => GRPO_Page(selectedIndex: 12),
-  //       )
-  //     case 21:
-  //       return MaterialPageRoute(
-  //         builder: (context) => MaterialRequestPage(selectedIndex: 21),
-  //       )
-  //     case 22:
-  //       return MaterialPageRoute(
-  //         builder: (context) => StockOpnamePage(selectedIndex: 22),
-  //       )
-  //     case 23:
-  //       return MaterialPageRoute(
-  //         builder: (context) => TransferStockPage(selectedIndex: 23),
-  //       )
-  //     case 24:
-  //       return MaterialPageRoute(
-  //         builder: (context) => WastePage(selectedIndex: 24),
-  //       )
-  //     case 25:
-  //       return MaterialPageRoute(
-  //         builder: (context) => MaterialCalculatePage(selectedIndex: 25),
-  //       )
-  //     default:
-  //       return MaterialPageRoute(
-  //         builder: (context) => DirectPurchasePage(selectedIndex: 11),
-  //       )
-  //   }
-  // }
-
+  Route _getPageRouteByIndex(int index) {
+    switch (index) {
+      case 0:
+        return MaterialPageRoute(
+          builder: (context) => DashboardPage(selectedIndex: 0),
+        );
+      case 11:
+        return MaterialPageRoute(
+          builder: (context) => DirectPurchasePage(selectedIndex: 11),
+        );
+      case 12:
+        return MaterialPageRoute(
+          builder: (context) => GRPO_Page(selectedIndex: 12),
+        );
+      case 21:
+        return MaterialPageRoute(
+          builder: (context) => MaterialRequestPage(selectedIndex: 21),
+        );
+      case 22:
+        return MaterialPageRoute(
+          builder: (context) => StockOpnamePage(selectedIndex: 22),
+        );
+      case 23:
+        return MaterialPageRoute(
+          builder: (context) => TransferStockPage(selectedIndex: 23),
+        );
+      case 24:
+        return MaterialPageRoute(
+          builder: (context) => WastePage(selectedIndex: 24),
+        );
+      case 25:
+        return MaterialPageRoute(
+          builder: (context) => MaterialCalculatePage(selectedIndex: 25),
+        );
+      default:
+        return MaterialPageRoute(
+          builder: (context) => DirectPurchasePage(selectedIndex: 11),
+        );
+    }
+  }
   // Todo :Routing navigation page for each dropdown page
   void _navigateToPage(int index) {
     switch (index) {
