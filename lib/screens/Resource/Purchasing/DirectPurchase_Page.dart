@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'package:google_fonts/google_fonts.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
@@ -17,7 +18,28 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:miniproject_flutter/services/DirectService.dart';
+=======
+import 'dart:io';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Purchasing/GRPO_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialCalculate_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/StockOpname_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/TransferStock_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialRequest_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/UserProfile_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/Help_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/Waste_Page.dart';
+import 'package:miniproject_flutter/screens/DashboardPage.dart';
+import 'package:miniproject_flutter/services/DirectService.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:miniproject_flutter/services/authService.dart';
+>>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
 import 'package:intl/intl.dart';
+// import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 
 class DirectPurchasePage extends StatefulWidget {
   final int selectedIndex;
@@ -40,7 +62,10 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
 
   // Tambahan untuk integrasi API
   final DirectService _directService = DirectService();
+<<<<<<< HEAD
 
+=======
+>>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
   List<dynamic> _directPurchases = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -671,6 +696,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     // print(item);
     // Mapping status dan badge
     String status = item['status'] ?? '';
+<<<<<<< HEAD
     Color badgeColor;
     Color badgeTextColor;
     IconData badgeIcon;
@@ -679,6 +705,13 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       badgeColor = const Color.fromARGB(255, 255, 247, 173);
       badgeTextColor = const Color.fromARGB(255, 244, 183, 29);
 
+=======
+    Color badgeColor = Colors.grey.shade200;
+    Color badgeTextColor = Colors.grey.shade800;
+    IconData badgeIcon = Icons.info_outline_rounded;
+    String badgeText = status;
+    if (status == 'Pending Area Manager') {
+>>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
       badgeColor = const Color(0xFFFFF9C4);
       badgeTextColor = const Color(0xFFFBC02D);
 
@@ -693,11 +726,14 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       badgeColor = const Color(0xFFC8E6C9);
       badgeTextColor = const Color(0xFF388E3C);
       badgeIcon = Icons.verified_rounded;
+<<<<<<< HEAD
       badgeText = 'Approved';
     } else {
       badgeColor = const Color(0xFFF8BBD0);
       badgeTextColor = const Color(0xFFE91E63);
       badgeIcon = Icons.info_outline_rounded;
+=======
+>>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
       badgeText = status;
     }
     // todo : card index
@@ -1254,7 +1290,11 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                   _expandedMenuIndex = STOCK_MANAGEMENT_MENU;
                 }
               });
+<<<<<<< HEAD
               Navigator.pushReplacement(context, _getPageRouteByIndex(index));
+=======
+              _navigateToPage(index);
+>>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
               if (isMobile && closeDrawer != null) closeDrawer();
             }
           },
@@ -1310,7 +1350,10 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
         );
     }
   }
+<<<<<<< HEAD
 
+=======
+>>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
   // Todo :Routing navigation page for each dropdown page
   void _navigateToPage(int index) {
     switch (index) {

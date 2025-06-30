@@ -9,6 +9,7 @@ import 'package:miniproject_flutter/screens/Resource/Auth/UserProfile_Page.dart'
 import 'package:miniproject_flutter/screens/Resource/Auth/Help_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/Waste_Page.dart';
 import 'package:miniproject_flutter/services/authService.dart';
+<<<<<<< HEAD
 import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
@@ -20,6 +21,12 @@ import 'package:miniproject_flutter/screens/DashboardPage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 
+=======
+import 'package:miniproject_flutter/services/GrpoService.dart';
+import 'package:miniproject_flutter/screens/DashboardPage.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
+>>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
 
 class GRPO_Page extends StatefulWidget {
   final int selectedIndex;
@@ -73,6 +80,7 @@ class GrpoPageState extends State<GRPO_Page> {
       print(
         'Fetching data for tab: ${isOutstandingSelected ? "Shipping" : "Received"}',
       );
+<<<<<<< HEAD
 
       // Fetch semua data GRPO terlebih dahulu
       final allData = await _grpoService.fetchAllGrpo();
@@ -111,6 +119,27 @@ class GrpoPageState extends State<GRPO_Page> {
       );
     } catch (e) {
       print('Error fetching data: $e');
+=======
+      if (isOutstandingSelected) {
+        // Tab Shipping: ambil dari endpoint shipping
+        final shippingData = await _grpoService.fetchShippingPOs();
+        setState(() {
+          _shippingPOs = shippingData;
+          _isLoading = false;
+        });
+        print('Shipping data count: ${shippingData.length}');
+      } else {
+        // Tab Received: ambil dari endpoint received
+        final receivedData = await _grpoService.fetchReceivedGrpo();
+        setState(() {
+          _receivedGrpos = receivedData;
+          _isLoading = false;
+        });
+        print('Received data count: ${receivedData.length}');
+      }
+    } catch (e) {
+      print('Error fetching data: ${e}');
+>>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
       setState(() {
         _isLoading = false;
         _errorMessage = 'Gagal memuat data: ${e.toString()}';
@@ -797,7 +826,11 @@ class GrpoPageState extends State<GRPO_Page> {
                         ),
                       ),
                       TextSpan(
+<<<<<<< HEAD
                         text: item['noPO'] ?? '-',
+=======
+                        text: item['purchaseOrderNumber'] ?? '-',
+>>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.normal,
                           fontSize: 15,
@@ -858,7 +891,7 @@ class GrpoPageState extends State<GRPO_Page> {
                         text: TextSpan(
                           children: [
                             TextSpan(
-                              text: 'Receive Date: ',
+                              text: 'Purchase Order Date: ',
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
@@ -866,7 +899,11 @@ class GrpoPageState extends State<GRPO_Page> {
                               ),
                             ),
                             TextSpan(
+<<<<<<< HEAD
                               text: item['receiveDate'] ?? '-',
+=======
+                              text: item['purchaseOrderDate'] ?? '-',
+>>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.normal,
                                 fontSize: 14,
@@ -1285,9 +1322,13 @@ class GrpoPageState extends State<GRPO_Page> {
                         ],
                       ),
                     // CTA Received
+<<<<<<< HEAD
                     if ((item['purchaseOrderStatus'] ?? '')
                             .toString()
                             .toLowerCase() !=
+=======
+                    if ((item['status'] ?? '').toString().toLowerCase() !=
+>>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
                         'received')
                       Padding(
                         padding: const EdgeInsets.only(top: 18.0),

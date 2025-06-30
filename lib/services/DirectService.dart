@@ -87,6 +87,10 @@ class DirectService {
           items[i]['item_description'];
       request.fields['items[$i][quantity]'] = items[i]['quantity'].toString();
       request.fields['items[$i][price]'] = items[i]['price'].toString();
+<<<<<<< HEAD
+=======
+      request.fields['items[$i][unit]'] = items[i]['unit'];
+>>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
     }
 
     if (purchaseProofs != null) {
