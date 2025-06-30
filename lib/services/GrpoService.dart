@@ -63,7 +63,7 @@ class GrpoService {
   Future<List<dynamic>> fetchShippingPOs() async {
     final token = await storage.read(key: 'token');
     final response = await client.get(
-      Uri.parse('$baseUrl/grpo/filter-shipping'),
+      Uri.parse('$baseUrl/grpo/shipping'),
       headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
     );
     print('FetchShippingPOs - Status: ${response.statusCode}');
@@ -97,7 +97,7 @@ class GrpoService {
   Future<List<dynamic>> fetchReceivedGrpo() async {
     final token = await storage.read(key: 'token');
     final response = await client.get(
-      Uri.parse('$baseUrl/grpo/filter-received'),
+      Uri.parse('$baseUrl/grpo/'),
       headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
     );
     print('FetchReceivedGrpo - Status: ${response.statusCode}');
@@ -116,7 +116,7 @@ class GrpoService {
   Future<Map<String, dynamic>> getReceivedGrpoDetail(int id) async {
     final token = await storage.read(key: 'token');
     final response = await client.get(
-      Uri.parse('$baseUrl/grpo/received/$id'),
+      Uri.parse('$baseUrl/grpo/$id'),
       headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
     );
     if (response.statusCode == 200) {

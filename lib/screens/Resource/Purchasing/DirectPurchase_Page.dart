@@ -1245,7 +1245,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                   _expandedMenuIndex = STOCK_MANAGEMENT_MENU;
                 }
               });
-              Navigator.pushReplacement(context, _getPageRouteByIndex(index));
+              _navigateToPage(index);
               if (isMobile && closeDrawer != null) closeDrawer();
             }
           },
@@ -1301,7 +1301,6 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
         );
     }
   }
-
   // Todo :Routing navigation page for each dropdown page
   void _navigateToPage(int index) {
     switch (index) {
