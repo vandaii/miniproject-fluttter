@@ -17,19 +17,20 @@ import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:intl/intl.dart';
-// import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui';
 
 class DirectPurchasePage extends StatefulWidget {
   final int selectedIndex;
   const DirectPurchasePage({this.selectedIndex = 11, Key? key})
-    : super(key: key);
+      : super(key: key);
 
   @override
   _DirectPurchasePageState createState() => _DirectPurchasePageState();
 }
 
-class _DirectPurchasePageState extends State<DirectPurchasePage> {
+class _DirectPurchasePageState extends State<DirectPurchasePage>
+    with TickerProviderStateMixin {
   bool isOutstandingSelected =
       true; // Track selected tab (Outstanding or Approved)
   bool _isSidebarExpanded = true;
@@ -38,11 +39,38 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   int? _expandedMenuIndex;
   late int _selectedIndex;
   int? _hoveredIndex;
+  late AnimationController _notificationAnimationController;
+  OverlayEntry? _notificationOverlayEntry;
+  final GlobalKey _notificationIconKey = GlobalKey();
+
+  final List<Map<String, dynamic>> notifications = [
+    {
+      'icon': Icons.shopping_cart,
+      'title': 'Purchase Approved',
+      'message': 'Your direct purchase request has been approved.',
+      'time': '2 min ago',
+      'color': Color(0xFFE91E63),
+    },
+    {
+      'icon': Icons.assignment_turned_in,
+      'title': 'GRPO Received',
+      'message': 'Goods receipt has been completed for PO-2023-12.',
+      'time': '10 min ago',
+      'color': Color(0xFFE91E63),
+    },
+    {
+      'icon': Icons.warning_amber_rounded,
+      'title': 'Stock Low',
+      'message': 'Stock for Item ABC is below minimum level.',
+      'time': '1 hour ago',
+      'color': Color(0xFFE91E63),
+    },
+  ];
 
   // Tambahan untuk integrasi API
   final DirectService _directService = DirectService();
   List<dynamic> _directPurchases = [];
-  bool _isLoading = false;
+  bool _isLoading = true;
   String? _errorMessage;
   String _searchQuery = '';
   final AuthService _authService = AuthService();
@@ -58,6 +86,20 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       _expandedMenuIndex = STOCK_MANAGEMENT_MENU;
     }
     _fetchDirectPurchases();
+    _notificationAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+  }
+
+  @override
+  void dispose() {
+    _notificationAnimationController.dispose();
+    if (_notificationOverlayEntry != null) {
+      _notificationOverlayEntry!.remove();
+      _notificationOverlayEntry = null;
+    }
+    super.dispose();
   }
 
   final Color primaryColor = const Color(0xFFF8BBD0);
@@ -66,6 +108,8 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
 
   static const int PURCHASING_MENU = 1;
   static const int STOCK_MANAGEMENT_MENU = 2;
+
+  bool? get isMobile => null;
 
   bool _isMainMenuActive(int index) {
     // Aktif jika salah satu submenu dari menu utama sedang selected
@@ -112,7 +156,10 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
             return itemStatus != null && itemStatus != 'Approved';
           }).toList();
         } else {
-          _directPurchases = allPurchases;
+          // Jika di tab Approved, filter yang statusnya 'Approved'
+          _directPurchases = allPurchases
+              .where((item) => (item['status'] as String?) == 'Approved')
+              .toList();
         }
         _isLoading = false;
       });
@@ -175,717 +222,421 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   //===================================================================================================================== //
   //Todo:Rangkaian fungsi dan styling untuk header dan item lain
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
+
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: AppBar(
-          backgroundColor: const Color(0xFFE91E63),
-          elevation: 4,
-          centerTitle: true,
-          leading: Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.menu, color: Colors.white),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
+        preferredSize: Size.fromHeight(isMobile ? 72 : 84),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(32),
+            bottomRight: Radius.circular(32),
           ),
-          title: Text(
-            'Direct Purchase',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-              color: Colors.white,
-            ),
-          ),
-          actions: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => NotificationPage(),
-                        ),
-                      );
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Icon(
-                        Icons.notifications_none,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => EmailPage()),
-                      );
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Icon(
-                        Icons.mail_outline,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    onTap: () {
-                      setState(() {
-                        _isProfileMenuOpen = !_isProfileMenuOpen;
-                        _isStoreMenuOpen = false;
-                      });
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: CircleAvatar(
-                        backgroundColor: Colors.white,
-                        radius: 16,
-                        child: Text(
-                          'J',
-                          style: TextStyle(
-                            color: Color(0xFFE91E63),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-              ],
-            ),
-          ],
-        ),
-      ),
-      drawer: Drawer(
-        child: Container(
-          color: Colors.white,
-          child: Column(
-            children: [
-              // Logo dan nama aplikasi
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Colors.grey.withOpacity(0.1),
-                      width: 1,
-                    ),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Image.asset(
-                      'assets/images/icons-haus.png',
-                      height: 36,
-                      width: 36,
-                    ),
-                    if (_isSidebarExpanded) const SizedBox(width: 12),
-                    if (_isSidebarExpanded)
-                      Text(
-                        'haus! Inventory',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: deepPink,
-                        ),
-                      ),
-                  ],
-                ),
+          child: AppBar(
+            backgroundColor: const Color.fromARGB(255, 233, 30, 99),
+            elevation: 0,
+            automaticallyImplyLeading: false,
+            toolbarHeight: isMobile ? 72 : 84,
+            titleSpacing: 0,
+            title: Padding(
+              padding: EdgeInsets.only(
+                left: isMobile ? 12 : 24,
+                right: isMobile ? 10 : 24,
+                top: isMobile ? 8 : 12,
+                bottom: isMobile ? 12 : 16,
               ),
-
-              //todo: Info toko dengan dropdown
-              if (_isSidebarExpanded) _buildStoreDropdown(),
-
-              //todo: Menu Items dengan Expanded
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    children: [
-                      // Section GENERAL
-                      if (_isSidebarExpanded)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                          child: Row(
-                            children: [
-                              Text(
-                                'GENERAL',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: Colors.black54,
-                                  letterSpacing: 1,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const Spacer(),
-                              Container(
-                                height: 1,
-                                width: 100,
-                                color: Colors.grey.withOpacity(0.2),
-                              ),
-                            ],
-                          ),
-                        ),
-                      _buildMenuItem(
-                        icon: Icons.dashboard_outlined,
-                        title: 'Dashboard',
-                        index: 0,
-                        onTap: () {
-                          if (_selectedIndex != 0) {
-                            _navigateToPage(0);
-                          }
-                        },
-                      ),
-                      _buildExpandableMenu(
-                        icon: Icons.shopping_cart_outlined,
-                        title: 'Purchasing',
-                        isExpanded: _isMenuExpanded(PURCHASING_MENU, [11, 12]),
-                        menuIndex: PURCHASING_MENU,
-                        children: [
-                          _buildSubMenuItem('Direct Purchase', 11),
-                          _buildSubMenuItem('GRPO', 12),
-                        ],
-                        onTap: () {
-                          if (_selectedIndex != PURCHASING_MENU) {
-                            _navigateToPage(PURCHASING_MENU);
-                          }
-                        },
-                      ),
-                      _buildExpandableMenu(
-                        icon: Icons.inventory_2_outlined,
-                        title: 'Stock Management',
-                        isExpanded: _isMenuExpanded(STOCK_MANAGEMENT_MENU, [
-                          21,
-                          22,
-                          23,
-                          24,
-                          25,
-                        ]),
-                        menuIndex: STOCK_MANAGEMENT_MENU,
-                        children: [
-                          _buildSubMenuItem('Material Request', 21),
-                          _buildSubMenuItem('Material Calculate', 25),
-                          _buildSubMenuItem('Stock Opname', 22),
-                          _buildSubMenuItem('Transfer Stock', 23),
-                          _buildSubMenuItem('Waste', 24),
-                        ],
-                        onTap: () {
-                          if (_selectedIndex != STOCK_MANAGEMENT_MENU) {
-                            _navigateToPage(STOCK_MANAGEMENT_MENU);
-                          }
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.assessment_outlined,
-                        title: 'Inventory Report',
-                        index: 3,
-                        onTap: () {
-                          if (_selectedIndex != 3) {
-                            _navigateToPage(3);
-                          }
-                        },
-                      ),
-                      // Section TOOLS
-                      if (_isSidebarExpanded)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                          child: Row(
-                            children: [
-                              Text(
-                                'TOOLS',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: Colors.black54,
-                                  letterSpacing: 1,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const Spacer(),
-                              Container(
-                                height: 1,
-                                width: 100,
-                                color: Colors.grey.withOpacity(0.2),
-                              ),
-                            ],
-                          ),
-                        ),
-                      _buildMenuItem(
-                        icon: Icons.settings_outlined,
-                        title: 'Account & Settings',
-                        index: 4,
-                        onTap: () {
-                          if (_selectedIndex != 4) {
-                            _navigateToPage(4);
-                          }
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.help_outline,
-                        title: 'Help',
-                        index: 5,
-                        onTap: () {
-                          if (_selectedIndex != 5) {
-                            _navigateToPage(5);
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // User profile dengan dropdown (selalu di bawah)
-              if (_isSidebarExpanded) _buildProfileDropdown(),
-            ],
-          ),
-        ),
-      ),
-      backgroundColor: const Color(0xFFF3F4F6),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Search Bar Section
-            Padding(
-              padding: const EdgeInsets.only(top: 24.0, bottom: 16.0),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  if (isMobile)
+                    Builder(
+                      builder: (context) => Container(
+                        margin: const EdgeInsets.only(left: 4),
+                        child: _modernHeaderIcon(
+                          icon: Icons.grid_view_rounded,
+                          onTap: () {
+                            Scaffold.of(context).openDrawer();
+                          },
+                          isMobile: isMobile,
+                          glass: true,
+                          iconSize: 24,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  if (isMobile) const SizedBox(width: 8),
                   Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFFF8BBD0), Color(0xFFE91E63)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0xFFE91E63).withOpacity(0.10),
-                            blurRadius: 10,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
+                    child: Text(
+                      'Direct Purchase',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: isMobile ? 20 : 24,
+                        color: Colors.white,
+                        letterSpacing: 0.2,
                       ),
-                      child: TextField(
-                        onChanged: _onSearchChanged,
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: Color(0xFFE91E63),
-                            size: 22,
-                          ),
-                          hintText:
-                              'search by NO direct , Supplier , date ,etc',
-                          hintStyle: GoogleFonts.poppins(
-                            color: Colors.grey[400],
-                            fontSize: 14,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                            vertical: 16,
-                            horizontal: 18,
-                          ),
-                          filled: true,
-                          fillColor: Colors.white.withOpacity(0.85),
-                        ),
-                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.left,
                     ),
                   ),
-                  SizedBox(width: 14),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFFF8BBD0), Color(0xFFE91E63)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0xFFE91E63).withOpacity(0.10),
-                          blurRadius: 10,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: Icon(Icons.filter_alt, color: Colors.white),
-                      onPressed: _fetchDirectPurchases,
-                    ),
-                  ),
+                  const SizedBox(width: 8),
+                  _modernHeaderIconBar(isMobile),
                 ],
               ),
             ),
-            // Taskbar for Outstanding and Approved
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+          ),
+        ),
+      ),
+      drawer: Drawer(
+        child: _buildSidebarContent(
+          isMobile: true,
+          closeDrawer: () => Navigator.pop(context),
+        ),
+      ),
+      backgroundColor: const Color(0xFFF3F4F6),
+      body: Column(
+        children: [
+          // Search Bar & Filter
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+            child: Row(
               children: [
-                // Outstanding Button
-                GestureDetector(
-                  onTap: () => _onTabChanged(true),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient: isOutstandingSelected
-                          ? LinearGradient(
-                              colors: [Color(0xFFE91E63), Color(0xFFF8BBD0)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      color: isOutstandingSelected ? null : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0xFFE91E63).withOpacity(0.08),
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                      border: Border.all(
-                        color: isOutstandingSelected
-                            ? Colors.transparent
-                            : Color(0xFFE91E63),
-                        width: 2,
-                      ),
-                    ),
-                    child: Text(
-                      'Outstanding',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        color: isOutstandingSelected
-                            ? Colors.white
-                            : Color(0xFFE91E63),
-                        fontSize: 15,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 18),
-                // Approved Button
-                GestureDetector(
-                  onTap: () => _onTabChanged(false),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient: !isOutstandingSelected
-                          ? LinearGradient(
-                              colors: [Color(0xFFE91E63), Color(0xFFF8BBD0)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      color: !isOutstandingSelected ? null : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0xFFE91E63).withOpacity(0.08),
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                      border: Border.all(
-                        color: !isOutstandingSelected
-                            ? Colors.transparent
-                            : Color(0xFFE91E63),
-                        width: 2,
-                      ),
-                    ),
-                    child: Text(
-                      'Approved',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        color: !isOutstandingSelected
-                            ? Colors.white
-                            : Color(0xFFE91E63),
-                        fontSize: 15,
-                      ),
-                    ),
-                  ),
+                Expanded(child: _buildModernSearchBar()),
+                const SizedBox(width: 14),
+                _modernHeaderIcon(
+                  icon: Icons.filter_alt_outlined,
+                  onTap: () {
+                    // TODO: Implement filter logic
+                  },
+                  isMobile: isMobile,
+                  color: deepPink,
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: _isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  : _errorMessage != null
-                  ? Center(child: Text(_errorMessage!))
-                  : _directPurchases.isEmpty
-                  ? Center(child: Text('Tidak ada data'))
-                  : RefreshIndicator(
-                      onRefresh: _fetchDirectPurchases,
-                      child: ListView.builder(
-                        itemCount: _directPurchases.length,
-                        itemBuilder: (context, index) {
-                          final item = _directPurchases[index];
-                          return _buildDirectPurchaseCardFromApi(item);
-                        },
-                      ),
-                    ),
-            ),
-          ],
-        ),
+          ),
+          // Status Tabs
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8.0),
+            child: _buildStatusTabs(),
+          ),
+          // Content
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
+                    ? Center(child: Text(_errorMessage!))
+                    : _directPurchases.isEmpty
+                        ? Center(
+                            child: Text(
+                              'Tidak ada data',
+                              style: GoogleFonts.poppins(fontSize: 16),
+                            ),
+                          )
+                        : RefreshIndicator(
+                            onRefresh: _fetchDirectPurchases,
+                            child: ListView.builder(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              itemCount: _directPurchases.length,
+                              itemBuilder: (context, index) {
+                                final item = _directPurchases[index];
+                                return _buildDirectPurchaseCardFromApi(item);
+                              },
+                            ),
+                          ),
+          ),
+        ],
       ),
       floatingActionButton: Tooltip(
         message: "Add New Direct Purchase",
         child: FloatingActionButton(
           onPressed: _showAddDirectPurchaseForm,
-          backgroundColor: const Color(0xFFE91E63),
-          child: const Icon(Icons.add, size: 30),
+          backgroundColor: deepPink,
+          child: const Icon(Icons.add, size: 30, color: Colors.white),
+          shape: const CircleBorder(),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
+  Widget _buildModernSearchBar() {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16.0),
+      elevation: 4.0,
+      shadowColor: Colors.black.withOpacity(0.05),
+      child: TextField(
+        onChanged: _onSearchChanged,
+        style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
+        decoration: InputDecoration(
+          prefixIcon: Icon(Icons.search, color: Colors.grey[500], size: 22),
+          hintText: 'Search by No Direct, Supplier, etc.',
+          hintStyle: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 14),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 18,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusTabs() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(6),
+      child: Row(
+        children: [
+          _buildTabItem('Outstanding', true),
+          _buildTabItem('Approved', false),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabItem(String title, bool isOutstandingTab) {
+    final isSelected = isOutstandingSelected == isOutstandingTab;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _onTabChanged(isOutstandingTab),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? deepPink : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              color: isSelected ? Colors.white : Colors.grey[600],
+              fontSize: 15,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDirectPurchaseCardFromApi(dynamic item) {
-    // Todo : checking for status item
-    // print(item);
     // Mapping status dan badge
-    String status = item['status'] ?? '';
-    Color badgeColor = Colors.grey.shade200;
-    Color badgeTextColor = Colors.grey.shade800;
-    IconData badgeIcon = Icons.info_outline_rounded;
-    String badgeText = status;
-    if (status == 'Pending Area Manager') {
-      badgeColor = const Color(0xFFFFF9C4);
-      badgeTextColor = const Color(0xFFFBC02D);
-      badgeIcon = Icons.hourglass_top_rounded;
-      badgeText = 'Pending Area Manager';
-    } else if (status == 'Approved Area Manager') {
-      badgeColor = const Color.fromARGB(255, 144, 202, 249);
-      badgeTextColor = const Color.fromARGB(255, 21, 101, 192);
-      badgeIcon = Icons.verified_user_rounded;
-      badgeText = 'Approved Area Manager';
-    } else if (status == 'Approved') {
-      badgeColor = const Color(0xFFC8E6C9);
-      badgeTextColor = const Color(0xFF388E3C);
-      badgeIcon = Icons.verified_rounded;
-      badgeText = status;
+    String status = item['status'] ?? 'Unknown';
+    Color badgeColor, badgeTextColor;
+    IconData badgeIcon;
+
+    switch (status) {
+      case 'Pending Area Manager':
+        badgeColor = const Color(0xFFFFF9C4); // Light Yellow
+        badgeTextColor = const Color(0xFFFBC02D); // Amber
+        badgeIcon = Icons.hourglass_top_rounded;
+        break;
+      case 'Approved Area Manager':
+        badgeColor = const Color(0xFFD1C4E9); // Light Purple
+        badgeTextColor = const Color(0xFF5E35B1); // Deep Purple
+        badgeIcon = Icons.verified_user_rounded;
+        break;
+      case 'Approved':
+        badgeColor = const Color(0xFFC8E6C9); // Light Green
+        badgeTextColor = const Color(0xFF388E3C); // Green
+        badgeIcon = Icons.check_circle_rounded;
+        break;
+      default:
+        badgeColor = Colors.grey.shade200;
+        badgeTextColor = Colors.grey.shade800;
+        badgeIcon = Icons.info_outline_rounded;
     }
-    // todo : card index
+
     return Card(
-      elevation: 8,
+      elevation: 4,
+      shadowColor: Colors.black.withOpacity(0.05),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: const EdgeInsets.only(bottom: 16),
       color: Colors.white,
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // No Direct dan tombol copy di satu baris
+            // Header: No Direct & Status
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'No Direct: ',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: Color(0xFFE91E63),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'NO. DIRECT PURCHASE',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              getNoDirect(item),
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: deepPink,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            icon: Icon(
+                              Icons.copy,
+                              size: 18,
+                              color: Colors.grey[400],
+                            ),
+                            tooltip: 'Copy No Direct',
+                            onPressed: () {
+                              Clipboard.setData(
+                                ClipboardData(text: getNoDirect(item)),
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('No Direct berhasil disalin!'),
+                                  backgroundColor: Colors.green,
+                                  duration: Duration(seconds: 1),
+                                ),
+                              );
+                            },
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                Expanded(
-                  child: Tooltip(
-                    message: getNoDirect(item),
-                    child: Text(
-                      getNoDirect(item),
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.normal,
-                        fontSize: 15,
-                        color: Color(0xFFE91E63),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.copy, size: 18, color: Color(0xFFE91E63)),
-                  tooltip: 'Copy No Direct',
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: getNoDirect(item)));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('No Direct berhasil disalin!'),
-                        backgroundColor: Colors.green,
-                        duration: Duration(seconds: 1),
-                      ),
-                    );
-                  },
-                  padding: EdgeInsets.zero,
-                  constraints: BoxConstraints(),
-                ),
-              ],
-            ),
-            // Badge status di baris berikutnya, rata kanan
-            Row(
-              children: [
-                Spacer(),
                 Container(
-                  constraints: const BoxConstraints(maxWidth: 140),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
-                    vertical: 4,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
                     color: badgeColor,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: badgeColor.withOpacity(0.18),
-                        blurRadius: 4,
-                        offset: Offset(0, 1),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Icon(badgeIcon, color: badgeTextColor, size: 16),
                       const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          badgeText,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12,
-                            color: badgeTextColor,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: true,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.store, color: Color(0xFFE91E63), size: 16),
-                SizedBox(width: 6),
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'Supplier: ',
+                      Text(
+                        status,
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Colors.grey[800],
-                        ),
-                      ),
-                      TextSpan(
-                        text: item['supplier'] ?? '-',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.normal,
-                          fontSize: 14,
-                          color: Colors.grey[800],
+                          fontSize: 12,
+                          color: badgeTextColor,
                         ),
                       ),
                     ],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
-            SizedBox(height: 6),
-            Row(
-              children: [
-                Icon(Icons.calendar_today, color: Color(0xFFE91E63), size: 16),
-                SizedBox(width: 6),
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'Date: ',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Colors.grey[900],
-                        ),
-                      ),
-                      TextSpan(
-                        text: getDate(item),
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.normal,
-                          fontSize: 14,
-                          color: Colors.grey[900],
-                        ),
-                      ),
-                    ],
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+            const SizedBox(height: 12),
+            const Divider(),
+            const SizedBox(height: 12),
+            // Details: Supplier and Date
+            _buildInfoRow(
+              icon: Icons.store_mall_directory_outlined,
+              label: 'Supplier',
+              value: item['supplier'] ?? '-',
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 12),
+            _buildInfoRow(
+              icon: Icons.calendar_today_outlined,
+              label: 'Date',
+              value: getDate(item),
+            ),
+            const SizedBox(height: 20),
+            // Action Button
             Align(
               alignment: Alignment.bottomRight,
-              child: OutlinedButton.icon(
+              child: ElevatedButton.icon(
                 onPressed: () => _showDetailPopup(item),
-                icon: Icon(
-                  Icons.info_outline_rounded,
-                  color: Color(0xFFE91E63),
-                  size: 18,
+                icon: const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: Colors.white,
                 ),
                 label: Text(
-                  'Detail',
+                  'View Details',
                   style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFFE91E63),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
-                style: OutlinedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  side: BorderSide(color: Color(0xFFE91E63), width: 2),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: deepPink,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  elevation: 0,
-                  minimumSize: Size(120, 44),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
                 ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.grey[500], size: 20),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[800],
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -1049,6 +800,220 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     }
   }
 
+  Widget _buildSidebarContent({
+    bool isMobile = false,
+    VoidCallback? closeDrawer,
+  }) {
+    return Container(
+      color: Colors.white,
+      child: Column(
+        children: [
+          // Logo dan nama aplikasi
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 16 : 20,
+              vertical: 24,
+            ),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.grey.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Image.asset(
+                  'assets/images/icons-haus.png',
+                  height: 36,
+                  width: 36,
+                ),
+                if (_isSidebarExpanded || isMobile) const SizedBox(width: 12),
+                if (_isSidebarExpanded || isMobile)
+                  Text(
+                    'haus! Inventory',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: deepPink,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if (_isSidebarExpanded || isMobile) _buildStoreDropdown(),
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  // Section GENERAL
+                  if (_isSidebarExpanded || isMobile)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                      child: Row(
+                        children: [
+                          Text(
+                            'GENERAL',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              letterSpacing: 1,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            height: 1,
+                            width: 100,
+                            color: Colors.grey.withOpacity(0.2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  _buildMenuItem(
+                    icon: Icons.dashboard_customize_rounded,
+                    title: 'Dashboard',
+                    index: 0,
+                    onTap: () {
+                      if (_selectedIndex != 0) {
+                        _navigateToPage(0);
+                      }
+                      if (isMobile && closeDrawer != null) closeDrawer();
+                    },
+                  ),
+                  _buildExpandableMenu(
+                    icon: Icons.shopping_bag_rounded,
+                    title: 'Purchasing',
+                    isExpanded: _isMenuExpanded(PURCHASING_MENU, [11, 12]),
+                    menuIndex: PURCHASING_MENU,
+                    children: [
+                      _buildSubMenuItem(
+                        'Direct Purchase',
+                        11,
+                        isMobile: isMobile,
+                        closeDrawer: closeDrawer,
+                      ),
+                      _buildSubMenuItem(
+                        'GRPO',
+                        12,
+                        isMobile: isMobile,
+                        closeDrawer: closeDrawer,
+                      ),
+                    ],
+                    onTap: () {
+                      // This onTap is for the main expandable menu header
+                    },
+                  ),
+                  _buildExpandableMenu(
+                    icon: Icons.inventory_rounded,
+                    title: 'Stock Management',
+                    isExpanded: _isMenuExpanded(STOCK_MANAGEMENT_MENU, [
+                      21,
+                      22,
+                      23,
+                      24,
+                      25,
+                    ]),
+                    menuIndex: STOCK_MANAGEMENT_MENU,
+                    children: [
+                      _buildSubMenuItem(
+                        'Material Request',
+                        21,
+                        isMobile: isMobile,
+                        closeDrawer: closeDrawer,
+                      ),
+                      _buildSubMenuItem(
+                        'Material Calculate',
+                        25,
+                        isMobile: isMobile,
+                        closeDrawer: closeDrawer,
+                      ),
+                      _buildSubMenuItem(
+                        'Stock Opname',
+                        22,
+                        isMobile: isMobile,
+                        closeDrawer: closeDrawer,
+                      ),
+                      _buildSubMenuItem(
+                        'Transfer Stock',
+                        23,
+                        isMobile: isMobile,
+                        closeDrawer: closeDrawer,
+                      ),
+                      _buildSubMenuItem(
+                        'Waste',
+                        24,
+                        isMobile: isMobile,
+                        closeDrawer: closeDrawer,
+                      ),
+                    ],
+                    onTap: () {
+                      // This onTap is for the main expandable menu header
+                    },
+                  ),
+                  _buildMenuItem(
+                    icon: Icons.bar_chart_rounded,
+                    title: 'Inventory Report',
+                    index: 3,
+                    onTap: () {
+                      if (_selectedIndex != 3) _navigateToPage(3);
+                      if (isMobile && closeDrawer != null) closeDrawer();
+                    },
+                  ),
+                  // Section TOOLS
+                  if (_isSidebarExpanded || isMobile)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                      child: Row(
+                        children: [
+                          Text(
+                            'TOOLS',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              letterSpacing: 1,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            height: 1,
+                            width: 100,
+                            color: Colors.grey.withOpacity(0.2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  _buildMenuItem(
+                    icon: Icons.settings_suggest_rounded,
+                    title: 'Account & Settings',
+                    index: 4,
+                    onTap: () {
+                      if (_selectedIndex != 4) _navigateToPage(4);
+                      if (isMobile && closeDrawer != null) closeDrawer();
+                    },
+                  ),
+                  _buildMenuItem(
+                    icon: Icons.help_center_rounded,
+                    title: 'Help',
+                    index: 5,
+                    onTap: () {
+                      if (_selectedIndex != 5) _navigateToPage(5);
+                      if (isMobile && closeDrawer != null) closeDrawer();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_isSidebarExpanded || isMobile) _buildProfileDropdown(),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMenuItem({
     required IconData icon,
     required String title,
@@ -1057,34 +1022,28 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   }) {
     final isActive = _isMainMenuActive(index);
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        color: isActive ? deepPink.withOpacity(0.1) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: isActive
-                ? deepPink.withOpacity(0.1)
-                : Colors.grey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: isActive ? deepPink : Colors.grey, size: 20),
+        leading: Icon(
+          icon,
+          color: isActive ? deepPink : Colors.grey[600],
+          size: 22,
         ),
         title: Text(
           title,
           style: GoogleFonts.poppins(
-            color: isActive ? deepPink : Colors.grey,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            color: isActive ? deepPink : Colors.grey[800],
+            fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
             fontSize: 14,
           ),
         ),
-        selected: isActive,
         onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
         dense: true,
       ),
     );
@@ -1108,47 +1067,43 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     }
 
     // Jika ada submenu aktif, nonaktifkan hover/active background pada parent
-    final bool highlightParent = isExpanded && !isAnySubMenuActive;
+    final bool highlightParent = isAnySubMenuActive || isMenuExpanded;
+    final bool isMobile = MediaQuery.of(context).size.width < 600;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: highlightParent
-                ? lightPink.withOpacity(0.3)
+            color: highlightParent && !isAnySubMenuActive
+                ? deepPink.withOpacity(0.1)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: ListTile(
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: highlightParent
-                    ? deepPink.withOpacity(0.1)
-                    : Colors.grey.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                color: highlightParent ? deepPink : Colors.grey,
-                size: 20,
-              ),
+            leading: Icon(
+              icon,
+              color: highlightParent ? deepPink : Colors.grey[600],
+              size: 22,
             ),
             title: Text(
               title,
               style: GoogleFonts.poppins(
-                color: highlightParent ? deepPink : Colors.grey,
-                fontWeight: highlightParent
-                    ? FontWeight.bold
-                    : FontWeight.normal,
+                color: highlightParent ? deepPink : Colors.grey[800],
+                fontWeight:
+                    highlightParent ? FontWeight.bold : FontWeight.w500,
                 fontSize: 14,
               ),
             ),
-            trailing: Icon(
-              isMenuExpanded ? Icons.expand_less : Icons.expand_more,
-              color: highlightParent ? deepPink : Colors.grey,
+            trailing: AnimatedRotation(
+              turns: isMenuExpanded ? 0.5 : 0.0,
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+              child: Icon(
+                Icons.expand_more,
+                color: highlightParent ? deepPink : Colors.grey,
+              ),
             ),
             onTap: () {
               setState(() {
@@ -1161,20 +1116,25 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
             },
             dense: true,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
             ),
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
+              horizontal: 20,
+              vertical: 2,
             ),
           ),
         ),
-        if (isMenuExpanded && _isSidebarExpanded)
-          Container(
-            margin: const EdgeInsets.only(left: 16),
+        if (isMenuExpanded && (_isSidebarExpanded || isMobile))
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.only(left: 32, top: 4, bottom: 4),
+            padding: const EdgeInsets.only(left: 16),
             decoration: BoxDecoration(
               border: Border(
-                left: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1),
+                left: BorderSide(
+                  color: Colors.grey.withOpacity(0.3),
+                  width: 1.5,
+                ),
               ),
             ),
             child: Column(
@@ -1205,32 +1165,26 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
         }
       },
       child: Container(
-        margin: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
+        margin: const EdgeInsets.only(left: 0, right: 8, top: 4, bottom: 4),
         decoration: BoxDecoration(
-          color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          color: isActive ? deepPink.withOpacity(0.1) : Colors.transparent,
+          borderRadius: const BorderRadius.only(
+            topRight: Radius.circular(12),
+            bottomRight: Radius.circular(12),
+          ),
         ),
         child: ListTile(
-          leading: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? deepPink.withOpacity(0.1)
-                  : Colors.grey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              _getSubMenuIcon(index),
-              color: isActive ? deepPink : Colors.grey,
-              size: 20,
-            ),
+          leading: Icon(
+            _getSubMenuIcon(index),
+            color: isActive ? deepPink : Colors.grey[600],
+            size: 20,
           ),
           title: Text(
             title,
             style: GoogleFonts.poppins(
               fontSize: 13,
               color: isActive ? deepPink : Colors.black87,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
             ),
           ),
           selected: isActive,
@@ -1250,7 +1204,12 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
             }
           },
           dense: true,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(12),
+              bottomRight: Radius.circular(12),
+            ),
+          ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 4,
@@ -1301,6 +1260,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
         );
     }
   }
+
   // Todo :Routing navigation page for each dropdown page
   void _navigateToPage(int index) {
     switch (index) {
@@ -1405,8 +1365,8 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: lightPink,
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFFFFF1F5),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: deepPink.withOpacity(0.1), width: 1),
       ),
       child: Column(
@@ -1488,7 +1448,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
           storeName,
           style: GoogleFonts.poppins(
             fontSize: 13,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             color: isSelected ? deepPink : Colors.black87,
           ),
         ),
@@ -1724,13 +1684,497 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       return rawDate;
     }
   }
+
+  Widget _modernHeaderIconBar(bool isMobile) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.white.withOpacity(0.22), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            key: _notificationIconKey,
+            child: _modernHeaderIcon(
+              icon: Icons.notifications_none_outlined,
+              onTap: _toggleNotificationOverlay,
+              badge: notifications.isNotEmpty,
+              isMobile: isMobile,
+              glass: true,
+              iconSize: isMobile ? 24 : 28,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(width: isMobile ? 10 : 18),
+          _modernHeaderIcon(
+            icon: Icons.mail_outline,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => EmailPage()),
+              );
+            },
+            isMobile: isMobile,
+            glass: true,
+            iconSize: isMobile ? 24 : 28,
+            color: Colors.white,
+          ),
+          SizedBox(width: isMobile ? 10 : 18),
+          _modernHeaderAvatar(isMobile: isMobile, glass: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _modernHeaderIcon({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool badge = false,
+    bool isMobile = false,
+    Color? color,
+    bool glass = false,
+    double? iconSize,
+  }) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 180),
+          curve: Curves.easeInOut,
+          padding: EdgeInsets.all(isMobile ? 8 : 12),
+          decoration: BoxDecoration(
+            color: glass
+                ? Colors.white.withOpacity(0.35)
+                : (color?.withOpacity(0.13) ?? Colors.white.withOpacity(0.13)),
+            borderRadius: BorderRadius.circular(16),
+            border: glass
+                ? Border.all(color: Colors.white.withOpacity(0.32), width: 1.1)
+                : Border.all(color: (color ?? Colors.white).withOpacity(0.22)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(
+                icon,
+                color: color != null && !glass ? deepPink : Colors.white,
+                size: iconSize ?? (isMobile ? 22 : 26),
+              ),
+              if (badge)
+                Positioned(
+                  right: -2,
+                  top: -2,
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Colors.pinkAccent,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _modernHeaderAvatar({bool isMobile = false, bool glass = false}) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          _showProfileMenu(context);
+        },
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 180),
+          curve: Curves.easeInOut,
+          padding: EdgeInsets.all(isMobile ? 4 : 6),
+          decoration: BoxDecoration(
+            color: glass
+                ? Colors.white.withOpacity(0.35)
+                : Colors.white.withOpacity(0.13),
+            borderRadius: BorderRadius.circular(16),
+            border: glass
+                ? Border.all(color: Colors.white.withOpacity(0.32), width: 1.1)
+                : Border.all(color: Colors.white.withOpacity(0.22)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: CircleAvatar(
+            backgroundColor: Colors.white,
+            radius: isMobile ? 15 : 17,
+            child: Text(
+              'J',
+              style: TextStyle(
+                color: deepPink,
+                fontWeight: FontWeight.bold,
+                fontSize: isMobile ? 14 : 16,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showProfileMenu(BuildContext context) {
+    final RenderBox button = context.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(const Offset(0, 0), ancestor: overlay),
+        button.localToGlobal(
+          button.size.bottomRight(Offset.zero),
+          ancestor: overlay,
+        ),
+      ),
+      Offset.zero & overlay.size,
+    );
+
+    showMenu(
+      context: context,
+      position: position,
+      color: Colors.white,
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      items: <PopupMenuEntry<int>>[
+        PopupMenuItem<int>(
+          value: 0,
+          child: Builder(
+            builder: (context) => _buildProfileMenuItem(
+              Icons.person_outline,
+              'Profile',
+              onTap: () {
+                Navigator.pop(context); // Close the menu first
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const UserprofilePage(),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        PopupMenuItem<int>(
+          value: 1,
+          child: Builder(
+            builder: (context) => _buildProfileMenuItem(
+              Icons.settings_outlined,
+              'Settings',
+              onTap: () {
+                Navigator.pop(context);
+                // Handle settings
+              },
+            ),
+          ),
+        ),
+        PopupMenuItem<int>(
+          value: 2,
+          child: Builder(
+            builder: (context) => _buildProfileMenuItem(
+              Icons.help_outline,
+              'Help & Support',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => HelpPage()),
+                );
+              },
+            ),
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem<int>(
+          value: 3,
+          child: Builder(
+            builder: (context) => _buildProfileMenuItem(
+              Icons.logout,
+              'Logout',
+              isLogout: true,
+              onTap: () async {
+                Navigator.pop(context);
+                await _handleLogout();
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // --- Notification Overlay Logic ---
+  void _toggleNotificationOverlay() {
+    if (_notificationAnimationController.isAnimating) return;
+
+    if (_notificationOverlayEntry == null) {
+      _showNotificationBubble();
+    } else {
+      _removeNotificationOverlay();
+    }
+  }
+
+  void _removeNotificationOverlay() {
+    if (_notificationOverlayEntry != null) {
+      _notificationAnimationController.reverse().then((_) {
+        if (_notificationOverlayEntry != null &&
+            _notificationOverlayEntry!.mounted) {
+          _notificationOverlayEntry!.remove();
+          _notificationOverlayEntry = null;
+        }
+      });
+    }
+  }
+
+  void _showNotificationBubble() {
+    final RenderBox renderBox =
+        _notificationIconKey.currentContext!.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final position = renderBox.localToGlobal(Offset.zero);
+
+    _notificationOverlayEntry = OverlayEntry(
+      builder: (context) => _buildNotificationBubbleAnimated(position, size),
+    );
+
+    Overlay.of(context).insert(_notificationOverlayEntry!);
+    _notificationAnimationController.forward();
+  }
+
+  Widget _buildNotificationBubbleAnimated(Offset position, Size size) {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: _removeNotificationOverlay,
+            behavior: HitTestBehavior.opaque,
+            child: Container(color: Colors.transparent),
+          ),
+        ),
+        Positioned(
+          top: position.dy + size.height + 10,
+          right: 16,
+          child: AnimatedBuilder(
+            animation: _notificationAnimationController,
+            builder: (context, child) {
+              return FadeTransition(
+                opacity: _notificationAnimationController,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.85, end: 1.0).animate(
+                    CurvedAnimation(
+                      parent: _notificationAnimationController,
+                      curve: Curves.easeOutBack,
+                    ),
+                  ),
+                  alignment: Alignment.topRight,
+                  child: child,
+                ),
+              );
+            },
+            child: _buildNotificationBubbleContent(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNotificationBubbleContent() {
+    final List<Map<String, dynamic>> previewNotifs =
+        notifications.take(4).toList();
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
+    return Material(
+      color: Colors.white.withOpacity(0.98),
+      elevation: 16,
+      shadowColor: Colors.black.withOpacity(0.10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        width: isMobile ? screenWidth * 0.85 : 340,
+        constraints: BoxConstraints(maxHeight: isMobile ? 380 : 420),
+        padding: const EdgeInsets.only(top: 10, bottom: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Triangle
+            Align(
+              alignment: Alignment.topRight,
+              child: Container(
+                margin: const EdgeInsets.only(right: 16, bottom: 2),
+                child: ClipPath(
+                  clipper: TriangleClipper(),
+                  child: Container(
+                      color: Colors.white.withOpacity(0.98),
+                      height: 10,
+                      width: 18),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
+              child: Text(
+                'Notifikasi',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
+            if (previewNotifs.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 16,
+                ),
+                child: Text(
+                  'Belum ada notifikasi.',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              )
+            else
+              Flexible(
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  itemCount: previewNotifs.length,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  separatorBuilder: (_, __) =>
+                      Divider(height: 1, color: Colors.grey.shade100),
+                  itemBuilder: (context, i) =>
+                      _buildNotificationBubbleItem(previewNotifs[i]),
+                ),
+              ),
+            const SizedBox(height: 2),
+            InkWell(
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+              onTap: () {
+                _removeNotificationOverlay();
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => NotificationPage()),
+                  );
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                alignment: Alignment.center,
+                child: Text(
+                  'Lihat Semua Notifikasi',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold,
+                    color: deepPink,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationBubbleItem(Map<String, dynamic> notif) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            backgroundColor: (notif['color'] as Color).withOpacity(0.13),
+            child: Icon(notif['icon'], color: notif['color'], size: 16),
+            radius: 13,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  notif['title'],
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: notif['color'],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  notif['message'],
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.5,
+                    color: Colors.grey[800],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  notif['time'],
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    color: Colors.grey[400],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class TriangleClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.moveTo(size.width, 0);
+    path.lineTo(size.width, size.height);
+    path.lineTo(size.width - (size.width / 2), 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(TriangleClipper oldClipper) => false;
 }
 
 // Todo : ini souce line untuk menambahkan data baru di database
 class _AddDirectPurchaseFormContent extends StatefulWidget {
   final VoidCallback onSuccess;
   const _AddDirectPurchaseFormContent({Key? key, required this.onSuccess})
-    : super(key: key);
+      : super(key: key);
 
   @override
   State<_AddDirectPurchaseFormContent> createState() =>
