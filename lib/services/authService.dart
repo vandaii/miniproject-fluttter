@@ -5,8 +5,13 @@ import 'package:http/http.dart' as http;
 import 'package:miniproject_flutter/config/APi.dart';
 
 class AuthService {
+<<<<<<< HEAD
+  final String baseUrl = 'http://192.168.1.4:8000/api';
+  final FlutterSecureStorage storage = FlutterSecureStorage();
+=======
   // Untuk menyimpan data data user ke dalam local storage
   final storage = const FlutterSecureStorage();
+>>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
 
   // Untuk mengakses API
   final http.Client client = ApiConfig.client;
@@ -176,4 +181,8 @@ class AuthService {
       return null;
     }
   }
+<<<<<<< HEAD
+
+=======
+>>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
 }
