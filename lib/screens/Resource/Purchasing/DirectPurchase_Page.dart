@@ -1,22 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-import 'package:google_fonts/google_fonts.dart';
-import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
-import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
-import 'package:miniproject_flutter/screens/Resource/Purchasing/GRPO_Page.dart';
-import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialCalculate_Page.dart';
-import 'package:miniproject_flutter/screens/Resource/Stock_Management/StockOpname_Page.dart';
-import 'package:miniproject_flutter/screens/Resource/Stock_Management/TransferStock_Page.dart';
-import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialRequest_Page.dart';
-import 'package:miniproject_flutter/screens/Resource/Auth/UserProfile_Page.dart';
-import 'package:miniproject_flutter/screens/Resource/Auth/Help_Page.dart';
-import 'package:miniproject_flutter/screens/Resource/Stock_Management/Waste_Page.dart';
-import 'package:miniproject_flutter/screens/DashboardPage.dart';
-import 'package:miniproject_flutter/services/authService.dart';
-import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
-import 'package:file_picker/file_picker.dart';
-=======
->>>>>>> front
 import 'dart:io';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
@@ -689,18 +671,13 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     // print(item);
     // Mapping status dan badge
     String status = item['status'] ?? '';
-    Color badgeColor;
-    Color badgeTextColor;
-    IconData badgeIcon;
-    String badgeText;
+    Color badgeColor = Colors.grey.shade200;
+    Color badgeTextColor = Colors.grey.shade800;
+    IconData badgeIcon = Icons.info_outline_rounded;
+    String badgeText = status;
     if (status == 'Pending Area Manager') {
-<<<<<<< HEAD:lib/screens/Dashboard_Resouce/Purchasing/DirectPurchase_Page.dart
-      badgeColor = const Color.fromARGB(255, 255, 247, 173);
-      badgeTextColor = const Color.fromARGB(255, 244, 183, 29);
-=======
       badgeColor = const Color(0xFFFFF9C4);
       badgeTextColor = const Color(0xFFFBC02D);
->>>>>>> 98b629f7dd79157f3b277c7ace6b44561eae4546:lib/screens/Resource/Purchasing/DirectPurchase_Page.dart
       badgeIcon = Icons.hourglass_top_rounded;
       badgeText = 'Pending Area Manager';
     } else if (status == 'Approved Area Manager') {
@@ -712,11 +689,6 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       badgeColor = const Color(0xFFC8E6C9);
       badgeTextColor = const Color(0xFF388E3C);
       badgeIcon = Icons.verified_rounded;
-      badgeText = 'Approved';
-    } else {
-      badgeColor = const Color(0xFFF8BBD0);
-      badgeTextColor = const Color(0xFFE91E63);
-      badgeIcon = Icons.info_outline_rounded;
       badgeText = status;
     }
     // todo : card index
@@ -1288,10 +1260,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     );
   }
 
-<<<<<<< HEAD:lib/screens/Dashboard_Resouce/Purchasing/DirectPurchase_Page.dart
-=======
   //Todo : Routing navigation page for each menu
->>>>>>> 98b629f7dd79157f3b277c7ace6b44561eae4546:lib/screens/Resource/Purchasing/DirectPurchase_Page.dart
   Route _getPageRouteByIndex(int index) {
     switch (index) {
       case 0:

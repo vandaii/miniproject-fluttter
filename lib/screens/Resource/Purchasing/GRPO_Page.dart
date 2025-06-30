@@ -9,19 +9,13 @@ import 'package:miniproject_flutter/screens/Resource/Auth/UserProfile_Page.dart'
 import 'package:miniproject_flutter/screens/Resource/Auth/Help_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/Waste_Page.dart';
 import 'package:miniproject_flutter/services/authService.dart';
-<<<<<<< HEAD
 import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
-=======
 import 'package:miniproject_flutter/services/GrpoService.dart';
-import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
-import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
-import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/screens/DashboardPage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
->>>>>>> front
 
 class GRPO_Page extends StatefulWidget {
   final int selectedIndex;

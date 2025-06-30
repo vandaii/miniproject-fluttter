@@ -4,7 +4,7 @@ import 'package:http/io_client.dart';
 // import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiConfig {
-  static const String baseUrl = 'http://192.168.1.11:8000/api';
+  static const String baseUrl = 'http://192.168.1.17:8000/api';
 
   static http.Client client = IOClient(
     HttpClient()

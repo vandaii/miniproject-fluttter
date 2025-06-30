@@ -51,7 +51,7 @@ class _DashboardPageState extends State<DashboardPage>
   OverlayEntry? _notificationOverlayEntry;
   final GlobalKey _notificationIconKey = GlobalKey();
 
-  // Data notifikasi (diambil dari Notification_Page.dart) 
+  // Data notifikasi (diambil dari Notification_Page.dart)
   final List<Map<String, dynamic>> notifications = [
     {
       'icon': Icons.shopping_cart,
@@ -482,7 +482,7 @@ class _DashboardPageState extends State<DashboardPage>
               children: [
                 Icon(
                   Icons.search,
-                  color: deepPink.withOpacity(0.8),
+                  color: Colors.white,
                   size: isMobile ? 20 : 24,
                 ),
                 const SizedBox(width: 8),
@@ -504,7 +504,7 @@ class _DashboardPageState extends State<DashboardPage>
                 const SizedBox(width: 4),
                 IconButton(
                   icon: const Icon(Icons.close),
-                  color: deepPink,
+                  color: Colors.white,
                   splashRadius: 20,
                   onPressed: _toggleSearch,
                 ),
@@ -600,6 +600,69 @@ class _DashboardPageState extends State<DashboardPage>
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
+      extendBodyBehindAppBar: false,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(isMobile ? 72 : 84),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(32),
+            bottomRight: Radius.circular(32),
+          ),
+          child: AppBar(
+            backgroundColor: const Color.fromARGB(255, 255, 30, 105),
+            elevation: 0,
+            automaticallyImplyLeading: false,
+            toolbarHeight: isMobile ? 72 : 84,
+            titleSpacing: 0,
+            title: Padding(
+              padding: EdgeInsets.only(
+                left: isMobile ? 12 : 24,
+                right: isMobile ? 10 : 24,
+                top: isMobile ? 8 : 12,
+                bottom: isMobile ? 12 : 16,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (isMobile)
+                    Builder(
+                      builder: (context) => Container(
+                        margin: const EdgeInsets.only(left: 4),
+                        child: _modernHeaderIcon(
+                          icon: Icons.grid_view_rounded,
+                          onTap: () {
+                            Scaffold.of(context).openDrawer();
+                          },
+                          isMobile: isMobile,
+                          glass: true,
+                          iconSize: 24,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  if (isMobile) const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Dashboard',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: isMobile ? 20 : 24,
+                        color: Colors.white,
+                        letterSpacing: 0.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.left,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _modernHeaderIconBarNoSearch(isMobile),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
       drawer: isMobile
           ? Drawer(
               child: _buildSidebarContent(
@@ -611,6 +674,23 @@ class _DashboardPageState extends State<DashboardPage>
       body: SafeArea(
         child: Stack(
           children: [
+            // Sidebar (desktop/tablet)
+            if (!isMobile)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: _isSidebarExpanded ? 250 : 70,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 0),
+                    ),
+                  ],
+                ),
+                child: _buildSidebarContent(isMobile: false),
+              ),
             // Main Content Area
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
@@ -619,10 +699,6 @@ class _DashboardPageState extends State<DashboardPage>
                   : EdgeInsets.only(left: _isSidebarExpanded ? 250 : 70),
               child: Column(
                 children: [
-                  // Header (will not be blurred)
-                  _buildHeader(screenWidth, isMobile),
-                  _buildAnimatedSearchBar(),
-                  // Scrollable Content
                   Expanded(
                     child: SingleChildScrollView(
                       child: Column(
@@ -649,916 +725,52 @@ class _DashboardPageState extends State<DashboardPage>
                 ],
               ),
             ),
-            // Sidebar (hanya tampil di desktop/tablet)
-            if (!isMobile)
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: _isSidebarExpanded ? 250 : 70,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 0),
-                    ),
-                  ],
-                ),
-                child: _buildSidebarContent(isMobile: false),
-              ),
           ],
         ),
       ),
     );
   }
 
-  // content widgets
-  Widget _buildSidebarContent({
-    bool isMobile = false,
-    VoidCallback? closeDrawer,
-  }) {
+  Widget _modernHeaderIconBarNoSearch(bool isMobile) {
     return Container(
-      color: Colors.white,
-      child: Column(
-        children: [
-          // Logo dan nama aplikasi
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 16 : 20,
-              vertical: 24,
-            ),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.grey.withOpacity(0.1),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Image.asset(
-                  'assets/images/icons-haus.png',
-                  height: 36,
-                  width: 36,
-                ),
-                if (_isSidebarExpanded || isMobile) const SizedBox(width: 12),
-                if (_isSidebarExpanded || isMobile)
-                  Text(
-                    'haus! Inventory',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: deepPink,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          // Info toko dengan dropdown
-          if (_isSidebarExpanded || isMobile) _buildStoreDropdown(),
-
-          // Menu Items dengan Expanded
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: [
-                  // Section GENERAL
-                  if (_isSidebarExpanded || isMobile)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                      child: Row(
-                        children: [
-                          Text(
-                            'GENERAL',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: Colors.black54,
-                              letterSpacing: 1,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            height: 1,
-                            width: 100,
-                            color: Colors.grey.withOpacity(0.2),
-                          ),
-                        ],
-                      ),
-                    ),
-                  _buildMenuItem(
-                    icon: Icons.dashboard_customize_rounded,
-                    title: 'Dashboard',
-                    index: 0,
-                    onTap: () {
-                      if (_selectedIndex != 0) {
-                        setState(() => _selectedIndex = 0);
-                        _navigateToPage(0);
-                        if (isMobile && closeDrawer != null) closeDrawer();
-                      }
-                    },
-                  ),
-                  _buildExpandableMenu(
-                    icon: Icons.shopping_bag_rounded,
-                    title: 'Purchasing',
-                    isExpanded: _selectedIndex == PURCHASING_MENU,
-                    menuIndex: PURCHASING_MENU,
-                    children: [
-                      _buildSubMenuItem('Direct Purchase', 11),
-                      _buildSubMenuItem('GRPO', 12),
-                    ],
-                    onTap: () {
-                      setState(() => _selectedIndex = PURCHASING_MENU);
-                    },
-                    isMobile: isMobile,
-                  ),
-                  _buildExpandableMenu(
-                    icon: Icons.inventory_rounded,
-                    title: 'Stock Management',
-                    isExpanded: _selectedIndex == STOCK_MANAGEMENT_MENU,
-                    menuIndex: STOCK_MANAGEMENT_MENU,
-                    children: [
-                      _buildSubMenuItem('Material Request', 21),
-                      _buildSubMenuItem('Material Calculate', 25),
-                      _buildSubMenuItem('Stock Opname', 22),
-                      _buildSubMenuItem('Transfer Stock', 23),
-                      _buildSubMenuItem('Waste', 24),
-                    ],
-                    onTap: () {
-                      setState(() => _selectedIndex = STOCK_MANAGEMENT_MENU);
-                    },
-                    isMobile: isMobile,
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.bar_chart_rounded,
-                    title: 'Inventory Report',
-                    index: 3,
-                    onTap: () {
-                      setState(() => _selectedIndex = 3);
-                      if (isMobile && closeDrawer != null) closeDrawer();
-                    },
-                  ),
-                  // Section TOOLS
-                  if (_isSidebarExpanded || isMobile)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                      child: Row(
-                        children: [
-                          Text(
-                            'TOOLS',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: Colors.black54,
-                              letterSpacing: 1,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            height: 1,
-                            width: 100,
-                            color: Colors.grey.withOpacity(0.2),
-                          ),
-                        ],
-                      ),
-                    ),
-                  _buildMenuItem(
-                    icon: Icons.settings_suggest_rounded,
-                    title: 'Account & Settings',
-                    index: 4,
-                    onTap: () {
-                      setState(() => _selectedIndex = 4);
-                      _navigateToPage(4);
-                      if (isMobile && closeDrawer != null) closeDrawer();
-                    },
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.help_center_rounded,
-                    title: 'Help',
-                    index: 5,
-                    onTap: () {
-                      setState(() => _selectedIndex = 5);
-                      _navigateToPage(5);
-                      if (isMobile && closeDrawer != null) closeDrawer();
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // User profile dengan dropdown (selalu di bawah)
-          if (_isSidebarExpanded || isMobile) _buildProfileDropdown(),
-        ],
-      ),
-    );
-  }
-
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-  Widget _buildMenuItem({
-    required IconData icon,
-    required String title,
-    required int index,
-    required VoidCallback onTap,
-  }) {
-    final isActive = _isMenuActive(index);
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hoveredIndex = index),
-      onExit: (_) => setState(() => _hoveredIndex = null),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: ListTile(
-          horizontalTitleGap: 12,
-          leading: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? deepPink.withOpacity(0.1)
-                  : Colors.grey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: isActive ? deepPink : Colors.grey,
-              size: 20,
-            ),
-          ),
-          title: Text(
-            title,
-            style: GoogleFonts.poppins(
-              color: isActive ? deepPink : Colors.grey,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              fontSize: 14,
-            ),
-          ),
-          selected: isActive,
-          onTap: () {
-            if (_selectedIndex != index) {
-              setState(() => _selectedIndex = index);
-              _navigateToPage(index);
-            }
-          },
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
-          dense: true,
-        ),
-      ),
-    );
-  }
-
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-  Widget _buildExpandableMenu({
-    required IconData icon,
-    required String title,
-    required bool isExpanded,
-    required List<Widget> children,
-    required VoidCallback onTap,
-    required int menuIndex,
-    bool isMobile = false,
-  }) {
-    final isMenuExpanded = _expandedMenuIndex == menuIndex;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: isExpanded ? lightPink.withOpacity(0.3) : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: ListTile(
-            horizontalTitleGap: 12,
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isExpanded
-                    ? deepPink.withOpacity(0.1)
-                    : Colors.grey.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                color: isExpanded ? deepPink : Colors.grey,
-                size: 20,
-              ),
-            ),
-            title: Text(
-              title,
-              style: GoogleFonts.poppins(
-                color: isExpanded ? deepPink : Colors.grey,
-                fontWeight: isExpanded ? FontWeight.bold : FontWeight.normal,
-                fontSize: 14,
-              ),
-            ),
-            trailing: AnimatedRotation(
-              turns: isMenuExpanded ? 0.5 : 0.0,
-              duration: Duration(milliseconds: 220),
-              curve: Curves.easeInOut,
-              child: Icon(
-                Icons.expand_more,
-                color: isExpanded ? deepPink : Colors.grey,
-              ),
-            ),
-            onTap: () {
-              _toggleMenu(menuIndex);
-              onTap();
-            },
-            dense: true,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
-          ),
-        ),
-        if (isMenuExpanded && (_isSidebarExpanded || isMobile))
-          Container(
-            margin: const EdgeInsets.only(left: 16),
-            decoration: BoxDecoration(
-              border: Border(
-                left: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: children,
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildSubMenuItem(String title, int index) {
-    return Container(
-      margin: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 16, vertical: 6),
       decoration: BoxDecoration(
-        color: _selectedIndex == index
-            ? lightPink.withOpacity(0.3)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.white.withOpacity(0.22), width: 1),
       ),
-      child: ListTile(
-        horizontalTitleGap: 12,
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: _selectedIndex == index
-                ? deepPink.withOpacity(0.1)
-                : Colors.grey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            _getSubMenuIcon(index),
-            color: _selectedIndex == index ? deepPink : Colors.grey,
-            size: 20,
-          ),
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            color: _selectedIndex == index ? deepPink : Colors.black87,
-            fontWeight: _selectedIndex == index
-                ? FontWeight.bold
-                : FontWeight.normal,
-          ),
-        ),
-        selected: _selectedIndex == index,
-        onTap: () {
-          setState(() => _selectedIndex = index);
-          _navigateToPage(index);
-        },
-        dense: true,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      ),
-    );
-  }
-
-  void _navigateToPage(int index) {
-    switch (index) {
-      case 11: // Direct Purchase
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => DirectPurchasePage()),
-        );
-        break;
-      case 12: // GRPO
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => GRPO_Page()),
-        );
-        break;
-      case 21: // Material Request
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MaterialRequestPage()),
-        );
-        break;
-      case 22: // Stock Opname
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => StockOpnamePage()),
-        );
-        break;
-      case 23: // Transfer Stock
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => TransferStockPage()),
-        );
-        break;
-      case 24: // Waste
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => WastePage()),
-        );
-        break;
-      case 25: // Material Calculate
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MaterialCalculatePage()),
-        );
-        break;
-      case 4: // Account & Settings
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const UserprofilePage()),
-        );
-        break;
-      case 5: // Help
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => HelpPage()),
-        );
-        break;
-    }
-  }
-
-  IconData _getSubMenuIcon(int index) {
-    switch (index) {
-      case 11: // Direct Purchase
-        return Icons.shopping_bag_rounded;
-      case 12: // GRPO
-        return Icons.receipt_long_outlined;
-      case 21: // Material Request
-        return Icons.inventory_rounded;
-      case 22: // Stock Opname
-        return Icons.checklist_rtl_outlined;
-      case 23: // Transfer Stock
-        return Icons.swap_horiz_outlined;
-      case 24: // Waste
-        return Icons.delete_outline;
-      case 25: //material calculate
-        return Icons.inventory_rounded;
-      default:
-        return Icons.circle_outlined;
-    }
-  }
-
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
-  final Color softPink = const Color(0xFFFFB6D5);
-  final Color lightWhite = Colors.white.withOpacity(0.98);
-
-  double iconBarWidth = _isIconBarOpen ? (isMobile ? 180 : 260) : (isMobile ? 44 : 52);
-
-  return Stack(
-    alignment: Alignment.centerRight,
-    children: [
-      // Background header
-      ClipRRect(
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(36),
-          bottomRight: Radius.circular(36),
-        ),
-        child: Container(
-          width: double.infinity,
-          height: isMobile ? 80 : 96,
-          decoration: BoxDecoration(
-            color: softPink,
-=======
-=======
->>>>>>> Stashed changes
-  Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
-    final Color softPink = const Color(0xFFFFB6D5);
-    final Color lightWhite = Colors.white.withOpacity(0.98);
-
-    return Stack(
-      alignment: Alignment.centerRight,
-      children: [
-        // Background header
-        ClipRRect(
-          borderRadius: const BorderRadius.only(
-            bottomLeft: Radius.circular(36),
-            bottomRight: Radius.circular(36),
->>>>>>> Stashed changes
-          ),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-            child: Container(
-              color: Colors.white.withOpacity(0.04),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            key: _notificationIconKey,
+            child: _modernHeaderIcon(
+              icon: Icons.notifications_none_outlined,
+              onTap: _toggleNotificationOverlay,
+              badge: notifications.isNotEmpty,
+              isMobile: isMobile,
+              glass: true,
+              iconSize: isMobile ? 24 : 28,
+              color: Colors.white,
             ),
           ),
-        ),
-      ),
-      // Konten header
-      ClipRRect(
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(36),
-          bottomRight: Radius.circular(36),
-        ),
-        child: Container(
-          width: double.infinity,
-          padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? 16 : 32,
-            vertical: isMobile ? 17 : 15,
+          SizedBox(width: isMobile ? 10 : 18),
+          _modernHeaderIcon(
+            icon: Icons.mail_outline,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => EmailPage()),
+              );
+            },
+            isMobile: isMobile,
+            glass: true,
+            iconSize: isMobile ? 24 : 28,
+            color: Colors.white,
           ),
-<<<<<<< Updated upstream
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              if (isMobile)
-                Builder(
-                  builder: (context) => IconButton(
-                    icon: const Icon(Icons.grid_view_rounded, color: Colors.black54),
-                    onPressed: () {
-                      Scaffold.of(context).openDrawer();
-                    },
-                  ),
-                ),
-              SizedBox(width: isMobile ? 8 : 14),
-              Expanded(
-                child: Text(
-                  'Dashboard',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    fontSize: isMobile ? 18 : 22,
-                    color: Colors.white,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              SizedBox(width: isMobile ? 8 : 14),
-              // AnimatedContainer untuk lebar icon bar
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 400),
-                curve: Curves.easeInOutCubic,
-                width: _isIconBarOpen ? (isMobile ? 180 : 260) : (isMobile ? 56 : 64),
-                child: Stack(
-                  alignment: Alignment.centerRight,
-                  children: [
-                    // AnimatedSlide & AnimatedOpacity untuk transisi smooth
-                    AnimatedSlide(
-                      duration: const Duration(milliseconds: 400),
-                      curve: Curves.easeInOutCubic,
-                      offset: _isIconBarOpen ? Offset(0, 0) : Offset(0.5, 0),
-                      child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 300),
-                        opacity: _isIconBarOpen ? 1.0 : 0.0,
-                        child: _buildIconBarFull(isMobile),
-                      ),
-                    ),
-                    AnimatedSlide(
-                      duration: const Duration(milliseconds: 400),
-                      curve: Curves.easeInOutCubic,
-                      offset: !_isIconBarOpen ? Offset(0, 0) : Offset(-0.5, 0),
-                      child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 300),
-                        opacity: !_isIconBarOpen ? 1.0 : 0.0,
-                        child: _buildIconBarAvatar(isMobile),
-                      ),
-                    ),
-                  ],
-                ),
-                onEnd: () {
-                  setState(() {
-                    _isIconBarAnimating = false;
-                  });
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    ],
-  );
-}
-
-  Widget _buildIconBarFull(bool isMobile) {
-    return ClipRRect(
-      key: ValueKey('iconbar-full'),
-      borderRadius: BorderRadius.circular(36),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? 8 : 12,
-            vertical: isMobile ? 6 : 8,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.38),
-            borderRadius: BorderRadius.circular(36),
-            border: Border.all(color: Colors.white.withOpacity(0.22), width: 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  if (_isIconBarAnimating) return;
-                  setState(() {
-                    _isIconBarOpen = false;
-                    _isIconBarAnimating = true;
-                  });
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.pinkAccent.withOpacity(0.25),
-                        blurRadius: 8,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(Icons.arrow_forward_ios_rounded, color: Colors.pinkAccent, size: isMobile ? 22 : 24),
-                ),
-              ),
-              SizedBox(width: isMobile ? 8 : 12),
-              _modernHeaderIcon(
-                icon: Icons.search,
-                onTap: _toggleSearch,
-                isMobile: isMobile,
-                glass: true,
-                iconSize: isMobile ? 22 : 24,
-              ),
-              SizedBox(width: isMobile ? 8 : 12),
-              SizedBox(
-                key: _notificationIconKey,
-                child: _modernHeaderIcon(
-                  icon: Icons.notifications_none_outlined,
-                  onTap: _toggleNotificationOverlay,
-                  badge: notifications.isNotEmpty,
-                  isMobile: isMobile,
-                  glass: true,
-                  iconSize: isMobile ? 22 : 24,
-                ),
-              ),
-              SizedBox(width: isMobile ? 8 : 12),
-              _modernHeaderIcon(
-                icon: Icons.mail_outline,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => EmailPage()),
-                  );
-                },
-                isMobile: isMobile,
-                glass: true,
-                iconSize: isMobile ? 22 : 24,
-              ),
-              SizedBox(width: isMobile ? 8 : 12),
-              _modernHeaderAvatar(isMobile: isMobile, glass: true),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIconBarAvatar(bool isMobile) {
-=======
-          child: Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 16 : 32,
-              vertical: isMobile ? 17 : 15,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (isMobile)
-                  Builder(
-                    builder: (context) => IconButton(
-                      icon: const Icon(Icons.grid_view_rounded, color: Colors.black54),
-                      onPressed: () {
-                        Scaffold.of(context).openDrawer();
-                      },
-                    ),
-                  ),
-                SizedBox(width: isMobile ? 8 : 14),
-                Expanded(
-                  child: Text(
-                    'Dashboard',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: isMobile ? 18 : 22,
-                      color: Colors.white,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                SizedBox(width: isMobile ? 8 : 14),
-                // Icon bar yang langsung tampil semua
-                _buildIconBarFull(isMobile),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildIconBarFull(bool isMobile) {
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-    return ClipRRect(
-      key: ValueKey('iconbar-full'),
-      borderRadius: BorderRadius.circular(36),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? 8 : 12,
-            vertical: isMobile ? 6 : 8,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.38),
-            borderRadius: BorderRadius.circular(36),
-            border: Border.all(color: Colors.white.withOpacity(0.22), width: 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _modernHeaderIcon(
-                icon: Icons.search,
-                onTap: _toggleSearch,
-                isMobile: isMobile,
-                glass: true,
-                iconSize: isMobile ? 22 : 24,
-              ),
-              SizedBox(width: isMobile ? 8 : 12),
-              SizedBox(
-                key: _notificationIconKey,
-                child: _modernHeaderIcon(
-                  icon: Icons.notifications_none_outlined,
-                  onTap: _toggleNotificationOverlay,
-                  badge: notifications.isNotEmpty,
-                  isMobile: isMobile,
-                  glass: true,
-                  iconSize: isMobile ? 22 : 24,
-                ),
-              ),
-              SizedBox(width: isMobile ? 8 : 12),
-              _modernHeaderIcon(
-                icon: Icons.mail_outline,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => EmailPage()),
-                  );
-                },
-                isMobile: isMobile,
-                glass: true,
-                iconSize: isMobile ? 22 : 24,
-              ),
-              SizedBox(width: isMobile ? 8 : 12),
-              _modernHeaderAvatar(isMobile: isMobile, glass: true),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _modernHeaderIcon({
-    required IconData icon,
-    required VoidCallback onTap,
-    bool badge = false,
-    bool isMobile = false,
-    Color? color,
-    bool glass = false,
-    double? iconSize,
-  }) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: Duration(milliseconds: 180),
-          curve: Curves.easeInOut,
-          padding: EdgeInsets.all(isMobile ? 7 : 10),
-          decoration: BoxDecoration(
-            color: glass
-                ? Colors.white.withOpacity(0.35)
-                : (color?.withOpacity(0.13) ?? Colors.white.withOpacity(0.13)),
-            borderRadius: BorderRadius.circular(16),
-            border: glass
-                ? Border.all(color: Colors.white.withOpacity(0.32), width: 1.1)
-                : Border.all(color: (color ?? Colors.white).withOpacity(0.22)),
-            boxShadow: [
-              if (glass)
-                BoxShadow(
-                  color: Colors.pinkAccent.withOpacity(0.13),
-                  blurRadius: 16,
-                  spreadRadius: 0.5,
-                  offset: Offset(0, 2),
-                ),
-              BoxShadow(
-                color: (color ?? Colors.black).withOpacity(0.13),
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Icon(icon, color: color ?? Colors.black87, size: iconSize ?? (isMobile ? 22 : 26)),
-              if (badge)
-                Positioned(
-                  right: -2,
-                  top: -2,
-                  child: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: color ?? Colors.pinkAccent,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _modernHeaderAvatar({bool isMobile = false, bool glass = false}) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () {
-          _showProfileMenu(context);
-        },
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: deepPink.withOpacity(0.2), width: 2),
-            shape: BoxShape.circle,
-            boxShadow: [
-              if (glass)
-                BoxShadow(
-                  color: Colors.pinkAccent.withOpacity(0.13),
-                  blurRadius: 16,
-                  spreadRadius: 0.5,
-                  offset: Offset(0, 2),
-                ),
-              BoxShadow(
-                color: deepPink.withOpacity(0.08),
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: CircleAvatar(
-            radius: isMobile ? 18 : 20,
-            backgroundColor: glass ? Colors.white.withOpacity(0.35) : null,
-            child: ClipOval(
-              child: Image.asset(
-                'assets/images/avatar.jpg',
-                fit: BoxFit.cover,
-                width: isMobile ? 36 : 40,
-                height: isMobile ? 36 : 40,
-                errorBuilder: (context, error, stackTrace) => Icon(
-                  Icons.person,
-                  color: Colors.grey[500],
-                  size: isMobile ? 24 : 28,
-                ),
-              ),
-            ),
-          ),
-        ),
+          SizedBox(width: isMobile ? 10 : 18),
+          _modernHeaderAvatar(isMobile: isMobile, glass: true),
+        ],
       ),
     );
   }
@@ -2166,7 +1378,7 @@ Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
                 ),
                 Icon(
                   _isStoreMenuOpen ? Icons.expand_less : Icons.expand_more,
-                  color: deepPink,
+                  color: Colors.white,
                 ),
               ],
             ),
@@ -2269,7 +1481,7 @@ Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
                 ),
                 Icon(
                   _isProfileMenuOpen ? Icons.expand_less : Icons.expand_more,
-                  color: deepPink,
+                  color: Colors.white,
                 ),
               ],
             ),
@@ -2478,9 +1690,22 @@ Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: isActive
-                  ? deepPink.withOpacity(0.1)
-                  : Colors.grey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+                  ? Colors.white.withOpacity(0.35)
+                  : Colors.white.withOpacity(0.13),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isActive
+                    ? Colors.white.withOpacity(0.32)
+                    : Colors.white.withOpacity(0.22),
+                width: 1.1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
             ),
             child: Icon(
               icon,
@@ -2491,7 +1716,7 @@ Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
           title: Text(
             title,
             style: GoogleFonts.poppins(
-              color: isActive ? deepPink : Colors.grey,
+              color: isActive ? deepPink : Colors.black87,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
               fontSize: 14,
             ),
@@ -2512,6 +1737,534 @@ Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
         ),
       ),
     );
+  }
+
+  // Sidebar Content
+  Widget _buildSidebarContent({
+    bool isMobile = false,
+    VoidCallback? closeDrawer,
+  }) {
+    return Container(
+      color: Colors.white,
+      child: Column(
+        children: [
+          // Logo dan nama aplikasi
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 16 : 20,
+              vertical: 24,
+            ),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.grey.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Image.asset(
+                  'assets/images/icons-haus.png',
+                  height: 36,
+                  width: 36,
+                ),
+                if (_isSidebarExpanded || isMobile) const SizedBox(width: 12),
+                if (_isSidebarExpanded || isMobile)
+                  Text(
+                    'haus! Inventory',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: deepPink,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if (_isSidebarExpanded || isMobile) _buildStoreDropdown(),
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  // Section GENERAL
+                  if (_isSidebarExpanded || isMobile)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                      child: Row(
+                        children: [
+                          Text(
+                            'GENERAL',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              letterSpacing: 1,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            height: 1,
+                            width: 100,
+                            color: Colors.grey.withOpacity(0.2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  _buildMenuItem(
+                    icon: Icons.dashboard_customize_rounded,
+                    title: 'Dashboard',
+                    index: 0,
+                    onTap: () {
+                      if (_selectedIndex != 0) {
+                        setState(() => _selectedIndex = 0);
+                        _navigateToPage(0);
+                        if (isMobile && closeDrawer != null) closeDrawer();
+                      }
+                    },
+                  ),
+                  _buildExpandableMenu(
+                    icon: Icons.shopping_bag_rounded,
+                    title: 'Purchasing',
+                    isExpanded: _selectedIndex == PURCHASING_MENU,
+                    menuIndex: PURCHASING_MENU,
+                    children: [
+                      _buildSubMenuItem('Direct Purchase', 11),
+                      _buildSubMenuItem('GRPO', 12),
+                    ],
+                    onTap: () {
+                      setState(() => _selectedIndex = PURCHASING_MENU);
+                    },
+                    isMobile: isMobile,
+                  ),
+                  _buildExpandableMenu(
+                    icon: Icons.inventory_rounded,
+                    title: 'Stock Management',
+                    isExpanded: _selectedIndex == STOCK_MANAGEMENT_MENU,
+                    menuIndex: STOCK_MANAGEMENT_MENU,
+                    children: [
+                      _buildSubMenuItem('Material Request', 21),
+                      _buildSubMenuItem('Material Calculate', 25),
+                      _buildSubMenuItem('Stock Opname', 22),
+                      _buildSubMenuItem('Transfer Stock', 23),
+                      _buildSubMenuItem('Waste', 24),
+                    ],
+                    onTap: () {
+                      setState(() => _selectedIndex = STOCK_MANAGEMENT_MENU);
+                    },
+                    isMobile: isMobile,
+                  ),
+                  _buildMenuItem(
+                    icon: Icons.bar_chart_rounded,
+                    title: 'Inventory Report',
+                    index: 3,
+                    onTap: () {
+                      setState(() => _selectedIndex = 3);
+                      if (isMobile && closeDrawer != null) closeDrawer();
+                    },
+                  ),
+                  // Section TOOLS
+                  if (_isSidebarExpanded || isMobile)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                      child: Row(
+                        children: [
+                          Text(
+                            'TOOLS',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              letterSpacing: 1,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            height: 1,
+                            width: 100,
+                            color: Colors.grey.withOpacity(0.2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  _buildMenuItem(
+                    icon: Icons.settings_suggest_rounded,
+                    title: 'Account & Settings',
+                    index: 4,
+                    onTap: () {
+                      setState(() => _selectedIndex = 4);
+                      _navigateToPage(4);
+                      if (isMobile && closeDrawer != null) closeDrawer();
+                    },
+                  ),
+                  _buildMenuItem(
+                    icon: Icons.help_center_rounded,
+                    title: 'Help',
+                    index: 5,
+                    onTap: () {
+                      setState(() => _selectedIndex = 5);
+                      _navigateToPage(5);
+                      if (isMobile && closeDrawer != null) closeDrawer();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_isSidebarExpanded || isMobile) _buildProfileDropdown(),
+        ],
+      ),
+    );
+  }
+
+  // Modern Header Icon
+  Widget _modernHeaderIcon({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool badge = false,
+    bool isMobile = false,
+    Color? color,
+    bool glass = false,
+    double? iconSize,
+  }) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 180),
+          curve: Curves.easeInOut,
+          padding: EdgeInsets.all(isMobile ? 8 : 12),
+          decoration: BoxDecoration(
+            color: glass
+                ? Colors.white.withOpacity(0.35)
+                : (color?.withOpacity(0.13) ?? Colors.white.withOpacity(0.13)),
+            borderRadius: BorderRadius.circular(16),
+            border: glass
+                ? Border.all(color: Colors.white.withOpacity(0.32), width: 1.1)
+                : Border.all(color: (color ?? Colors.white).withOpacity(0.22)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(
+                icon,
+                color: Colors.white,
+                size: iconSize ?? (isMobile ? 24 : 28),
+              ),
+              if (badge)
+                Positioned(
+                  right: -2,
+                  top: -2,
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: color ?? Colors.pinkAccent,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Modern Header Avatar
+  Widget _modernHeaderAvatar({bool isMobile = false, bool glass = false}) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          _showProfileMenu(context);
+        },
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 180),
+          curve: Curves.easeInOut,
+          padding: EdgeInsets.all(isMobile ? 8 : 12),
+          decoration: BoxDecoration(
+            color: glass
+                ? Colors.white.withOpacity(0.35)
+                : Colors.white.withOpacity(0.13),
+            borderRadius: BorderRadius.circular(16),
+            border: glass
+                ? Border.all(color: Colors.white.withOpacity(0.32), width: 1.1)
+                : Border.all(color: Colors.white.withOpacity(0.22)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ClipOval(
+            child: Image.asset(
+              'assets/images/avatar.jpg',
+              fit: BoxFit.cover,
+              width: isMobile ? 24 : 28,
+              height: isMobile ? 24 : 28,
+              errorBuilder: (context, error, stackTrace) => Icon(
+                Icons.person,
+                color: Colors.grey[500],
+                size: isMobile ? 24 : 28,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Expandable Menu (Sidebar)
+  Widget _buildExpandableMenu({
+    required IconData icon,
+    required String title,
+    required bool isExpanded,
+    required List<Widget> children,
+    required VoidCallback onTap,
+    required int menuIndex,
+    bool isMobile = false,
+  }) {
+    final isMenuExpanded = _expandedMenuIndex == menuIndex;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: isExpanded ? lightPink.withOpacity(0.3) : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ListTile(
+            horizontalTitleGap: 12,
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isExpanded
+                    ? Colors.white.withOpacity(0.35)
+                    : Colors.white.withOpacity(0.13),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isExpanded
+                      ? Colors.white.withOpacity(0.32)
+                      : Colors.white.withOpacity(0.22),
+                  width: 1.1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                icon,
+                color: isExpanded ? deepPink : Colors.grey,
+                size: 20,
+              ),
+            ),
+            title: Text(
+              title,
+              style: GoogleFonts.poppins(
+                color: isExpanded ? deepPink : Colors.black87,
+                fontWeight: isExpanded ? FontWeight.bold : FontWeight.normal,
+                fontSize: 14,
+              ),
+            ),
+            trailing: AnimatedRotation(
+              turns: isMenuExpanded ? 0.5 : 0.0,
+              duration: Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+              child: Icon(
+                Icons.expand_more,
+                color: isExpanded ? deepPink : Colors.grey,
+              ),
+            ),
+            onTap: () {
+              _toggleMenu(menuIndex);
+              onTap();
+            },
+            dense: true,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+          ),
+        ),
+        if (isMenuExpanded && (_isSidebarExpanded || isMobile))
+          Container(
+            margin: const EdgeInsets.only(left: 16),
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: children,
+            ),
+          ),
+      ],
+    );
+  }
+
+  // Sub Menu Item (Sidebar)
+  Widget _buildSubMenuItem(String title, int index) {
+    return Container(
+      margin: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
+      decoration: BoxDecoration(
+        color: _selectedIndex == index
+            ? lightPink.withOpacity(0.3)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        horizontalTitleGap: 12,
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: _selectedIndex == index
+                ? Colors.white.withOpacity(0.35)
+                : Colors.white.withOpacity(0.13),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _selectedIndex == index
+                  ? Colors.white.withOpacity(0.32)
+                  : Colors.white.withOpacity(0.22),
+              width: 1.1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(
+            _getSubMenuIcon(index),
+            color: _selectedIndex == index ? deepPink : Colors.grey,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            color: _selectedIndex == index ? deepPink : Colors.black87,
+            fontWeight: _selectedIndex == index
+                ? FontWeight.bold
+                : FontWeight.normal,
+          ),
+        ),
+        selected: _selectedIndex == index,
+        onTap: () {
+          setState(() => _selectedIndex = index);
+          _navigateToPage(index);
+        },
+        dense: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      ),
+    );
+  }
+
+  // Icon untuk sub menu sidebar
+  IconData _getSubMenuIcon(int index) {
+    switch (index) {
+      case 11: // Direct Purchase
+        return Icons.shopping_bag_rounded;
+      case 12: // GRPO
+        return Icons.receipt_long_outlined;
+      case 21: // Material Request
+        return Icons.inventory_rounded;
+      case 22: // Stock Opname
+        return Icons.checklist_rtl_outlined;
+      case 23: // Transfer Stock
+        return Icons.swap_horiz_outlined;
+      case 24: // Waste
+        return Icons.delete_outline;
+      case 25: // Material Calculate
+        return Icons.inventory_rounded;
+      default:
+        return Icons.circle_outlined;
+    }
+  }
+
+  // Navigasi ke halaman lain
+  void _navigateToPage(int index) {
+    switch (index) {
+      case 11: // Direct Purchase
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => DirectPurchasePage()),
+        );
+        break;
+      case 12: // GRPO
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => GRPO_Page()),
+        );
+        break;
+      case 21: // Material Request
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => MaterialRequestPage()),
+        );
+        break;
+      case 22: // Stock Opname
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => StockOpnamePage()),
+        );
+        break;
+      case 23: // Transfer Stock
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => TransferStockPage()),
+        );
+        break;
+      case 24: // Waste
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => WastePage()),
+        );
+        break;
+      case 25: // Material Calculate
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => MaterialCalculatePage()),
+        );
+        break;
+      case 4: // Account & Settings
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const UserprofilePage()),
+        );
+        break;
+      case 5: // Help
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => HelpPage()),
+        );
+        break;
+    }
   }
 }
 
