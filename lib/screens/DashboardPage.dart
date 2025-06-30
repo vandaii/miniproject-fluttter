@@ -13,7 +13,6 @@ import 'Resource/Auth/Notification_Page.dart';
 import 'Resource/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
-import 'package:miniproject_flutter/s'
 import 'dart:ui';
 
 class DashboardPage extends StatefulWidget {
@@ -45,14 +44,13 @@ class _DashboardPageState extends State<DashboardPage>
   static const int STOCK_MANAGEMENT_MENU = 2;
 
   final AuthService _authService = AuthService();
-
   late AnimationController _searchAnimationController;
   late AnimationController _notificationAnimationController;
 
   OverlayEntry? _notificationOverlayEntry;
   final GlobalKey _notificationIconKey = GlobalKey();
 
-  // Data notifikasi (diambil dari Notification_Page.dart) 
+  // Data notifikasi (diambil dari Notification_Page.dart)
   final List<Map<String, dynamic>> notifications = [
     {
       'icon': Icons.shopping_cart,
@@ -161,10 +159,6 @@ class _DashboardPageState extends State<DashboardPage>
 
   // Tambahkan state untuk hover
   int? _hoveredIndex;
-
-  // Tambahkan state untuk animasi icon bar
-  bool _isIconBarOpen = false;
-  bool _isIconBarAnimating = false;
 
   // Fungsi reusable untuk menentukan apakah menu sedang di-hover atau selected
   bool _isMenuActive(int index) {
@@ -602,8 +596,7 @@ class _DashboardPageState extends State<DashboardPage>
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     bool isMobile = screenWidth < 600;
-
-    double iconBarWidth = _isIconBarOpen ? (isMobile ? 180 : 260) : (isMobile ? 44 : 52);
+    final double headerHeight = isMobile ? 68 : 80;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
@@ -615,23 +608,125 @@ class _DashboardPageState extends State<DashboardPage>
               ),
             )
           : null,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Main Content Area
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              margin: isMobile
-                  ? EdgeInsets.zero
-                  : EdgeInsets.only(left: _isSidebarExpanded ? 250 : 70),
-              child: Column(
+      body: Stack(
+        children: [
+          // HEADER PINK MODERN STICKY
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              width: double.infinity,
+              height: headerHeight + MediaQuery.of(context).padding.top,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFB6D5),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(32),
+                  bottomRight: Radius.circular(32),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.pink.withOpacity(0.08),
+                    blurRadius: 16,
+                    offset: Offset(0, 6),
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).padding.top + 8,
+                left: isMobile ? 8 : 24,
+                right: isMobile ? 8 : 24,
+                bottom: 8,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Header (will not be blurred)
-                  _buildHeader(screenWidth, isMobile),
-                  _buildAnimatedSearchBar(),
-                  // Scrollable Content
+                  if (isMobile)
+                    Builder(
+                      builder: (context) => IconButton(
+                        icon: const Icon(Icons.grid_view_rounded, color: Colors.white),
+                        iconSize: isMobile ? 28 : 32,
+                        padding: EdgeInsets.zero,
+                        constraints: BoxConstraints(),
+                        onPressed: () {
+                          Scaffold.of(context).openDrawer();
+                        },
+                      ),
+                    ),
                   Expanded(
-                    child: SingleChildScrollView(
+                    child: Padding(
+                      padding: EdgeInsets.only(left: isMobile ? 2 : 8),
+                      child: Text(
+                        'Dashboard',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: isMobile ? 24 : 28,
+                          color: Colors.white,
+                          letterSpacing: 0.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.left,
+                      ),
+                    ),
+                  ),
+                  // ICON BAR TANPA SEARCH, PADDING LEBIH RAPI
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 2 : 10,
+                      vertical: isMobile ? 0 : 2,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          key: _notificationIconKey,
+                          child: _modernHeaderIcon(
+                            icon: Icons.notifications_none_outlined,
+                            onTap: _toggleNotificationOverlay,
+                            badge: notifications.isNotEmpty,
+                            isMobile: isMobile,
+                            glass: true,
+                            iconSize: isMobile ? 30 : 32,
+                          ),
+                        ),
+                        SizedBox(width: isMobile ? 10 : 18),
+                        _modernHeaderIcon(
+                          icon: Icons.mail_outline,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => EmailPage()),
+                            );
+                          },
+                          isMobile: isMobile,
+                          glass: true,
+                          iconSize: isMobile ? 30 : 32,
+                        ),
+                        SizedBox(width: isMobile ? 10 : 18),
+                        _modernHeaderAvatar(isMobile: isMobile, glass: true),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // BODY PUTIH, KONTEN DI BAWAH HEADER, BISA DI-SCROLL
+          Padding(
+            padding: EdgeInsets.only(top: headerHeight + MediaQuery.of(context).padding.top - 8),
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (notification) {
+                FocusScope.of(context).unfocus();
+                return false;
+              },
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    _buildAnimatedSearchBar(),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 32),
                       child: Column(
                         children: [
                           Container(
@@ -652,29 +747,29 @@ class _DashboardPageState extends State<DashboardPage>
                         ],
                       ),
                     ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Sidebar (hanya tampil di desktop/tablet)
+          if (!isMobile)
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: _isSidebarExpanded ? 250 : 70,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 0),
                   ),
                 ],
               ),
+              child: _buildSidebarContent(isMobile: false),
             ),
-            // Sidebar (hanya tampil di desktop/tablet)
-            if (!isMobile)
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: _isSidebarExpanded ? 250 : 70,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 0),
-                    ),
-                  ],
-                ),
-                child: _buildSidebarContent(isMobile: false),
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -862,33 +957,7 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
- 
-
-  Widget _buildExpandableMenu({
-    required IconData icon,
-    required String title,
-    required bool isExpanded,
-    required List<Widget> children,
-    required VoidCallback onTap,
-    required int menuIndex,
-    bool isMobile = false,
-  }) {
-    final isMenuExpanded = _expandedMenuIndex == menuIndex;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: isExpanded ? lightPink.withOpacity(0.3) : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: ListTile(
-            horizontalTitleGap: 12,
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDec  Widget _buildMenuItem({
+  Widget _buildMenuItem({
     required IconData icon,
     required String title,
     required int index,
@@ -945,7 +1014,32 @@ class _DashboardPageState extends State<DashboardPage>
       ),
     );
   }
-tion(
+
+  Widget _buildExpandableMenu({
+    required IconData icon,
+    required String title,
+    required bool isExpanded,
+    required List<Widget> children,
+    required VoidCallback onTap,
+    required int menuIndex,
+    bool isMobile = false,
+  }) {
+    final isMenuExpanded = _expandedMenuIndex == menuIndex;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: isExpanded ? lightPink.withOpacity(0.3) : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ListTile(
+            horizontalTitleGap: 12,
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
                 color: isExpanded
                     ? deepPink.withOpacity(0.1)
                     : Colors.grey.withOpacity(0.1),
@@ -1132,397 +1226,19 @@ tion(
     }
   }
 
-Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
-  final Color softPink = const Color(0xFFFFB6D5);
-  final Color lightWhite = Colors.white.withOpacity(0.98);
-  double iconBarWidth = _isIconBarOpen ? (isMobile ? 180 : 260) : (isMobile ? 44 : 52);
-
-
-  return Stack(
-    alignment: Alignment.centerRight,
-    children: [
-      // Background header
-      ClipRRect(
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(36),
-  Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
-    final Color softPink = const Color(0xFFFFB6D5);
-    final Color lightWhite = Colors.white.withOpacity(0.98);
-          width: double.infinity,
-    return Stack(
-      alignment: Alignment.centerRight,
-      children: [
-        // Background header
-        ClipRRect(
-          borderRadius: const BorderRadius.only(
-            bottomLeft: Radius.circular(36),
-            bottomRight: Radius.circular(36),
+  Widget _buildTaskSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 12,
+            offset: Offset(0, 8),
           ),
-          child: Container(
-            width: double.infinity,
-            height: isMobile ? 80 : 96,
-            decoration: BoxDecoration(
-              color: softPink,
-            ),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-              child: Container(
-                color: Colors.white.withOpacity(0.04),
-              ),
-            ),
-          ),
-        ),
-        // Konten header
-        ClipRRect(
-          borderRadius: const BorderRadius.only(
-            bottomLeft: Radius.circular(36),
-            bottomRight: Radius.circular(36),
-          ),
-          child: Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 16 : 32,
-              vertical: isMobile ? 17 : 15,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (isMobile)
-                  Builder(
-                    builder: (context) => IconButton(
-                      icon: const Icon(Icons.grid_view_rounded, color: Colors.black54),
-                      onPressed: () {
-                        Scaffold.of(context).openDrawer();
-                      },
-                    ),
-                  ),
-                SizedBox(width: isMobile ? 8 : 14),
-                Expanded(
-                  child: Text(
-                    'Dashboard',
-                    style: GoogleFonts.poppins(
-                width: _isIconBarOpen ? (isMobile ? 180 : 260) : (isMobile ? 56 : 64),es.easeInOutCubic,bold,
-                      fontSize: isMobile ? 18 : 22,
-                      color: Colors.white,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                SizedBox(width: isMobile ? 8 : 14),
-                      offset: _isIconBarOpen ? Offset(0, 0) : Offset(0.5, 0),utCubic,
-                _ModernIconBar(
-                  isMobile: isMobile,
-                        opacity: _isIconBarOpen ? 1.0 : 0.0,st Duration(milliseconds: 300),
-                  notifications: notifications,
-                  onSearch: _toggleSearch,
-                  onNotif: _toggleNotificationOverlay,
-                    AnimatedSlide(
-                      duration: const Duration(milliseconds: 400),
-                      curve: Curves.easeInOutCubic,
-                      offset: !_isIconBarOpen ? Offset(0, 0) : Offset(-0.5, 0),
-                      child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 300),
-                        opacity: !_isIconBarOpen ? 1.0 : 0.0,
-                        child: _buildIconBarAvatar(isMobile),
-                      ),
-                    ),
-                  onEmail: () {
-                    Navigator.push(
-                onEnd: () {
-                  setState(() {
-                    _isIconBarAnimating = false;
-                  });
-                },
-                      context,
-                      MaterialPageRoute(builder: (context) => EmailPage()),
-                    );
-                  },
-                  onAvatar: () {
-                    _showProfileMenu(context);
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }                   boxShadow: [
-                      BoxShadow(
-  // Tambahkan widget baru untuk icon bar modern
-  class _ModernIconBar extends StatefulWidget {
-    final bool isMobile;
-    final Color deepPink;
-    final List<Map<String, dynamic>> notifications;
-    final VoidCallback onSearch;
-    final VoidCallback onNotif;
-    final VoidCallback onEmail;
-    final VoidCallback onAvatar;
-
-    const _ModernIconBar({
-      required this.isMobile,
-      required this.notifications,
-      required this.onSearch,
-                  if (_isIconBarAnimating) return;
-                  setState(() {
-                    _isIconBarOpen = false;
-                    _isIconBarAnimating = true;
-                  });
-      required this.onEmail,
-      required this.onAvatar,
-    });
-
-    @override
-    State<_ModernIconBar> createState() => _ModernIconBarState();
-  }
-
-  class _ModernIconBarState extends State<_ModernIconBar> with SingleTickerProviderStateMixin {
-    bool _showIcons = false;
-    late AnimationController _controller;
-    late Animation<double> _slideAnim;
-    late Animation<double> _fadeAnim;
-
-    @override
-    void initState() {
-            children: [
-      super.initState();
-      _controller = AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 400),
-      );
-      _slideAnim = Tween<double>(begin: 40, end: 0).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-      );
-      _fadeAnim = Tween<double>(begin: 0, end: 1).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-      );
-    }
-
-    @override
-    void dispose() {
-      _controller.dispose();
-      super.dispose();
-    }
-
-    void _toggleIcons() {
-      setState(() {
-        _showIcons = !_showIcons;
-        if (_showIcons) {
-          _controller.forward();
-        } else {
-          _controller.reverse();
-        }
-      });
-    }
-
-    @override
-    Widget build(BuildContext context) {
-      final isMobile = widget.isMobile;
-      return Container(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Animated icon bar (slide + fade)
-            AnimatedBuilder(
-              animation: _controller,
-  Widget _buildIconBarAvatar(bool isMobile) {
-    return ClipRRect(
-      key: ValueKey('iconbar-avatar'),
-      borderRadius: BorderRadius.circular(36),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? 8 : 12,
-            vertical: isMobile ? 6 : 8,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.38),
-            borderRadius: BorderRadius.circular(36),
-            border: Border.all(color: Colors.white.withOpacity(0.22), width: 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  if (_isIconBarAnimating) return;
-                  setState(() {
-                    _isIconBarOpen = true;
-                    _isIconBarAnimating = true;
-                  });
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.pinkAccent.withOpacity(0.25),
-                        blurRadius: 8,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(Icons.arrow_back_ios_new_rounded, color: Colors.pinkAccent, size: isMobile ? 22 : 24),
-                ),
-              ),
-              SizedBox(width: isMobile ? 8 : 12),
-              _modernHeaderAvatar(isMobile: isMobile, glass: true),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-              builder: (context, child) {
-                return Row(
-                  children: [
-                    if (_fadeAnim.value > 0)
-                      Opacity(
-                        opacity: _fadeAnim.value,
-                        child: Transform.translate(
-                          offset: Offset(-_slideAnim.value, 0),
-                          child: Row(
-                            children: [
-                              _modernHeaderIcon(
-                                icon: Icons.mail_outline,
-                                onTap: widget.onEmail,
-                                isMobile: isMobile,
-                                color: widget.deepPink,
-                              ),
-                              SizedBox(width: isMobile ? 8 : 12),
-                              _modernHeaderIcon(
-                                icon: Icons.search,
-                                onTap: widget.onSearch,
-                                isMobile: isMobile,
-                                color: widget.deepPink,
-                              ),
-                              SizedBox(width: isMobile ? 8 : 12),
-                              _modernHeaderIcon(
-                                icon: Icons.notifications_none_outlined,
-                                onTap: widget.onNotif,
-                                isMobile: isMobile,
-                                color: widget.deepPink,
-                                badge: widget.notifications.isNotEmpty,
-                              ),
-                              SizedBox(width: isMobile ? 8 : 12),
-                            ],
-                          ),
-                        ),
-                      ),
-                    // Tombol close (>)
-                    if (_showIcons)
-                      GestureDetector(
-                        onTap: _toggleIcons,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                            boxShadow: [
-                              BoxShadow(
-                                color: widget.deepPink.withOpacity(0.13),
-                                blurRadius: 8,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Icon(Icons.chevron_right, color: widget.deepPink, size: isMobile ? 22 : 26),
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
-            // Tombol open (<) jika icon bar tertutup
-            if (!_showIcons)
-              GestureDetector(
-                onTap: _toggleIcons,
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: widget.deepPink.withOpacity(0.13),
-                        blurRadius: 8,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(Icons.chevron_left, color: widget.deepPink, size: isMobile ? 22 : 26),
-                ),
-              ),
-            SizedBox(width: isMobile ? 8 : 12),
-            // Avatar
-            GestureDetector(
-              onTap: widget.onAvatar,
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: widget.deepPink.withOpacity(0.2), width: 2),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: widget.deepPink.withOpacity(0.08),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: CircleAvatar(
-                  radius: isMobile ? 18 : 20,
-                  backgroundColor: Colors.white,
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/images/avatar.jpg',
-                      fit: BoxFit.cover,
-                      width: isMobile ? 36 : 40,
-                      height: isMobile ? 36 : 40,
-                      errorBuilder: (context, error, stackTrace) => Icon(
-                        Icons.person,
-                        color: Colors.grey[500],
-                        size: isMobile ? 24 : 28,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }               blurRadius: 16,
-                  spreadRadius: 0.5,
-    Widget _modernHeaderIcon({
-      required IconData icon,
-      required VoidCallback onTap,
-      bool badge = false,
-      bool isMobile = false,
-      Color? color,
-    }) {
-      return MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          onTap: onTap,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                padding: EdgeInsets.all(isMobile ? 7 : 10),
-                decoration: BoxDecoration(
-                  color: color?.withOpacity(0.13) ?? Colors.white.withOpacity(0.13),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: (color ?? Colors.white).withOpacity(0.22)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (color ?? Colors.black).withOpacity(0.13),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(icon, color: color ?? Colors.black87, size: isMobile ? 22 : 26),
-              ),
         ],
       ),
       child: Column(
@@ -1540,8 +1256,56 @@ Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
                 ),
               ),
               GestureDetector(
-      );
-    }et _buildTaskCard(
+                onTap: () {
+                  // Handle "Show All" press
+                },
+                child: Row(
+                  children: [
+                    Text(
+                      "Show All",
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_outward_rounded,
+                      size: 14,
+                      color: const Color.fromARGB(246, 0, 0, 0),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _buildTaskCard(
+            "Stock Opname has not been performed",
+            "12/03/2025 09:42",
+            "High Priority",
+            "Needs Attention",
+          ),
+          const SizedBox(height: 8),
+          _buildTaskCard(
+            "PO-2024-0125 awaiting acceptance from PTK",
+            "12/03/2025 09:42",
+            "Medium Priority",
+            "Waiting for Action",
+          ),
+          const SizedBox(height: 8),
+          _buildTaskCard(
+            "PO-2025-0222 awaiting acceptance from PTK",
+            "12/03/2025 09:42",
+            "High Priority",
+            "Needs Attention",
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTaskCard(
     String taskTitle,
     String date,
     String priority,
@@ -2354,6 +2118,79 @@ Widget _buildHeader(double screenWidth, [bool isMobile = false]) {
       ],
     );
   }
+
+  // --- MODERN HEADER ICON & AVATAR (GLASS EFFECT, BORDER HALUS, TANPA SHADOW) ---
+
+  // Icon bulat transparan (glass effect) dengan border halus, tanpa shadow
+  Widget _modernHeaderIcon({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool badge = false,
+    bool isMobile = false,
+    bool glass = true,
+    double iconSize = 22,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(32),
+      onTap: onTap,
+      child: Container(
+        width: isMobile ? 36 : 40,
+        height: isMobile ? 36 : 40,
+        decoration: BoxDecoration(
+          color: glass ? Colors.white.withOpacity(0.32) : Colors.transparent,
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.22),
+            width: 1,
+          ),
+        ),
+        child: Stack(
+          children: [
+            Center(
+              child: Icon(icon, color: Colors.white, size: iconSize),
+            ),
+            if (badge)
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Avatar bulat transparan (glass effect)
+  Widget _modernHeaderAvatar({bool isMobile = false, bool glass = true}) {
+    return Container(
+      width: isMobile ? 36 : 40,
+      height: isMobile ? 36 : 40,
+      decoration: BoxDecoration(
+        color: glass ? Colors.white.withOpacity(0.32) : Colors.transparent,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.22),
+          width: 1,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: Image.asset(
+          'assets/images/icons-logoDekoration.png', // Ganti dengan path avatar kamu jika perlu
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
 }
 
 class TriangleClipper extends CustomClipper<Path> {
@@ -2370,4 +2207,3 @@ class TriangleClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(TriangleClipper oldClipper) => false;
 }
-

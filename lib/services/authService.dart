@@ -2,17 +2,24 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:miniproject_flutter/config/APi.dart';
+import 'package:http/io_client.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 
 class AuthService {
-  // Untuk menyimpan data data user ke dalam local storage
-  final storage = const FlutterSecureStorage();
+  final String baseUrl = 'http://192.168.1.4:8000/api';
+  final FlutterSecureStorage storage = FlutterSecureStorage();
 
-  // Untuk mengakses API
-  final http.Client client = ApiConfig.client;
-  final String baseUrl = ApiConfig.baseUrl;
+  http.Client client = IOClient(
+    HttpClient()
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true,
+  );
 
-  //Untuk pemanggilan API Login dan Registrasi dari backend ke frontend
+  // ====================================
+  // AUTH
+  // ====================================
+
   Future<bool> register({
     required String employeeId,
     required String name,
@@ -176,4 +183,5 @@ class AuthService {
       return null;
     }
   }
+
 }
