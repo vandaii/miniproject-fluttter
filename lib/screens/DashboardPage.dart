@@ -14,6 +14,7 @@ import 'Resource/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
 import 'dart:ui';
+import 'package:miniproject_flutter/widgets/Dashboard/TaskCard.dart';
 
 class DashboardPage extends StatefulWidget {
   final int selectedIndex;
@@ -481,11 +482,7 @@ class _DashboardPageState extends State<DashboardPage>
               children: [
                 Icon(
                   Icons.search,
-<<<<<<< HEAD
-                  color: deepPink.withOpacity(0.8),
-=======
                   color: Colors.white,
->>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
                   size: isMobile ? 20 : 24,
                 ),
                 const SizedBox(width: 8),
@@ -507,11 +504,7 @@ class _DashboardPageState extends State<DashboardPage>
                 const SizedBox(width: 4),
                 IconButton(
                   icon: const Icon(Icons.close),
-<<<<<<< HEAD
-                  color: deepPink,
-=======
                   color: Colors.white,
->>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
                   splashRadius: 20,
                   onPressed: _toggleSearch,
                 ),
@@ -607,7 +600,7 @@ class _DashboardPageState extends State<DashboardPage>
     final double headerHeight = isMobile ? 68 : 80;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor: const Color.fromARGB(238, 255, 255, 255),
       extendBodyBehindAppBar: false,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(isMobile ? 72 : 84),
@@ -679,53 +672,6 @@ class _DashboardPageState extends State<DashboardPage>
               ),
             )
           : null,
-<<<<<<< HEAD
-      body: Stack(
-        children: [
-          // HEADER PINK MODERN STICKY
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              width: double.infinity,
-              height: headerHeight + MediaQuery.of(context).padding.top,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFB6D5),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(32),
-                  bottomRight: Radius.circular(32),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.pink.withOpacity(0.08),
-                    blurRadius: 16,
-                    offset: Offset(0, 6),
-                  ),
-                ],
-              ),
-              padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top + 8,
-                left: isMobile ? 8 : 24,
-                right: isMobile ? 8 : 24,
-                bottom: 8,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  if (isMobile)
-                    Builder(
-                      builder: (context) => IconButton(
-                        icon: const Icon(Icons.grid_view_rounded, color: Colors.white),
-                        iconSize: isMobile ? 28 : 32,
-                        padding: EdgeInsets.zero,
-                        constraints: BoxConstraints(),
-                        onPressed: () {
-                          Scaffold.of(context).openDrawer();
-                        },
-                      ),
-                    ),
-=======
       body: SafeArea(
         child: Stack(
           children: [
@@ -752,501 +698,170 @@ class _DashboardPageState extends State<DashboardPage>
               margin: isMobile
                   ? EdgeInsets.zero
                   : EdgeInsets.only(left: _isSidebarExpanded ? 250 : 70),
-              child: Column(
-                children: [
->>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.only(left: isMobile ? 2 : 8),
-                      child: Text(
-                        'Dashboard',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold,
-                          fontSize: isMobile ? 24 : 28,
-                          color: Colors.white,
-                          letterSpacing: 0.2,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                  ),
-                  // ICON BAR TANPA SEARCH, PADDING LEBIH RAPI
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isMobile ? 2 : 10,
-                      vertical: isMobile ? 0 : 2,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  top: 8,
+                  left: isMobile ? 12 : 32,
+                  right: isMobile ? 12 : 32,
+                ),
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    FocusScope.of(context).unfocus();
+                    return false;
+                  },
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         SizedBox(
-                          key: _notificationIconKey,
-                          child: _modernHeaderIcon(
-                            icon: Icons.notifications_none_outlined,
-                            onTap: _toggleNotificationOverlay,
-                            badge: notifications.isNotEmpty,
-                            isMobile: isMobile,
-                            glass: true,
-                            iconSize: isMobile ? 30 : 32,
+                          height: 18,
+                        ), // Jarak rapi antara header dan search bar
+                        // Search bar modern lebih menarik
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 0,
+                            vertical: 0,
+                          ),
+                          child: StatefulBuilder(
+                            builder: (context, setState) {
+                              bool isFocused = false;
+                              return FocusScope(
+                                child: Focus(
+                                  onFocusChange: (focus) =>
+                                      setState(() => isFocused = focus),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 220),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.82),
+                                      borderRadius: BorderRadius.circular(22),
+                                      border: Border.all(
+                                        width: 1.5,
+                                        color: isFocused
+                                            ? const Color(0xFFF48FB1)
+                                            : Colors.purple.withOpacity(0.10),
+                                      ),
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Colors.white.withOpacity(0.82),
+                                          const Color(
+                                            0xFFF8BBD0,
+                                          ).withOpacity(0.13),
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.purple.withOpacity(
+                                            0.06,
+                                          ),
+                                          blurRadius: 16,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                          ),
+                                          child: Icon(
+                                            Icons.search,
+                                            color: const Color(
+                                              0xFFF06292,
+                                            ), // pink pastel
+                                            size: 26,
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: TextField(
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 15,
+                                              color: Colors.black87,
+                                            ),
+                                            decoration: InputDecoration(
+                                              hintText:
+                                                  'Cari tugas, nomor PO, atau status... ',
+                                              hintStyle: GoogleFonts.poppins(
+                                                color: Colors.grey,
+                                                fontSize: 14,
+                                              ),
+                                              border: InputBorder.none,
+                                            ),
+                                            cursorColor: const Color(
+                                              0xFFF06292,
+                                            ),
+                                            onTap: () => setState(
+                                              () => isFocused = true,
+                                            ),
+                                            onEditingComplete: () => setState(
+                                              () => isFocused = false,
+                                            ),
+                                          ),
+                                        ),
+                                        MouseRegion(
+                                          cursor: SystemMouseCursors.click,
+                                          child: GestureDetector(
+                                            onTap: () {},
+                                            child: AnimatedContainer(
+                                              duration: const Duration(
+                                                milliseconds: 180,
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 8,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: isFocused
+                                                    ? const Color(
+                                                        0xFFF8BBD0,
+                                                      ).withOpacity(0.18)
+                                                    : Colors.transparent,
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                              ),
+                                              child: Icon(
+                                                Icons.tune,
+                                                color: isFocused
+                                                    ? const Color(0xFFF06292)
+                                                    : Colors.grey.shade400,
+                                                size: 22,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
-                        SizedBox(width: isMobile ? 10 : 18),
-                        _modernHeaderIcon(
-                          icon: Icons.mail_outline,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => EmailPage()),
-                            );
-                          },
-                          isMobile: isMobile,
-                          glass: true,
-                          iconSize: isMobile ? 30 : 32,
-                        ),
-                        SizedBox(width: isMobile ? 10 : 18),
-                        _modernHeaderAvatar(isMobile: isMobile, glass: true),
+                        const SizedBox(height: 18),
+                        _buildTaskSection(),
+                        SizedBox(height: 22),
+                        _buildOutstandingCards(),
+                        SizedBox(height: 22),
+                        _buildOpenItemList(),
+                        SizedBox(height: 16),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-          // BODY PUTIH, KONTEN DI BAWAH HEADER, BISA DI-SCROLL
-          Padding(
-            padding: EdgeInsets.only(top: headerHeight + MediaQuery.of(context).padding.top - 8),
-            child: NotificationListener<ScrollNotification>(
-              onNotification: (notification) {
-                FocusScope.of(context).unfocus();
-                return false;
-              },
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  children: [
-                    _buildAnimatedSearchBar(),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 32),
-                      child: Column(
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Divider(
-                              color: Colors.grey.withOpacity(0.13),
-                              thickness: 1.2,
-                              height: 0,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          _buildTaskSection(),
-                          const SizedBox(height: 16),
-                          _buildOutstandingCards(),
-                          const SizedBox(height: 16),
-                          _buildOpenItemList(),
-                          const SizedBox(height: 12),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ),
-          ),
-          // Sidebar (hanya tampil di desktop/tablet)
-          if (!isMobile)
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              width: _isSidebarExpanded ? 250 : 70,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 0),
-                  ),
-                ],
-              ),
-              child: _buildSidebarContent(isMobile: false),
-            ),
-<<<<<<< HEAD
-        ],
-=======
           ],
         ),
->>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
       ),
     );
   }
 
   Widget _modernHeaderIconBarNoSearch(bool isMobile) {
     return Container(
-<<<<<<< HEAD
-      color: Colors.white,
-      child: Column(
-        children: [
-          // Logo dan nama aplikasi
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 16 : 20,
-              vertical: 24,
-            ),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.grey.withOpacity(0.1),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Image.asset(
-                  'assets/images/icons-haus.png',
-                  height: 36,
-                  width: 36,
-                ),
-                if (_isSidebarExpanded || isMobile) const SizedBox(width: 12),
-                if (_isSidebarExpanded || isMobile)
-                  Text(
-                    'haus! Inventory',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: deepPink,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          // Info toko dengan dropdown
-          if (_isSidebarExpanded || isMobile) _buildStoreDropdown(),
-
-          // Menu Items dengan Expanded
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: [
-                  // Section GENERAL
-                  if (_isSidebarExpanded || isMobile)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                      child: Row(
-                        children: [
-                          Text(
-                            'GENERAL',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: Colors.black54,
-                              letterSpacing: 1,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            height: 1,
-                            width: 100,
-                            color: Colors.grey.withOpacity(0.2),
-                          ),
-                        ],
-                      ),
-                    ),
-                  _buildMenuItem(
-                    icon: Icons.dashboard_customize_rounded,
-                    title: 'Dashboard',
-                    index: 0,
-                    onTap: () {
-                      if (_selectedIndex != 0) {
-                        setState(() => _selectedIndex = 0);
-                        _navigateToPage(0);
-                        if (isMobile && closeDrawer != null) closeDrawer();
-                      }
-                    },
-                  ),
-                  _buildExpandableMenu(
-                    icon: Icons.shopping_bag_rounded,
-                    title: 'Purchasing',
-                    isExpanded: _selectedIndex == PURCHASING_MENU,
-                    menuIndex: PURCHASING_MENU,
-                    children: [
-                      _buildSubMenuItem('Direct Purchase', 11),
-                      _buildSubMenuItem('GRPO', 12),
-                    ],
-                    onTap: () {
-                      setState(() => _selectedIndex = PURCHASING_MENU);
-                    },
-                    isMobile: isMobile,
-                  ),
-                  _buildExpandableMenu(
-                    icon: Icons.inventory_rounded,
-                    title: 'Stock Management',
-                    isExpanded: _selectedIndex == STOCK_MANAGEMENT_MENU,
-                    menuIndex: STOCK_MANAGEMENT_MENU,
-                    children: [
-                      _buildSubMenuItem('Material Request', 21),
-                      _buildSubMenuItem('Material Calculate', 25),
-                      _buildSubMenuItem('Stock Opname', 22),
-                      _buildSubMenuItem('Transfer Stock', 23),
-                      _buildSubMenuItem('Waste', 24),
-                    ],
-                    onTap: () {
-                      setState(() => _selectedIndex = STOCK_MANAGEMENT_MENU);
-                    },
-                    isMobile: isMobile,
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.bar_chart_rounded,
-                    title: 'Inventory Report',
-                    index: 3,
-                    onTap: () {
-                      setState(() => _selectedIndex = 3);
-                      if (isMobile && closeDrawer != null) closeDrawer();
-                    },
-                  ),
-                  // Section TOOLS
-                  if (_isSidebarExpanded || isMobile)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                      child: Row(
-                        children: [
-                          Text(
-                            'TOOLS',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: Colors.black54,
-                              letterSpacing: 1,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            height: 1,
-                            width: 100,
-                            color: Colors.grey.withOpacity(0.2),
-                          ),
-                        ],
-                      ),
-                    ),
-                  _buildMenuItem(
-                    icon: Icons.settings_suggest_rounded,
-                    title: 'Account & Settings',
-                    index: 4,
-                    onTap: () {
-                      setState(() => _selectedIndex = 4);
-                      _navigateToPage(4);
-                      if (isMobile && closeDrawer != null) closeDrawer();
-                    },
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.help_center_rounded,
-                    title: 'Help',
-                    index: 5,
-                    onTap: () {
-                      setState(() => _selectedIndex = 5);
-                      _navigateToPage(5);
-                      if (isMobile && closeDrawer != null) closeDrawer();
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // User profile dengan dropdown (selalu di bawah)
-          if (_isSidebarExpanded || isMobile) _buildProfileDropdown(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMenuItem({
-    required IconData icon,
-    required String title,
-    required int index,
-    required VoidCallback onTap,
-  }) {
-    final isActive = _isMenuActive(index);
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hoveredIndex = index),
-      onExit: (_) => setState(() => _hoveredIndex = null),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: ListTile(
-          horizontalTitleGap: 12,
-          leading: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? deepPink.withOpacity(0.1)
-                  : Colors.grey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: isActive ? deepPink : Colors.grey,
-              size: 20,
-            ),
-          ),
-          title: Text(
-            title,
-            style: GoogleFonts.poppins(
-              color: isActive ? deepPink : Colors.grey,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              fontSize: 14,
-            ),
-          ),
-          selected: isActive,
-          onTap: () {
-            if (_selectedIndex != index) {
-              setState(() => _selectedIndex = index);
-              _navigateToPage(index);
-            }
-          },
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
-          dense: true,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildExpandableMenu({
-    required IconData icon,
-    required String title,
-    required bool isExpanded,
-    required List<Widget> children,
-    required VoidCallback onTap,
-    required int menuIndex,
-    bool isMobile = false,
-  }) {
-    final isMenuExpanded = _expandedMenuIndex == menuIndex;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: isExpanded ? lightPink.withOpacity(0.3) : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: ListTile(
-            horizontalTitleGap: 12,
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isExpanded
-                    ? deepPink.withOpacity(0.1)
-                    : Colors.grey.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                color: isExpanded ? deepPink : Colors.grey,
-                size: 20,
-              ),
-            ),
-            title: Text(
-              title,
-              style: GoogleFonts.poppins(
-                color: isExpanded ? deepPink : Colors.grey,
-                fontWeight: isExpanded ? FontWeight.bold : FontWeight.normal,
-                fontSize: 14,
-              ),
-            ),
-            trailing: AnimatedRotation(
-              turns: isMenuExpanded ? 0.5 : 0.0,
-              duration: Duration(milliseconds: 220),
-              curve: Curves.easeInOut,
-              child: Icon(
-                Icons.expand_more,
-                color: isExpanded ? deepPink : Colors.grey,
-              ),
-            ),
-            onTap: () {
-              _toggleMenu(menuIndex);
-              onTap();
-            },
-            dense: true,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
-          ),
-        ),
-        if (isMenuExpanded && (_isSidebarExpanded || isMobile))
-          Container(
-            margin: const EdgeInsets.only(left: 16),
-            decoration: BoxDecoration(
-              border: Border(
-                left: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: children,
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildSubMenuItem(String title, int index) {
-    return Container(
-      margin: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
-      decoration: BoxDecoration(
-        color: _selectedIndex == index
-            ? lightPink.withOpacity(0.3)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ListTile(
-        horizontalTitleGap: 12,
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: _selectedIndex == index
-                ? deepPink.withOpacity(0.1)
-                : Colors.grey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            _getSubMenuIcon(index),
-            color: _selectedIndex == index ? deepPink : Colors.grey,
-            size: 20,
-          ),
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            color: _selectedIndex == index ? deepPink : Colors.black87,
-            fontWeight: _selectedIndex == index
-                ? FontWeight.bold
-                : FontWeight.normal,
-          ),
-        ),
-        selected: _selectedIndex == index,
-        onTap: () {
-          setState(() => _selectedIndex = index);
-          _navigateToPage(index);
-        },
-        dense: true,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-=======
       padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 16, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.transparent,
@@ -1285,281 +900,171 @@ class _DashboardPageState extends State<DashboardPage>
           SizedBox(width: isMobile ? 10 : 18),
           _modernHeaderAvatar(isMobile: isMobile, glass: true),
         ],
->>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
       ),
     );
   }
 
-<<<<<<< HEAD
-  void _navigateToPage(int index) {
-    switch (index) {
-      case 11: // Direct Purchase
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => DirectPurchasePage()),
-        );
-        break;
-      case 12: // GRPO
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => GRPO_Page()),
-        );
-        break;
-      case 21: // Material Request
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MaterialRequestPage()),
-        );
-        break;
-      case 22: // Stock Opname
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => StockOpnamePage()),
-        );
-        break;
-      case 23: // Transfer Stock
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => TransferStockPage()),
-        );
-        break;
-      case 24: // Waste
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => WastePage()),
-        );
-        break;
-      case 25: // Material Calculate
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MaterialCalculatePage()),
-        );
-        break;
-      case 4: // Account & Settings
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const UserprofilePage()),
-        );
-        break;
-      case 5: // Help
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => HelpPage()),
-        );
-        break;
-    }
-  }
-
-  IconData _getSubMenuIcon(int index) {
-    switch (index) {
-      case 11: // Direct Purchase
-        return Icons.shopping_bag_rounded;
-      case 12: // GRPO
-        return Icons.receipt_long_outlined;
-      case 21: // Material Request
-        return Icons.inventory_rounded;
-      case 22: // Stock Opname
-        return Icons.checklist_rtl_outlined;
-      case 23: // Transfer Stock
-        return Icons.swap_horiz_outlined;
-      case 24: // Waste
-        return Icons.delete_outline;
-      case 25: //material calculate
-        return Icons.inventory_rounded;
-      default:
-        return Icons.circle_outlined;
-    }
-  }
-
-=======
->>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
   Widget _buildTaskSection() {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 12,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Tasks",
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.black87,
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  // Handle "Show All" press
-                },
-                child: Row(
-                  children: [
-                    Text(
-                      "Show All",
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_outward_rounded,
-                      size: 14,
-                      color: const Color.fromARGB(246, 0, 0, 0),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _buildTaskCard(
-            "Stock Opname has not been performed",
-            "12/03/2025 09:42",
-            "High Priority",
-            "Needs Attention",
-          ),
-          const SizedBox(height: 8),
-          _buildTaskCard(
-            "PO-2024-0125 awaiting acceptance from PTK",
-            "12/03/2025 09:42",
-            "Medium Priority",
-            "Waiting for Action",
-          ),
-          const SizedBox(height: 8),
-          _buildTaskCard(
-            "PO-2025-0222 awaiting acceptance from PTK",
-            "12/03/2025 09:42",
-            "High Priority",
-            "Needs Attention",
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTaskCard(
-    String taskTitle,
-    String date,
-    String priority,
-    String status,
-  ) {
-    Color priorityColor;
-    IconData priorityIcon;
-    Color statusColor;
-    String statusText;
-
-    if (priority == "High Priority") {
-      priorityColor = Colors.red;
-      priorityIcon = Icons.error;
-    } else if (priority == "Medium Priority") {
-      priorityColor = Colors.orange;
-      priorityIcon = Icons.warning;
-    } else {
-      priorityColor = Colors.green;
-      priorityIcon = Icons.check_circle;
-    }
-
-    if (status == "Needs Attention") {
-      statusColor = Colors.red;
-      statusText = "Needs Attention";
-    } else if (status == "Waiting for Action") {
-      statusColor = Colors.orange;
-      statusText = "Waiting for Action";
-    } else {
-      statusColor = Colors.green;
-      statusText = "Resolved";
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 0),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
+        gradient: LinearGradient(
+          colors: [
+            const Color.fromARGB(
+              255,
+              255,
+              213,
+              244,
+            ).withOpacity(0.96), // abu-abu sangat muda
+            const Color.fromARGB(
+              255,
+              255,
+              241,
+              247,
+            ).withOpacity(0.92), // abu-abu kebiruan
+            Colors.white.withOpacity(0.90),
           ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: const Color(0xFFF8BBD0), // pink pastel
+          width: 1.3,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(priorityIcon, color: priorityColor, size: 30),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        taskTitle,
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        date,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        statusText,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: statusColor,
-                        ),
-                      ),
+                    Icon(
+                      Icons.task_alt_rounded,
+                      color: Color(0xFFE91E63),
+                      size: 26,
                     ),
-                    const SizedBox(height: 4),
-                    IconButton(
-                      icon: Icon(Icons.chevron_right, color: Colors.grey),
-                      onPressed: () {
-                        // Handle task click (navigate or show details)
-                      },
+                    const SizedBox(width: 8),
+                    Text(
+                      "Tasks",
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: isMobile ? 16 : 20,
+                        color: Colors.black87,
+                      ),
                     ),
                   ],
+                ),
+                TextButton.icon(
+                  onPressed: () {},
+                  icon: Icon(
+                    Icons.arrow_outward_rounded,
+                    size: 18,
+                    color: Color(0xFFE91E63),
+                  ),
+                  label: Text(
+                    "Lihat Semua",
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: Color(0xFFE91E63),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Color(0xFFE91E63),
+                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-            Divider(color: Colors.grey.withOpacity(0.18), thickness: 1),
+            const SizedBox(height: 18),
+            SizedBox(
+              height: isMobile ? 210 : 200,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                physics: BouncingScrollPhysics(),
+                padding: EdgeInsets.only(left: 4),
+                children: [
+                  TaskCard(
+                    taskTitle: "Stock Opname belum dilakukan",
+                    date: "12/03/2025 09:42",
+                    priority: "High Priority",
+                    status: "Needs Attention",
+                    onTap: () {
+                      Navigator.pushNamed(context, '/taskdetail');
+                    },
+                  ),
+                  TaskCard(
+                    taskTitle: "PO-2024-0125 menunggu acceptance dari PTK",
+                    date: "12/03/2025 09:42",
+                    priority: "Medium Priority",
+                    status: "Waiting for Action",
+                    onTap: () {
+                      Navigator.pushNamed(context, '/taskdetail');
+                    },
+                  ),
+                  TaskCard(
+                    taskTitle: "PO-2025-0222 menunggu acceptance dari PTK",
+                    date: "12/03/2025 09:42",
+                    priority: "High Priority",
+                    status: "Needs Attention",
+                    onTap: () {
+                      Navigator.pushNamed(context, '/taskdetail');
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.swipe, size: 18, color: Colors.grey),
+                SizedBox(width: 6),
+                Text(
+                  'Geser untuk melihat lebih banyak',
+                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _build3DTaskCard(Widget child, bool isMobile) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 24),
+      child: Card(
+        elevation: 28,
+        shadowColor: Colors.black.withOpacity(0.22),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(36),
+          side: BorderSide(color: Colors.grey.withOpacity(0.07), width: 1.2),
+        ),
+        color: Colors.white,
+        child: Container(
+          width: isMobile ? 320 : 400,
+          padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 22),
+          child: child,
         ),
       ),
     );
@@ -1567,118 +1072,113 @@ class _DashboardPageState extends State<DashboardPage>
 
   Widget _buildOutstandingCards() {
     final List<Map<String, dynamic>> items = [
-      {'title': 'Outstanding PO', 'count': '3'},
-      {'title': 'Outstanding Direct Purchase', 'count': '5'},
-      {'title': 'Outstanding Transfer Out', 'count': '8'},
+      {
+        'title': 'Outstanding PO',
+        'count': '3',
+        'icon': Icons.assignment_turned_in,
+        'color': Color(0xFF42A5F5), // vivid blue
+        'gradient': [Color(0xFF90CAF9), Color(0xFF42A5F5)],
+      },
+      {
+        'title': 'Outstanding Direct Purchase',
+        'count': '5',
+        'icon': Icons.shopping_bag_rounded,
+        'color': Color(0xFFF06292), // vivid pink
+        'gradient': [Color(0xFFF8BBD0), Color(0xFFF06292)],
+      },
+      {
+        'title': 'Outstanding Transfer Out',
+        'count': '8',
+        'icon': Icons.swap_horiz_rounded,
+        'color': Color(0xFFFFD600), // vivid yellow
+        'gradient': [Color(0xFFFFF59D), Color(0xFFFFD600)],
+      },
     ];
 
-    double screenWidth = MediaQuery.of(context).size.width;
-    bool isMobile = screenWidth < 600;
-
-    if (isMobile) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        child: Column(
-          children: items.map((item) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 24,
-                  horizontal: 16,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item['count'],
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 32,
-                        color: deepPink,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      item['title'],
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      );
-    } else {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: items.map((item) {
-            return Expanded(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 10),
-                padding: const EdgeInsets.symmetric(
-                  vertical: 28,
-                  horizontal: 16,
-                ),
+    return Column(
+      children: items.map((item) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            bool isPressed = false;
+            return GestureDetector(
+              onTapDown: (_) => setState(() => isPressed = true),
+              onTapUp: (_) => setState(() => isPressed = false),
+              onTapCancel: () => setState(() => isPressed = false),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                margin: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 18),
+                transform: isPressed ? (Matrix4.identity()..scale(0.97)) : Matrix4.identity(),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border(
+                    left: BorderSide(
+                      color: (item['color'] as Color),
+                      width: 5,
+                    ),
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                      item['count'],
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 32,
-                        color: deepPink,
+                    // Icon dengan background soft
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: (item['color'] as Color).withOpacity(0.13),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        item['icon'] as IconData,
+                        color: (item['color'] as Color),
+                        size: 30,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      item['title'],
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                        color: Colors.black87,
+                    const SizedBox(width: 18),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item['count'],
+                            style: GoogleFonts.robotoMono(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 26,
+                              color: (item['color'] as Color),
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            item['title'],
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              color: Colors.black87,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
               ),
             );
-          }).toList(),
-        ),
-      );
-    }
+          },
+        );
+      }).toList(),
+    );
   }
 
   Widget _buildOpenItemList() {
@@ -2266,11 +1766,6 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
-<<<<<<< HEAD
-  // --- MODERN HEADER ICON & AVATAR (GLASS EFFECT, BORDER HALUS, TANPA SHADOW) ---
-
-  // Icon bulat transparan (glass effect) dengan border halus, tanpa shadow
-=======
   Widget _buildMenuItem({
     required IconData icon,
     required String title,
@@ -2522,51 +2017,11 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   // Modern Header Icon
->>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
   Widget _modernHeaderIcon({
     required IconData icon,
     required VoidCallback onTap,
     bool badge = false,
     bool isMobile = false,
-<<<<<<< HEAD
-    bool glass = true,
-    double iconSize = 22,
-  }) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(32),
-      onTap: onTap,
-      child: Container(
-        width: isMobile ? 36 : 40,
-        height: isMobile ? 36 : 40,
-        decoration: BoxDecoration(
-          color: glass ? Colors.white.withOpacity(0.32) : Colors.transparent,
-          borderRadius: BorderRadius.circular(32),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.22),
-            width: 1,
-          ),
-        ),
-        child: Stack(
-          children: [
-            Center(
-              child: Icon(icon, color: Colors.white, size: iconSize),
-            ),
-            if (badge)
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 1),
-                  ),
-                ),
-              ),
-          ],
-=======
     Color? color,
     bool glass = false,
     double? iconSize,
@@ -2619,32 +2074,11 @@ class _DashboardPageState extends State<DashboardPage>
                 ),
             ],
           ),
->>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
         ),
       ),
     );
   }
 
-<<<<<<< HEAD
-  // Avatar bulat transparan (glass effect)
-  Widget _modernHeaderAvatar({bool isMobile = false, bool glass = true}) {
-    return Container(
-      width: isMobile ? 36 : 40,
-      height: isMobile ? 36 : 40,
-      decoration: BoxDecoration(
-        color: glass ? Colors.white.withOpacity(0.32) : Colors.transparent,
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.22),
-          width: 1,
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
-        child: Image.asset(
-          'assets/images/icons-logoDekoration.png', // Ganti dengan path avatar kamu jika perlu
-          fit: BoxFit.cover,
-=======
   // Modern Header Avatar
   Widget _modernHeaderAvatar({bool isMobile = false, bool glass = false}) {
     return MouseRegion(
@@ -2686,13 +2120,10 @@ class _DashboardPageState extends State<DashboardPage>
               ),
             ),
           ),
->>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
         ),
       ),
     );
   }
-<<<<<<< HEAD
-=======
 
   // Expandable Menu (Sidebar)
   Widget _buildExpandableMenu({
@@ -2933,7 +2364,6 @@ class _DashboardPageState extends State<DashboardPage>
         break;
     }
   }
->>>>>>> e422fb6acef86a8dadd036a0eaafdce346930fd4
 }
 
 class TriangleClipper extends CustomClipper<Path> {
