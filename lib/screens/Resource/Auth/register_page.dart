@@ -1,4 +1,4 @@
-// TODO:regristrasi eror 
+// TODO:regristrasi eror
 
 import 'package:flutter/material.dart';
 import 'package:miniproject_flutter/services/authService.dart';
@@ -139,85 +139,114 @@ class _RegisterPageState extends State<RegisterPage> {
                             ],
                           ),
                           const SizedBox(height: 40),
-                          SizedBox(  
+                          SizedBox(
                             width: double.infinity,
                             height: 50,
                             child: ElevatedButton(
-                              onPressed: _isLoading ? null : () async {
-                                final employeeId = _employeeIdController.text.trim();
-                                final name = _nameController.text.trim();
-                                final email = _emailController.text.trim();
-                                final phone = _phoneController.text.trim();
-                                final password = _passwordController.text;
-                                final confirmPassword = _confirmPasswordController.text;
+                              onPressed: _isLoading
+                                  ? null
+                                  : () async {
+                                      final employeeId = _employeeIdController
+                                          .text
+                                          .trim();
+                                      final name = _nameController.text.trim();
+                                      final email = _emailController.text
+                                          .trim();
+                                      final phone = _phoneController.text
+                                          .trim();
+                                      final password = _passwordController.text;
+                                      final confirmPassword =
+                                          _confirmPasswordController.text;
 
-                                if (employeeId.isEmpty ||
-                                    name.isEmpty ||
-                                    email.isEmpty ||
-                                    phone.isEmpty ||
-                                    password.isEmpty ||
-                                    confirmPassword.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Silakan isi semua field'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                  return;
-                                }
+                                      if (employeeId.isEmpty ||
+                                          name.isEmpty ||
+                                          email.isEmpty ||
+                                          phone.isEmpty ||
+                                          password.isEmpty ||
+                                          confirmPassword.isEmpty) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Silakan isi semua field',
+                                            ),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                        return;
+                                      }
 
-                                if (password != confirmPassword) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Password tidak cocok'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                  return;
-                                }
+                                      if (password != confirmPassword) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Password tidak cocok',
+                                            ),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                        return;
+                                      }
 
-                                setState(() {
-                                  _isLoading = true;
-                                });
+                                      setState(() {
+                                        _isLoading = true;
+                                      });
 
-                                try {
-                                  bool isRegistered = await AuthService().register(
-                                    employeeId: employeeId,
-                                    name: name,
-                                    email: email,
-                                    phone: phone,
-                                    password: password,
-                                    confirmedPassword: confirmPassword,
-                                  );
+                                      try {
+                                        bool isRegistered = await AuthService()
+                                            .register(
+                                              employeeId: employeeId,
+                                              name: name,
+                                              email: email,
+                                              phone: phone,
+                                              password: password,
+                                              confirmedPassword:
+                                                  confirmPassword,
+                                              storeLocation: '1',
+                                            );
 
-                                  if (isRegistered) {
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Registrasi berhasil'),
-                                          backgroundColor: Colors.green,
-                                        ),
-                                      );
-                                      Navigator.pop(context);
-                                    }
-                                  }
-                                } catch (e) {
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(e.toString().replaceFirst("Exception: ", "")),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                  }
-                                } finally {
-                                  if (mounted) {
-                                    setState(() {
-                                      _isLoading = false;
-                                    });
-                                  }
-                                }
-                              },
+                                        if (isRegistered) {
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Registrasi berhasil',
+                                                ),
+                                                backgroundColor: Colors.green,
+                                              ),
+                                            );
+                                            Navigator.pop(context);
+                                          }
+                                        }
+                                      } catch (e) {
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                e.toString().replaceFirst(
+                                                  "Exception: ",
+                                                  "",
+                                                ),
+                                              ),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
+                                      } finally {
+                                        if (mounted) {
+                                          setState(() {
+                                            _isLoading = false;
+                                          });
+                                        }
+                                      }
+                                    },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.pink,
                                 shape: RoundedRectangleBorder(
@@ -229,7 +258,10 @@ class _RegisterPageState extends State<RegisterPage> {
                                       width: 24,
                                       height: 24,
                                       child: CircularProgressIndicator(
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
                                         strokeWidth: 2,
                                       ),
                                     )
