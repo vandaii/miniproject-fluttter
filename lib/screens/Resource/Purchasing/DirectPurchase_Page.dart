@@ -19,6 +19,7 @@ import 'package:miniproject_flutter/services/authService.dart';
 import 'package:intl/intl.dart';
 // import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 
 class DirectPurchasePage extends StatefulWidget {
   final int selectedIndex;
@@ -60,9 +61,10 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     _fetchDirectPurchases();
   }
 
-  final Color primaryColor = const Color(0xFFF8BBD0);
-  final Color deepPink = const Color.fromARGB(255, 233, 30, 99);
+  final Color pastelPink = const Color(0xFFF8BBD0);
+  final Color deepPink = const Color(0xFFE91E63);
   final Color lightPink = const Color(0xFFFCE4EC);
+  final Color accentPurple = const Color(0xFF7B1FA2);
 
   static const int PURCHASING_MENU = 1;
   static const int STOCK_MANAGEMENT_MENU = 2;
@@ -177,25 +179,22 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(60),
+        preferredSize: Size.fromHeight(70),
         child: AppBar(
-          backgroundColor: const Color(0xFFE91E63),
-          elevation: 4,
-          centerTitle: true,
-          leading: Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.menu, color: Colors.white),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
-          ),
-          title: Text(
-            'Direct Purchase',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-              color: Colors.white,
+          backgroundColor: deepPink,
+          elevation: 6,
+          centerTitle: false,
+          titleSpacing: 32,
+          title: Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: Text(
+              'Direct Purchase',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w800,
+                fontSize: 28,
+                color: Colors.white,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
           actions: [
@@ -220,7 +219,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                       child: Icon(
                         Icons.notifications_none,
                         color: Colors.white,
-                        size: 24,
+                        size: 28,
                       ),
                     ),
                   ),
@@ -241,7 +240,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                       child: Icon(
                         Icons.mail_outline,
                         color: Colors.white,
-                        size: 24,
+                        size: 28,
                       ),
                     ),
                   ),
@@ -261,19 +260,20 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                       padding: const EdgeInsets.all(4.0),
                       child: CircleAvatar(
                         backgroundColor: Colors.white,
-                        radius: 16,
+                        radius: 20,
                         child: Text(
                           'J',
-                          style: TextStyle(
-                            color: Color(0xFFE91E63),
+                          style: GoogleFonts.poppins(
+                            color: deepPink,
                             fontWeight: FontWeight.bold,
+                            fontSize: 18,
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 24),
               ],
             ),
           ],
@@ -470,73 +470,70 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
           children: [
             // Search Bar Section
             Padding(
-              padding: const EdgeInsets.only(top: 24.0, bottom: 16.0),
+              padding: const EdgeInsets.only(top: 32.0, bottom: 24.0),
               child: Row(
                 children: [
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFFF8BBD0), Color(0xFFE91E63)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
-                            color: Color(0xFFE91E63).withOpacity(0.10),
-                            blurRadius: 10,
-                            offset: Offset(0, 4),
+                            color: deepPink.withOpacity(0.08),
+                            blurRadius: 16,
+                            offset: Offset(0, 6),
                           ),
                         ],
                       ),
                       child: TextField(
                         onChanged: _onSearchChanged,
+                        style: GoogleFonts.poppins(fontSize: 15, color: Colors.black87),
                         decoration: InputDecoration(
                           prefixIcon: Icon(
                             Icons.search,
-                            color: Color(0xFFE91E63),
-                            size: 22,
+                            color: deepPink,
+                            size: 24,
                           ),
-                          hintText:
-                              'search by NO direct , Supplier , date ,etc',
+                          hintText: 'Search by No Direct, Supplier…',
                           hintStyle: GoogleFonts.poppins(
                             color: Colors.grey[400],
-                            fontSize: 14,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w400,
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(18),
                             borderSide: BorderSide.none,
                           ),
                           contentPadding: EdgeInsets.symmetric(
-                            vertical: 16,
-                            horizontal: 18,
+                            vertical: 18,
+                            horizontal: 20,
                           ),
                           filled: true,
-                          fillColor: Colors.white.withOpacity(0.85),
+                          fillColor: Colors.white.withOpacity(0.95),
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(width: 14),
+                  SizedBox(width: 16),
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Color(0xFFF8BBD0), Color(0xFFE91E63)],
+                        colors: [pastelPink, deepPink],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(18),
                       boxShadow: [
                         BoxShadow(
-                          color: Color(0xFFE91E63).withOpacity(0.10),
+                          color: deepPink.withOpacity(0.10),
                           blurRadius: 10,
                           offset: Offset(0, 4),
                         ),
                       ],
                     ),
                     child: IconButton(
-                      icon: Icon(Icons.filter_alt, color: Colors.white),
+                      icon: Icon(Icons.filter_alt, color: Colors.white, size: 26),
                       onPressed: _fetchDirectPurchases,
                     ),
                   ),
@@ -547,92 +544,22 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Outstanding Button
-                GestureDetector(
+                _buildTabButton(
+                  label: 'Outstanding',
+                  selected: isOutstandingSelected,
                   onTap: () => _onTabChanged(true),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient: isOutstandingSelected
-                          ? LinearGradient(
-                              colors: [Color(0xFFE91E63), Color(0xFFF8BBD0)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      color: isOutstandingSelected ? null : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0xFFE91E63).withOpacity(0.08),
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                      border: Border.all(
-                        color: isOutstandingSelected
-                            ? Colors.transparent
-                            : Color(0xFFE91E63),
-                        width: 2,
-                      ),
-                    ),
-                    child: Text(
-                      'Outstanding',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        color: isOutstandingSelected
-                            ? Colors.white
-                            : Color(0xFFE91E63),
-                        fontSize: 15,
-                      ),
-                    ),
-                  ),
                 ),
                 const SizedBox(width: 18),
-                // Approved Button
-                GestureDetector(
+                _buildTabButton(
+                  label: 'Approved',
+                  selected: !isOutstandingSelected,
                   onTap: () => _onTabChanged(false),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient: !isOutstandingSelected
-                          ? LinearGradient(
-                              colors: [Color(0xFFE91E63), Color(0xFFF8BBD0)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      color: !isOutstandingSelected ? null : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0xFFE91E63).withOpacity(0.08),
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                      border: Border.all(
-                        color: !isOutstandingSelected
-                            ? Colors.transparent
-                            : Color(0xFFE91E63),
-                        width: 2,
-                      ),
-                    ),
-                    child: Text(
-                      'Approved',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        color: !isOutstandingSelected
-                            ? Colors.white
-                            : Color(0xFFE91E63),
-                        fontSize: 15,
-                      ),
-                    ),
-                  ),
+                  isApproved: true,
                 ),
               ],
             ),
             const SizedBox(height: 20),
+            // Responsive Grid for Cards
             Expanded(
               child: _isLoading
                   ? Center(child: CircularProgressIndicator())
@@ -642,11 +569,29 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
                   ? Center(child: Text('Tidak ada data'))
                   : RefreshIndicator(
                       onRefresh: _fetchDirectPurchases,
-                      child: ListView.builder(
-                        itemCount: _directPurchases.length,
-                        itemBuilder: (context, index) {
-                          final item = _directPurchases[index];
-                          return _buildDirectPurchaseCardFromApi(item);
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          int crossAxisCount = 1;
+                          double width = constraints.maxWidth;
+                          if (width > 1100) {
+                            crossAxisCount = 3;
+                          } else if (width > 700) {
+                            crossAxisCount = 2;
+                          }
+                          return GridView.builder(
+                            padding: const EdgeInsets.only(bottom: 24),
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossAxisCount,
+                              crossAxisSpacing: 24,
+                              mainAxisSpacing: 24,
+                              childAspectRatio: 1.25,
+                            ),
+                            itemCount: _directPurchases.length,
+                            itemBuilder: (context, index) {
+                              final item = _directPurchases[index];
+                              return _buildDirectPurchaseCardFromApi(item);
+                            },
+                          );
                         },
                       ),
                     ),
@@ -666,23 +611,82 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     );
   }
 
+  Widget _buildTabButton({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+    bool isApproved = false,
+  }) {
+    final Color selectedGradientStart = isApproved ? Color(0xFFE91E63) : Color(0xFFF8BBD0);
+    final Color selectedGradientEnd = isApproved ? Color(0xFFF8BBD0) : Color(0xFFE91E63);
+    final Color unselectedColor = Colors.white;
+    final Color selectedTextColor = Colors.white;
+    final Color unselectedTextColor = Color(0xFFE91E63);
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 180),
+        curve: Curves.easeInOut,
+        decoration: BoxDecoration(
+          gradient: selected
+              ? LinearGradient(
+                  colors: [selectedGradientStart, selectedGradientEnd],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: selected ? null : unselectedColor,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            if (selected)
+              BoxShadow(
+                color: Color(0xFFE91E63).withOpacity(0.10),
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+          ],
+          border: Border.all(
+            color: selected ? Colors.transparent : Color(0xFFE91E63),
+            width: 2,
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
+              child: Text(
+                label,
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  color: selected ? selectedTextColor : unselectedTextColor,
+                  fontSize: 16,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDirectPurchaseCardFromApi(dynamic item) {
-    // Todo : checking for status item
-    // print(item);
-    // Mapping status dan badge
     String status = item['status'] ?? '';
     Color badgeColor = Colors.grey.shade200;
     Color badgeTextColor = Colors.grey;
     IconData badgeIcon = Icons.info_outline;
     String badgeText = status;
     if (status == 'Pending Area Manager') {
-      badgeColor = const Color(0xFFFFF9C4);
-      badgeTextColor = const Color(0xFFFBC02D);
+      badgeColor = pastelPink;
+      badgeTextColor = deepPink;
       badgeIcon = Icons.hourglass_empty_rounded;
       badgeText = 'Pending Area Manager';
     } else if (status == 'Approved Area Manager') {
-      badgeColor = const Color.fromARGB(255, 144, 202, 249);
-      badgeTextColor = const Color.fromARGB(255, 21, 101, 192);
+      badgeColor = accentPurple.withOpacity(0.15);
+      badgeTextColor = accentPurple;
       badgeIcon = Icons.verified_user_rounded;
       badgeText = 'Approved Area Manager';
     } else if (status == 'Approved') {
@@ -691,200 +695,189 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       badgeIcon = Icons.verified_rounded;
       badgeText = status;
     }
-    // todo : card index
-    return Card(
-      elevation: 8,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      margin: const EdgeInsets.only(bottom: 16),
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // No Direct dan tombol copy di satu baris
-            Row(
-              children: [
-                Text(
-                  'No Direct: ',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: Color(0xFFE91E63),
+    // Highlight urgent/recent
+    bool isUrgent = status == 'Pending Area Manager';
+    bool isRecent = item['isNew'] == true;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: StatefulBuilder(
+        builder: (context, setCardState) {
+          bool isHovered = false;
+          return GestureDetector(
+            onTap: () => _showDetailPopup(item),
+            child: AnimatedContainer(
+              duration: Duration(milliseconds: 180),
+              curve: Curves.easeInOut,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: isHovered
+                        ? deepPink.withOpacity(0.18)
+                        : deepPink.withOpacity(0.10),
+                    blurRadius: isHovered ? 18 : 10,
+                    offset: Offset(0, isHovered ? 8 : 4),
                   ),
-                ),
-                Expanded(
-                  child: Tooltip(
-                    message: getNoDirect(item),
-                    child: Text(
-                      getNoDirect(item),
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.normal,
-                        fontSize: 15,
-                        color: Color(0xFFE91E63),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  if (isUrgent)
+                    BoxShadow(
+                      color: pastelPink.withOpacity(0.25),
+                      blurRadius: 8,
+                      spreadRadius: 1,
                     ),
-                  ),
+                ],
+                border: Border.all(
+                  color: isUrgent
+                      ? deepPink
+                      : isRecent
+                          ? accentPurple.withOpacity(0.5)
+                          : Colors.transparent,
+                  width: isUrgent || isRecent ? 2 : 1,
                 ),
-                IconButton(
-                  icon: Icon(Icons.copy, size: 18, color: Color(0xFFE91E63)),
-                  tooltip: 'Copy No Direct',
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: getNoDirect(item)));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('No Direct berhasil disalin!'),
-                        backgroundColor: Colors.green,
-                        duration: Duration(seconds: 1),
-                      ),
-                    );
-                  },
-                  padding: EdgeInsets.zero,
-                  constraints: BoxConstraints(),
-                ),
-              ],
-            ),
-            // Badge status di baris berikutnya, rata kanan
-            Row(
-              children: [
-                Spacer(),
-                Container(
-                  constraints: const BoxConstraints(maxWidth: 140),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: badgeColor,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: badgeColor.withOpacity(0.18),
-                        blurRadius: 4,
-                        offset: Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Icon(badgeIcon, color: badgeTextColor, size: 16),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          badgeText,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12,
-                            color: badgeTextColor,
+              ),
+              margin: const EdgeInsets.only(bottom: 0),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () => _showDetailPopup(item),
+                onHover: (hovering) => setCardState(() => isHovered = hovering),
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(28.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      getNoDirect(item),
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 22,
+                                        color: deepPink,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      item['supplier'] ?? '-',
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 16,
+                                        color: accentPurple,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      getDate(item),
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.w400,
+                                        fontSize: 13,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Status badge
+                              Container(
+                                margin: const EdgeInsets.only(left: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 7,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: badgeColor,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: badgeColor.withOpacity(0.18),
+                                      blurRadius: 4,
+                                      offset: Offset(0, 1),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(badgeIcon, color: badgeTextColor, size: 16),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      badgeText,
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12,
+                                        color: badgeTextColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: true,
+                          const Spacer(),
+                          Align(
+                            alignment: Alignment.bottomRight,
+                            child: OutlinedButton(
+                              onPressed: () => _showDetailPopup(item),
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                side: BorderSide(color: deepPink, width: 2),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                                elevation: 0,
+                                minimumSize: Size(120, 44),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                foregroundColor: deepPink,
+                              ),
+                              child: Text(
+                                'Detail',
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.bold,
+                                  color: deepPink,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Notification badge (example, can be extended)
+                    if (isRecent)
+                      Positioned(
+                        top: 10,
+                        left: 10,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: accentPurple,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'NEW',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                            ),
+                          ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.store, color: Color(0xFFE91E63), size: 16),
-                SizedBox(width: 6),
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'Supplier: ',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Colors.grey[800],
-                        ),
-                      ),
-                      TextSpan(
-                        text: item['supplier'] ?? '-',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.normal,
-                          fontSize: 14,
-                          color: Colors.grey[800],
-                        ),
-                      ),
-                    ],
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-            SizedBox(height: 6),
-            Row(
-              children: [
-                Icon(Icons.calendar_today, color: Color(0xFFE91E63), size: 16),
-                SizedBox(width: 6),
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'Date: ',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Colors.grey[900],
-                        ),
-                      ),
-                      TextSpan(
-                        text: getDate(item),
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.normal,
-                          fontSize: 14,
-                          color: Colors.grey[900],
-                        ),
-                      ),
-                    ],
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: OutlinedButton.icon(
-                onPressed: () => _showDetailPopup(item),
-                icon: Icon(
-                  Icons.info_outline_rounded,
-                  color: Color(0xFFE91E63),
-                  size: 18,
-                ),
-                label: Text(
-                  'Detail',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFFE91E63),
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  side: BorderSide(color: Color(0xFFE91E63), width: 2),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  elevation: 0,
-                  minimumSize: Size(120, 44),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -2389,7 +2382,7 @@ class _AddDirectPurchaseFormContentState
             fillColor: Colors.white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -2400,8 +2393,8 @@ class _AddDirectPurchaseFormContentState
               borderSide: BorderSide(color: deepPink),
             ),
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
               vertical: 12,
+              horizontal: 16,
             ),
           ),
         ),
