@@ -15,7 +15,7 @@ class TaskCard extends StatelessWidget {
     required this.date,
     required this.priority,
     required this.status,
-    this.onTap,
+    this.onTap, required Null Function(dynamic tapContext, dynamic tapPosition) onStatusTap, required Null Function(dynamic tapContext, dynamic tapPosition) onPriorityTap,
   }) : super(key: key);
 
   Color _getColor(String value) {
@@ -50,67 +50,14 @@ class TaskCard extends StatelessWidget {
   }
 
   Widget _buildBadge(BuildContext context, String text, Color color) {
-    final Color badgeBg = color.withOpacity(0.18); // lebih tegas
+    final Color badgeBg = color.withOpacity(0.18);
     final Color badgeBorder = color.withOpacity(0.32);
-    return GestureDetector(
-      onTap: () {
-        String message = text;
-        // Mapping pesan lengkap
-        if (text.toLowerCase().contains('waiting')) {
-          message = 'Waiting for Action';
-        } else if (text.toLowerCase().contains('high')) {
-          message = 'High Priority';
-        } else if (text.toLowerCase().contains('medium')) {
-          message = 'Medium Priority';
-        } else if (text.toLowerCase().contains('needs')) {
-          message = 'Needs Attention';
-        } else if (text.toLowerCase().contains('done') ||
-            text.toLowerCase().contains('selesai')) {
-          message = 'Completed';
-        }
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-            ),
-            title: Text(
-              'Detail',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-            ),
-            content: Text(message, style: GoogleFonts.poppins()),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(
-                  'Tutup',
-                  style: GoogleFonts.poppins(color: Colors.pink),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 110),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        margin: const EdgeInsets.only(right: 0),
-        decoration: BoxDecoration(
-          color: badgeBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: badgeBorder, width: 1.1),
-        ),
-        child: Text(
-          text,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
+    return AnimatedTooltipBadge(
+      key: ValueKey(text),
+      text: text,
+      color: color,
+      badgeBg: badgeBg,
+      badgeBorder: badgeBorder,
     );
   }
 
@@ -270,4 +217,196 @@ class TaskCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class AnimatedTooltipBadge extends StatefulWidget {
+  final String text;
+  final Color color;
+  final Color badgeBg;
+  final Color badgeBorder;
+
+  const AnimatedTooltipBadge({
+    Key? key,
+    required this.text,
+    required this.color,
+    required this.badgeBg,
+    required this.badgeBorder,
+  }) : super(key: key);
+
+  // Hanya satu badge aktif di seluruh aplikasi
+  static AnimatedTooltipBadgeState? _activeBadge;
+  static void removeAllTooltips() {
+    _activeBadge?._removeTooltip();
+    _activeBadge = null;
+  }
+
+  @override
+  State<AnimatedTooltipBadge> createState() => AnimatedTooltipBadgeState();
+}
+
+class AnimatedTooltipBadgeState extends State<AnimatedTooltipBadge> with SingleTickerProviderStateMixin {
+  OverlayEntry? _overlayEntry;
+  late AnimationController _controller;
+  late Animation<double> _fadeAnim;
+  late Animation<double> _scaleAnim;
+  bool _isDisposed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 180),
+    );
+    _fadeAnim = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+    _scaleAnim = Tween<double>(begin: 0.92, end: 1).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _removeTooltip();
+    if (AnimatedTooltipBadge._activeBadge == this) {
+      AnimatedTooltipBadge._activeBadge = null;
+    }
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _showTooltip(TapDownDetails details) async {
+    // Tutup badge lain jika ada
+    if (AnimatedTooltipBadge._activeBadge != null && AnimatedTooltipBadge._activeBadge != this) {
+      AnimatedTooltipBadge._activeBadge!._removeTooltip();
+    }
+    AnimatedTooltipBadge._activeBadge = this;
+    _removeTooltip();
+    final RenderBox box = context.findRenderObject() as RenderBox;
+    final Offset badgePos = box.localToGlobal(Offset.zero);
+    final Size badgeSize = box.size;
+    final overlay = Overlay.of(context);
+    String message = widget.text;
+    if (widget.text.toLowerCase().contains('waiting')) {
+      message = 'Waiting for Action';
+    } else if (widget.text.toLowerCase().contains('high')) {
+      message = 'High Priority';
+    } else if (widget.text.toLowerCase().contains('medium')) {
+      message = 'Medium Priority';
+    } else if (widget.text.toLowerCase().contains('needs')) {
+      message = 'Needs Attention';
+    } else if (widget.text.toLowerCase().contains('done') || widget.text.toLowerCase().contains('selesai')) {
+      message = 'Completed';
+    }
+    _overlayEntry = OverlayEntry(
+      builder: (context) {
+        return GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: _removeTooltip,
+          child: Stack(
+            children: [
+              Positioned(
+                left: badgePos.dx + badgeSize.width / 2 - 70,
+                top: badgePos.dy - 48,
+                child: FadeTransition(
+                  opacity: _fadeAnim,
+                  child: ScaleTransition(
+                    scale: _scaleAnim,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: widget.badgeBorder, width: 1),
+                            ),
+                            child: Text(
+                              message,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13.5,
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          // Arrow bawah ala macOS
+                          CustomPaint(
+                            size: const Size(18, 8),
+                            painter: _TooltipArrowPainter(color: Colors.white, borderColor: widget.badgeBorder),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    overlay.insert(_overlayEntry!);
+    if (!_isDisposed) _controller.forward();
+  }
+
+  void _removeTooltip() {
+    if (!_isDisposed) _controller.reverse();
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    if (AnimatedTooltipBadge._activeBadge == this) {
+      AnimatedTooltipBadge._activeBadge = null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: _showTooltip,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 110),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        margin: const EdgeInsets.only(right: 0),
+        decoration: BoxDecoration(
+          color: widget.badgeBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: widget.badgeBorder, width: 1.1),
+        ),
+        child: Text(
+          widget.text,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: widget.color,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+  }
+}
+
+class _TooltipArrowPainter extends CustomPainter {
+  final Color color;
+  final Color borderColor;
+  _TooltipArrowPainter({required this.color, required this.borderColor});
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()..color = color;
+    final Paint borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final Path path = Path();
+    path.moveTo(0, 0);
+    path.lineTo(size.width / 2, size.height);
+    path.lineTo(size.width, 0);
+    path.close();
+    canvas.drawPath(path, paint);
+    canvas.drawPath(path, borderPaint);
+  }
+  @override
+  bool shouldRepaint(_TooltipArrowPainter oldDelegate) => false;
 }
