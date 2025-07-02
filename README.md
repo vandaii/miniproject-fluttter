@@ -25,34 +25,81 @@ color by web
 code 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Purchasing/GRPO_Page.dart';
-import 'package:miniproject_flutter/screens/Dashboard_Resouce/Stock_Management/StockOpname_Page.dart';
-import 'Dashboard_Resouce/Purchasing/DirectPurchase_Page.dart';
-import 'Dashboard_Resouce/Stock_Management/TransferStock_Page.dart';
-import 'Dashboard_Resouce/Stock_Management/MaterialRequest_Page.dart';
-import 'Dashboard_Resouce/Auth/UserProfile_Page.dart';
-import 'Dashboard_Resouce/Stock_Management/Waste_Page.dart';
-import 'Dashboard_Resouce/Auth/Help_Page.dart';
-import 'Dashboard_Resouce/Auth/Notification_Page.dart';
-import 'Dashboard_Resouce/Auth/Email_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Purchasing/GRPO_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialCalculate_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/StockOpname_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Stock_Management/Waste_Page.dart';
+import 'Resource/Purchasing/DirectPurchase_Page.dart';
+import 'Resource/Stock_Management/TransferStock_Page.dart';
+import 'Resource/Stock_Management/MaterialRequest_Page.dart';
+import 'Resource/Auth/UserProfile_Page.dart';
+import 'Resource/Auth/Help_Page.dart';
+import 'Resource/Auth/Notification_Page.dart';
+import 'Resource/Auth/Email_Page.dart';
+import 'package:miniproject_flutter/services/authService.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
+import 'dart:ui';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  final int selectedIndex;
+  const DashboardPage({super.key, required this.selectedIndex});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> {
-  int _selectedIndex = 0;
+class _DashboardPageState extends State<DashboardPage>
+    with TickerProviderStateMixin {
+  late int _selectedIndex;
   bool _isSidebarExpanded = true;
+  bool _isProfileMenuOpen = false;
+  bool _isStoreMenuOpen = false;
+  int? _expandedMenuIndex;
+  bool _isSearchActive = false;
 
   int _selectedOpenItemTab = 0; // 0: PO, 1: Direct Purchase, 2: Transfer Out
 
   final Color primaryColor = const Color(0xFFF8BBD0);
-  final Color accentColor = const Color(0xFFE91E63);
-  final Color deepPink = const Color(0xFF880E4F);
+  // final Color accentColor = const Color.fromARGB(255, 233, 30, 99);
+  final Color deepPink = const Color.fromARGB(255, 233, 30, 99);
   final Color lightPink = const Color(0xFFFCE4EC);
+
+  // Konstanta untuk menu index
+  static const int PURCHASING_MENU = 1;
+  static const int STOCK_MANAGEMENT_MENU = 2;
+
+  final AuthService _authService = AuthService();
+
+  late AnimationController _searchAnimationController;
+  late AnimationController _notificationAnimationController;
+
+  OverlayEntry? _notificationOverlayEntry;
+  final GlobalKey _notificationIconKey = GlobalKey();
+
+  // Data notifikasi (diambil dari Notification_Page.dart)
+  final List<Map<String, dynamic>> notifications = [
+    {
+      'icon': Icons.shopping_cart,
+      'title': 'Purchase Approved',
+      'message': 'Your direct purchase request has been approved.',
+      'time': '2 min ago',
+      'color': Color(0xFFE91E63),
+    },
+    {
+      'icon': Icons.assignment_turned_in,
+      'title': 'GRPO Received',
+      'message': 'Goods receipt has been completed for PO-2023-12.',
+      'time': '10 min ago',
+      'color': Color(0xFFE91E63),
+    },
+    {
+      'icon': Icons.warning_amber_rounded,
+      'title': 'Stock Low',
+      'message': 'Stock for Item ABC is below minimum level.',
+      'time': '1 hour ago',
+      'color': Color(0xFFE91E63),
+    },
+  ];
 
   // Dummy data untuk masing-masing tab
   final List<List<DataRow>> _openItemRows = [
@@ -68,7 +115,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF880E4F),
+                backgroundColor: Color.fromARGB(255, 233, 30, 99),
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 shape: RoundedRectangleBorder(
@@ -94,7 +141,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF880E4F),
+                backgroundColor: Color.fromARGB(255, 233, 30, 99),
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 shape: RoundedRectangleBorder(
@@ -120,7 +167,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF880E4F),
+                backgroundColor: Color.fromARGB(255, 233, 30, 99),
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 shape: RoundedRectangleBorder(
@@ -136,454 +183,627 @@ class _DashboardPageState extends State<DashboardPage> {
     ],
   ];
 
-  @override
-  Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
+  // Tambahkan state untuk hover
+  int? _hoveredIndex;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
-      body: Row(
-        children: [
-          // Sidebar
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            width: _isSidebarExpanded ? 250 : 70,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 0),
+  // Fungsi reusable untuk menentukan apakah menu sedang di-hover atau selected
+  bool _isMenuActive(int index) {
+    return _selectedIndex == index || _hoveredIndex == index;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.selectedIndex;
+    _searchAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _notificationAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchAnimationController.dispose();
+    _notificationAnimationController.dispose();
+    // Pastikan overlay dihapus saat widget di-dispose
+    if (_notificationOverlayEntry != null) {
+      _notificationOverlayEntry!.remove();
+      _notificationOverlayEntry = null;
+    }
+    super.dispose();
+  }
+
+  void _toggleSearch() {
+    if (_searchAnimationController.isAnimating) return;
+
+    setState(() {
+      _isSearchActive = !_isSearchActive;
+      if (_isSearchActive) {
+        _searchAnimationController.forward();
+      } else {
+        _searchAnimationController.reverse();
+      }
+    });
+  }
+
+  // --- Notification Overlay Logic ---
+  void _toggleNotificationOverlay() {
+    if (_notificationAnimationController.isAnimating) return;
+
+    if (_notificationOverlayEntry == null) {
+      _showNotificationBubble();
+    } else {
+      _removeNotificationOverlay();
+    }
+  }
+
+  void _removeNotificationOverlay() {
+    if (_notificationOverlayEntry != null) {
+      _notificationAnimationController.reverse().then((_) {
+        if (_notificationOverlayEntry != null &&
+            _notificationOverlayEntry!.mounted) {
+          _notificationOverlayEntry!.remove();
+          _notificationOverlayEntry = null;
+        }
+      });
+    }
+  }
+
+  void _showNotificationBubble() {
+    final RenderBox renderBox =
+        _notificationIconKey.currentContext!.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final position = renderBox.localToGlobal(Offset.zero);
+
+    _notificationOverlayEntry = OverlayEntry(
+      builder: (context) => _buildNotificationBubbleAnimated(position, size),
+    );
+
+    Overlay.of(context).insert(_notificationOverlayEntry!);
+    _notificationAnimationController.forward();
+  }
+
+  Widget _buildNotificationBubbleAnimated(Offset position, Size size) {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: _removeNotificationOverlay,
+            behavior: HitTestBehavior.opaque,
+            child: Container(color: Colors.transparent),
+          ),
+        ),
+        Positioned(
+          top: position.dy + size.height + 10,
+          right: 16,
+          child: AnimatedBuilder(
+            animation: _notificationAnimationController,
+            builder: (context, child) {
+              final animValue = _notificationAnimationController.value;
+              return FadeTransition(
+                opacity: _notificationAnimationController,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.85, end: 1.0).animate(
+                    CurvedAnimation(
+                      parent: _notificationAnimationController,
+                      curve: Curves.easeOutBack,
+                    ),
+                  ),
+                  alignment: Alignment.topRight,
+                  child: child,
                 ),
-              ],
+              );
+            },
+            child: _buildNotificationBubbleContent(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNotificationBubbleContent() {
+    final List<Map<String, dynamic>> previewNotifs = notifications
+        .take(4)
+        .toList();
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
+    return Material(
+      color: Colors.white.withOpacity(0.98),
+      elevation: 16,
+      shadowColor: Colors.black.withOpacity(0.10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        width: isMobile ? screenWidth * 0.85 : 250,
+        constraints: BoxConstraints(maxHeight: isMobile ? 220 : 180),
+        padding: const EdgeInsets.only(top: 10, bottom: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Triangle
+            Container(
+              margin: const EdgeInsets.only(right: 16, bottom: 2),
+              child: ClipPath(
+                clipper: TriangleClipper(),
+                child: Container(color: Colors.white, height: 10, width: 18),
+              ),
             ),
-            child: Column(
-              children: [
-                // Logo dan Toggle Button
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: Row(
-                    mainAxisAlignment: _isSidebarExpanded
-                        ? MainAxisAlignment.spaceBetween
-                        : MainAxisAlignment.center,
-                    children: [
-                      if (_isSidebarExpanded)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 20),
-                          child: Image.asset(
-                            'assets/images/icons-haus.png',
-                            height: 40,
-                            width: 40,
-                          ),
-                        ),
-                      IconButton(
-                        icon: Icon(
-                          _isSidebarExpanded
-                              ? Icons.chevron_left
-                              : Icons.chevron_right,
-                          color: deepPink,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _isSidebarExpanded = !_isSidebarExpanded;
-                          });
-                        },
-                      ),
-                    ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
+              child: Text(
+                'Notifikasi',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
+            if (previewNotifs.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 16,
+                ),
+                child: Text(
+                  'Belum ada notifikasi.',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.grey[600],
                   ),
                 ),
-                const Divider(height: 1),
-                // Menu Items
-                Expanded(
-                  child: ListView(
-                    padding: EdgeInsets.zero,
-                    children: [
-                      _buildMenuItem(
-                        icon: Icons.home,
-                        title: 'Dashboard',
-                        isSelected: _selectedIndex == 0,
-                        onTap: () => setState(() => _selectedIndex = 0),
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.shopping_cart,
-                        title: 'Direct Purchase',
-                        isSelected: _selectedIndex == 1,
-                        onTap: () {
-                          setState(() => _selectedIndex = 1);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const DirectPurchasePage()),
-                          );
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.assignment_turned_in,
-                        title: 'GRPO',
-                        isSelected: _selectedIndex == 2,
-                        onTap: () {
-                          setState(() => _selectedIndex = 2);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const GRPO_Page()),
-                          );
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.request_page,
-                        title: 'Material Request',
-                        isSelected: _selectedIndex == 3,
-                        onTap: () {
-                          setState(() => _selectedIndex = 3);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const MaterialRequestPage()),
-                          );
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.inventory,
-                        title: 'Stock Opname',
-                        isSelected: _selectedIndex == 4,
-                        onTap: () {
-                          setState(() => _selectedIndex = 4);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const StockOpnamePage()),
-                          );
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.compare_arrows,
-                        title: 'Transfer Stock',
-                        isSelected: _selectedIndex == 5,
-                        onTap: () {
-                          setState(() => _selectedIndex = 5);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const TransferStockPage()),
-                          );
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.delete,
-                        title: 'Waste',
-                        isSelected: _selectedIndex == 6,
-                        onTap: () {
-                          setState(() => _selectedIndex = 6);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const WastePage()),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1),
-                      _buildMenuItem(
-                        icon: Icons.notifications,
-                        title: 'Notifications',
-                        isSelected: _selectedIndex == 7,
-                        onTap: () {
-                          setState(() => _selectedIndex = 7);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => NotificationPage()),
-                          );
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.mail_outline,
-                        title: 'Email',
-                        isSelected: _selectedIndex == 8,
-                        onTap: () {
-                          setState(() => _selectedIndex = 8);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => EmailPage()),
-                          );
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.help_outline,
-                        title: 'Help',
-                        isSelected: _selectedIndex == 9,
-                        onTap: () {
-                          setState(() => _selectedIndex = 9);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const HelpPage()),
-                          );
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.person,
-                        title: 'Profile',
-                        isSelected: _selectedIndex == 10,
-                        onTap: () {
-                          setState(() => _selectedIndex = 10);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const UserprofilePage()),
-                          );
-                        },
-                      ),
-                    ],
+              )
+            else
+              Flexible(
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  itemCount: previewNotifs.length,
+                  separatorBuilder: (_, __) =>
+                      Divider(height: 1, color: Colors.grey.shade100),
+                  itemBuilder: (context, i) =>
+                      _buildNotificationBubbleItem(previewNotifs[i]),
+                ),
+              ),
+            const SizedBox(height: 2),
+            InkWell(
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+              onTap: () {
+                _removeNotificationOverlay();
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => NotificationPage()),
+                  );
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                alignment: Alignment.center,
+                child: Text(
+                  'Lihat Semua Notifikasi',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold,
+                    color: deepPink,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationBubbleItem(Map<String, dynamic> notif) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            backgroundColor: (notif['color'] as Color).withOpacity(0.13),
+            child: Icon(notif['icon'], color: notif['color'], size: 16),
+            radius: 13,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  notif['title'],
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: notif['color'],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  notif['message'],
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.5,
+                    color: Colors.grey[800],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  notif['time'],
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    color: Colors.grey[400],
                   ),
                 ),
               ],
             ),
           ),
-          // Main Content
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnimatedSearchBar() {
+    return SizeTransition(
+      sizeFactor: CurvedAnimation(
+        parent: _searchAnimationController,
+        curve: Curves.easeInOutCubic,
+      ),
+      axisAlignment: -1.0,
+      child: Padding(
+        padding: const EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 12,
+          bottom: 12,
+        ),
+        child: _buildModernSearchBar(),
+      ),
+    );
+  }
+
+  Widget _buildModernSearchBar() {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(24.0),
+      elevation: 12.0,
+      shadowColor: deepPink.withOpacity(0.10),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 10 : 20,
+          vertical: isMobile ? 8 : 12,
+        ),
+        child: FadeTransition(
+          opacity: CurvedAnimation(
+            parent: _searchAnimationController,
+            curve: const Interval(0.4, 1.0, curve: Curves.easeOut),
+          ),
+          child: SlideTransition(
+            position:
+                Tween<Offset>(
+                  begin: const Offset(0.0, 0.5), // Slide from bottom
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: _searchAnimationController,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.search,
+                  color: Colors.white,
+                  size: isMobile ? 20 : 24,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: TextField(
+                    style: GoogleFonts.poppins(
+                      fontSize: isMobile ? 14 : 16,
+                      color: Colors.black87,
+                    ),
+                    decoration: InputDecoration.collapsed(
+                      hintText: 'Search anything...',
+                      hintStyle: GoogleFonts.poppins(
+                        color: Colors.grey.shade500,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  color: Colors.white,
+                  splashRadius: 20,
+                  onPressed: _toggleSearch,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _toggleMenu(int menuIndex) {
+    setState(() {
+      if (_expandedMenuIndex == menuIndex) {
+        // Jika menu yang sama diklik, tutup menu
+        _expandedMenuIndex = null;
+      } else {
+        // Buka menu yang baru diklik
+        _expandedMenuIndex = menuIndex;
+      }
+    });
+  }
+
+  Future<void> _handleLogout() async {
+    try {
+      // Tampilkan loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(child: CircularProgressIndicator());
+        },
+      );
+
+      // Panggil API logout
+      await _authService.logout();
+
+      // Tutup loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Tampilkan snackbar sukses
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Berhasil logout'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Navigate ke halaman login dan hapus semua route sebelumnya
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      // Handle error
+      if (mounted) {
+        // Tutup loading dialog jika masih terbuka
+        Navigator.of(context).pop();
+
+        // Tampilkan pesan error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal logout: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+
+        // Tetap arahkan ke halaman login meskipun terjadi error
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+          (route) => false,
+        );
+      }
+    }
+  }
+
+  //content season
+
+  @override
+  Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF3F4F6),
+      extendBodyBehindAppBar: false,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(isMobile ? 72 : 84),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(32),
+            bottomRight: Radius.circular(32),
+          ),
+          child: AppBar(
+            backgroundColor: const Color.fromARGB(255, 255, 30, 105),
+            elevation: 0,
+            automaticallyImplyLeading: false,
+            toolbarHeight: isMobile ? 72 : 84,
+            titleSpacing: 0,
+            title: Padding(
+              padding: EdgeInsets.only(
+                left: isMobile ? 12 : 24,
+                right: isMobile ? 10 : 24,
+                top: isMobile ? 8 : 12,
+                bottom: isMobile ? 12 : 16,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _buildHeader(screenWidth),
-                  const SizedBox(height: 130),
-                  _buildTaskSection(),
-                  const SizedBox(height: 60),
-                  _buildOutstandingCards(),
-                  const SizedBox(height: 40),
-                  _buildOpenItemList(),
-                  const SizedBox(height: 40),
+                  if (isMobile)
+                    Builder(
+                      builder: (context) => Container(
+                        margin: const EdgeInsets.only(left: 4),
+                        child: _modernHeaderIcon(
+                          icon: Icons.grid_view_rounded,
+                          onTap: () {
+                            Scaffold.of(context).openDrawer();
+                          },
+                          isMobile: isMobile,
+                          glass: true,
+                          iconSize: 24,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  if (isMobile) const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Dashboard',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: isMobile ? 20 : 24,
+                        color: Colors.white,
+                        letterSpacing: 0.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.left,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _modernHeaderIconBarNoSearch(isMobile),
                 ],
               ),
             ),
           ),
-        ],
+        ),
       ),
-    );
-  }
-
-  Widget _buildMenuItem({
-    required IconData icon,
-    required String title,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: isSelected ? deepPink : Colors.grey,
-      ),
-      title: _isSidebarExpanded
-          ? Text(
-              title,
-              style: GoogleFonts.poppins(
-                color: isSelected ? deepPink : Colors.grey,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      drawer: isMobile
+          ? Drawer(
+              child: _buildSidebarContent(
+                isMobile: true,
+                closeDrawer: () => Navigator.pop(context),
               ),
             )
           : null,
-      selected: isSelected,
-      onTap: onTap,
-      tileColor: isSelected ? lightPink.withOpacity(0.3) : null,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
-      contentPadding: EdgeInsets.symmetric(
-        horizontal: _isSidebarExpanded ? 20 : 0,
-        vertical: 8,
-      ),
-    );
-  }
-
-  Widget _buildHeader(double screenWidth) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          height: screenWidth * 0.6,
-          decoration: BoxDecoration(
-            color: deepPink,
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(40),
-              bottomRight: Radius.circular(40),
-            ),
-          ),
-          child: Column(
-            children: [
-              _buildHeaderRow(),
-              const SizedBox(height: 30),
-              _buildWelcomeText(),
-            ],
-          ),
-        ),
-        Positioned(
-          top: screenWidth * 0.45,
-          left: 16,
-          right: 16,
-          child: _buildSearchBar(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHeaderRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Image.asset('assets/images/icons-haus.png', height: 60, width: 60),
-        _buildProfileIcons(),
-      ],
-    );
-  }
-
-  Widget _buildProfileIcons() {
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => NotificationPage()),
-            );
-          },
-          child: const Icon(Icons.notifications, color: Colors.white),
-        ),
-        const SizedBox(width: 12),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => EmailPage()),
-            );
-          },
-          child: const Icon(Icons.mail_outline, color: Colors.white),
-        ),
-        const SizedBox(width: 12),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const UserprofilePage()),
-            );
-          },
-          child: const CircleAvatar(
-            backgroundImage: AssetImage('assets/images/avatar.jpg'),
-            radius: 15,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWelcomeText() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          'Welcome to the Dashboard',
-          style: GoogleFonts.poppins(fontSize: 14, color: Colors.white70),
-        ),
-        RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: 'Haus ',
-                style: GoogleFonts.cinzelDecorative(
-                  fontSize: 25,
-                  fontWeight: FontWeight.bold,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Sidebar (desktop/tablet)
+            if (!isMobile)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: _isSidebarExpanded ? 250 : 70,
+                decoration: BoxDecoration(
                   color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 0),
+                    ),
+                  ],
                 ),
+                child: _buildSidebarContent(isMobile: false),
               ),
-              TextSpan(
-                text: 'Inventory',
-                style: GoogleFonts.cinzelDecorative(
-                  fontSize: 25,
-                  fontWeight: FontWeight.bold,
-                  color: primaryColor,
-                ),
+            // Main Content Area
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: isMobile
+                  ? EdgeInsets.zero
+                  : EdgeInsets.only(left: _isSidebarExpanded ? 250 : 70),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Divider(
+                              color: Colors.grey.withOpacity(0.13),
+                              thickness: 1.2,
+                              height: 0,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildTaskSection(),
+                          const SizedBox(height: 16),
+                          _buildOutstandingCards(),
+                          const SizedBox(height: 16),
+                          _buildOpenItemList(),
+                          const SizedBox(height: 12),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _modernHeaderIconBarNoSearch(bool isMobile) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 16, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
-            spreadRadius: 1,
-            blurRadius: 8,
-          ),
-        ],
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.white.withOpacity(0.22), width: 1),
       ),
-      child: Column(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: TextField(
-              decoration: InputDecoration(
-                icon: Icon(Icons.search, color: deepPink),
-                hintText: 'Search...',
-                border: InputBorder.none,
-              ),
+          SizedBox(
+            key: _notificationIconKey,
+            child: _modernHeaderIcon(
+              icon: Icons.notifications_none_outlined,
+              onTap: _toggleNotificationOverlay,
+              badge: notifications.isNotEmpty,
+              isMobile: isMobile,
+              glass: true,
+              iconSize: isMobile ? 24 : 28,
+              color: Colors.white,
             ),
           ),
-          const SizedBox(height: 16),
-          _buildActionButtons(),
+          SizedBox(width: isMobile ? 10 : 18),
+          _modernHeaderIcon(
+            icon: Icons.mail_outline,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => EmailPage()),
+              );
+            },
+            isMobile: isMobile,
+            glass: true,
+            iconSize: isMobile ? 24 : 28,
+            color: Colors.white,
+          ),
+          SizedBox(width: isMobile ? 10 : 18),
+          _modernHeaderAvatar(isMobile: isMobile, glass: true),
         ],
       ),
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _actionButton(Icons.shopping_cart, 'Purchasing'),
-        _actionButton(Icons.assignment, 'Stock'),
-        _actionButton(Icons.report, 'Report'),
-      ],
-    );
-  }
-
-  Widget _actionButton(IconData icon, String label) {
-    return Column(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: primaryColor,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          padding: const EdgeInsets.all(12),
-          child: Icon(icon, color: deepPink, size: 28),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
-        ),
-      ],
     );
   }
 
   Widget _buildTaskSection() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -633,19 +853,21 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           _buildTaskCard(
             "Stock Opname has not been performed",
             "12/03/2025 09:42",
             "High Priority",
             "Needs Attention",
           ),
+          const SizedBox(height: 8),
           _buildTaskCard(
             "PO-2024-0125 awaiting acceptance from PTK",
             "12/03/2025 09:42",
             "Medium Priority",
             "Waiting for Action",
           ),
+          const SizedBox(height: 8),
           _buildTaskCard(
             "PO-2025-0222 awaiting acceptance from PTK",
             "12/03/2025 09:42",
@@ -691,9 +913,9 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 0),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -751,7 +973,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     IconButton(
                       icon: Icon(Icons.chevron_right, color: Colors.grey),
                       onPressed: () {
@@ -762,8 +984,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Divider(color: Colors.grey.withOpacity(0.3), thickness: 1),
+            const SizedBox(height: 6),
+            Divider(color: Colors.grey.withOpacity(0.18), thickness: 1),
           ],
         ),
       ),
@@ -771,149 +993,132 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildOutstandingCards() {
-    final List<Map<String, String>> items = [
-      {'title': 'Outstanding PO', 'count': '5', 'icon': 'shopping_cart'},
-      {'title': 'Outstanding Transfer Out', 'count': '3', 'icon': 'swap_horiz'},
-      {
-        'title': 'Outstanding Direct Purchase',
-        'count': '2',
-        'icon': 'local_mall',
-      },
+    final List<Map<String, dynamic>> items = [
+      {'title': 'Outstanding PO', 'count': '3'},
+      {'title': 'Outstanding Direct Purchase', 'count': '5'},
+      {'title': 'Outstanding Transfer Out', 'count': '8'},
     ];
 
-    final List<IconData> icons = [
-      Icons.shopping_cart,
-      Icons.swap_horiz,
-      Icons.local_mall,
-    ];
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
 
-    final List<Color> gradients = [
-      const Color(0xFFE91E63),
-      const Color(0xFF42A5F5),
-      const Color(0xFFFFB300),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(0),
-        ),
-        height: 200,
-        child: PageView.builder(
-          controller: PageController(viewportFraction: 0.7),
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            final item = items[index];
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      gradients[index].withOpacity(0.92),
-                      gradients[index].withOpacity(0.7),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+    if (isMobile) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Column(
+          children: items.map((item) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
                   ),
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: [
-                    BoxShadow(
-                      color: gradients[index].withOpacity(0.18),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 24,
+                  horizontal: 16,
                 ),
-                child: Stack(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Positioned(
-                      top: 18,
-                      right: 18,
-                      child: Icon(
-                        icons[index],
-                        color: Colors.white.withOpacity(0.18),
-                        size: 60,
+                    Text(
+                      item['count'],
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 32,
+                        color: deepPink,
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: Colors.white.withOpacity(0.18),
-                            radius: 22,
-                            child: Icon(
-                              icons[index],
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            item['title']!,
-                            style: GoogleFonts.poppins(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            item['count']!,
-                            style: GoogleFonts.poppins(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black.withOpacity(0.12),
-                                  blurRadius: 8,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 18,
-                      right: 18,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.18),
-                          shape: BoxShape.circle,
-                        ),
-                        padding: const EdgeInsets.all(8),
-                        child: const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
+                    const SizedBox(height: 8),
+                    Text(
+                      item['title'],
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        color: Colors.black87,
                       ),
                     ),
                   ],
                 ),
               ),
             );
-          },
+          }).toList(),
         ),
-      ),
-    );
+      );
+    } else {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: items.map((item) {
+            return Expanded(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 28,
+                  horizontal: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      item['count'],
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 32,
+                        color: deepPink,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      item['title'],
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        color: Colors.black87,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    }
   }
 
   Widget _buildOpenItemList() {
     double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
 
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-      padding: EdgeInsets.all(screenWidth * 0.05),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(
+        vertical: isMobile ? 14 : 24,
+        horizontal: 20,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -935,13 +1140,11 @@ class _DashboardPageState extends State<DashboardPage> {
                 "Open Item List",
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.bold,
-                  fontSize: screenWidth * 0.045,
+                  fontSize: isMobile ? 18 : screenWidth * 0.045,
                 ),
               ),
               GestureDetector(
-                onTap: () {
-                  // Handle Filter icon tap
-                },
+                onTap: () {},
                 child: Row(
                   children: [
                     Icon(Icons.filter_list, size: 16, color: Colors.black54),
@@ -958,16 +1161,18 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+            padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 2.0),
             child: _buildTaskBar(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: ConstrainedBox(
-              constraints: BoxConstraints(minWidth: screenWidth - 32),
+              constraints: BoxConstraints(
+                minWidth: screenWidth - (isMobile ? 24 : 64),
+              ),
               child: DataTable(
                 headingRowHeight: 50,
                 columns: [
@@ -1026,7 +1231,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1039,9 +1244,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   IconButton(
                     icon: const Icon(Icons.chevron_left),
                     splashRadius: 20,
-                    onPressed: () {
-                      // Handle previous page
-                    },
+                    onPressed: () {},
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -1092,9 +1295,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   IconButton(
                     icon: const Icon(Icons.chevron_right),
                     splashRadius: 20,
-                    onPressed: () {
-                      // Handle next page
-                    },
+                    onPressed: () {},
                   ),
                 ],
               ),
@@ -1152,8 +1353,960 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
-} 
 
+  Widget _buildStoreDropdown() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: lightPink,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: deepPink.withOpacity(0.1), width: 1),
+      ),
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isStoreMenuOpen = !_isStoreMenuOpen;
+                _isProfileMenuOpen = false;
+              });
+            },
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: deepPink.withOpacity(0.1),
+                  child: Icon(Icons.store, color: deepPink),
+                  radius: 18,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Toko',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      Text(
+                        'HAUS Jakarta',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  _isStoreMenuOpen ? Icons.expand_less : Icons.expand_more,
+                  color: Colors.white,
+                ),
+              ],
+            ),
+          ),
+          if (_isStoreMenuOpen)
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.withOpacity(0.2)),
+              ),
+              child: Column(
+                children: [
+                  _buildStoreMenuItem('HAUS Jakarta', true),
+                  _buildStoreMenuItem('HAUS Bandung', false),
+                  _buildStoreMenuItem('HAUS Surabaya', false),
+                  _buildStoreMenuItem('HAUS Medan', false),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStoreMenuItem(String storeName, bool isSelected) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isSelected ? lightPink.withOpacity(0.3) : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        dense: true,
+        title: Text(
+          storeName,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? deepPink : Colors.black87,
+          ),
+        ),
+        trailing: isSelected
+            ? Icon(Icons.check_circle, color: deepPink, size: 18)
+            : null,
+        onTap: () {
+          setState(() {
+            _isStoreMenuOpen = false;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildProfileDropdown() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: lightPink,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: deepPink.withOpacity(0.1), width: 1),
+      ),
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isProfileMenuOpen = !_isProfileMenuOpen;
+                _isStoreMenuOpen = false;
+              });
+            },
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: deepPink,
+                  child: Text('J', style: TextStyle(color: Colors.white)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'John Doe',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Text(
+                        'Admin',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  _isProfileMenuOpen ? Icons.expand_less : Icons.expand_more,
+                  color: Colors.white,
+                ),
+              ],
+            ),
+          ),
+          if (_isProfileMenuOpen)
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.withOpacity(0.2)),
+              ),
+              child: Column(
+                children: [
+                  _buildProfileMenuItem(
+                    Icons.person_outline,
+                    'Profile',
+                    onTap: () {
+                      setState(() => _isProfileMenuOpen = false);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const UserprofilePage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildProfileMenuItem(
+                    Icons.settings_outlined,
+                    'Settings',
+                    onTap: () {
+                      setState(() => _isProfileMenuOpen = false);
+                      // Handle settings
+                    },
+                  ),
+                  _buildProfileMenuItem(
+                    Icons.help_outline,
+                    'Help & Support',
+                    onTap: () {
+                      setState(() => _isProfileMenuOpen = false);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => HelpPage()),
+                      );
+                    },
+                  ),
+                  _buildProfileMenuItem(
+                    Icons.logout,
+                    'Logout',
+                    isLogout: true,
+                    onTap: () async {
+                      setState(() => _isProfileMenuOpen = false);
+                      await _handleLogout();
+                    },
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileMenuItem(
+    IconData icon,
+    String title, {
+    bool isLogout = false,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        dense: true,
+        leading: Icon(
+          icon,
+          size: 20,
+          color: isLogout ? Colors.red : Colors.black87,
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            color: isLogout ? Colors.red : Colors.black87,
+          ),
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  void _showProfileMenu(BuildContext context) {
+    final RenderBox button = context.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(Offset.zero, ancestor: overlay),
+        button.localToGlobal(
+          button.size.bottomRight(Offset.zero),
+          ancestor: overlay,
+        ),
+      ),
+      Offset.zero & overlay.size,
+    );
+
+    showMenu(
+      context: context,
+      position: position,
+      color: Colors.white,
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      items: [
+        PopupMenuItem(
+          height: 40,
+          child: _buildProfileMenuItem(
+            Icons.person_outline,
+            'Profile',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const UserprofilePage(),
+                ),
+              );
+            },
+          ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const UserprofilePage()),
+            );
+          },
+        ),
+        PopupMenuItem(
+          height: 40,
+          child: _buildProfileMenuItem(
+            Icons.settings_outlined,
+            'Settings',
+            onTap: () {
+              // Handle settings
+            },
+          ),
+          onTap: () {
+            // Handle settings
+          },
+        ),
+        PopupMenuItem(
+          height: 40,
+          child: _buildProfileMenuItem(
+            Icons.help_outline,
+            'Help & Support',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => HelpPage()),
+              );
+            },
+          ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => HelpPage()),
+            );
+          },
+        ),
+        PopupMenuItem(
+          height: 40,
+          child: _buildProfileMenuItem(
+            Icons.logout,
+            'Logout',
+            isLogout: true,
+            onTap: () async {
+              await _handleLogout();
+            },
+          ),
+          onTap: () async {
+            await _handleLogout();
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String title,
+    required int index,
+    required VoidCallback onTap,
+  }) {
+    final isActive = _isMenuActive(index);
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredIndex = index),
+      onExit: (_) => setState(() => _hoveredIndex = null),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: ListTile(
+          horizontalTitleGap: 12,
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isActive
+                  ? Colors.white.withOpacity(0.35)
+                  : Colors.white.withOpacity(0.13),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isActive
+                    ? Colors.white.withOpacity(0.32)
+                    : Colors.white.withOpacity(0.22),
+                width: 1.1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(
+              icon,
+              color: isActive ? deepPink : Colors.grey,
+              size: 20,
+            ),
+          ),
+          title: Text(
+            title,
+            style: GoogleFonts.poppins(
+              color: isActive ? deepPink : Colors.black87,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              fontSize: 14,
+            ),
+          ),
+          selected: isActive,
+          onTap: () {
+            if (_selectedIndex != index) {
+              setState(() => _selectedIndex = index);
+              _navigateToPage(index);
+            }
+          },
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
+          dense: true,
+        ),
+      ),
+    );
+  }
+
+  // Sidebar Content
+  Widget _buildSidebarContent({
+    bool isMobile = false,
+    VoidCallback? closeDrawer,
+  }) {
+    return Container(
+      color: Colors.white,
+      child: Column(
+        children: [
+          // Logo dan nama aplikasi
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 16 : 20,
+              vertical: 24,
+            ),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.grey.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Image.asset(
+                  'assets/images/icons-haus.png',
+                  height: 36,
+                  width: 36,
+                ),
+                if (_isSidebarExpanded || isMobile) const SizedBox(width: 12),
+                if (_isSidebarExpanded || isMobile)
+                  Text(
+                    'haus! Inventory',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: deepPink,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if (_isSidebarExpanded || isMobile) _buildStoreDropdown(),
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  // Section GENERAL
+                  if (_isSidebarExpanded || isMobile)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                      child: Row(
+                        children: [
+                          Text(
+                            'GENERAL',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              letterSpacing: 1,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            height: 1,
+                            width: 100,
+                            color: Colors.grey.withOpacity(0.2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  _buildMenuItem(
+                    icon: Icons.dashboard_customize_rounded,
+                    title: 'Dashboard',
+                    index: 0,
+                    onTap: () {
+                      if (_selectedIndex != 0) {
+                        setState(() => _selectedIndex = 0);
+                        _navigateToPage(0);
+                        if (isMobile && closeDrawer != null) closeDrawer();
+                      }
+                    },
+                  ),
+                  _buildExpandableMenu(
+                    icon: Icons.shopping_bag_rounded,
+                    title: 'Purchasing',
+                    isExpanded: _selectedIndex == PURCHASING_MENU,
+                    menuIndex: PURCHASING_MENU,
+                    children: [
+                      _buildSubMenuItem('Direct Purchase', 11),
+                      _buildSubMenuItem('GRPO', 12),
+                    ],
+                    onTap: () {
+                      setState(() => _selectedIndex = PURCHASING_MENU);
+                    },
+                    isMobile: isMobile,
+                  ),
+                  _buildExpandableMenu(
+                    icon: Icons.inventory_rounded,
+                    title: 'Stock Management',
+                    isExpanded: _selectedIndex == STOCK_MANAGEMENT_MENU,
+                    menuIndex: STOCK_MANAGEMENT_MENU,
+                    children: [
+                      _buildSubMenuItem('Material Request', 21),
+                      _buildSubMenuItem('Material Calculate', 25),
+                      _buildSubMenuItem('Stock Opname', 22),
+                      _buildSubMenuItem('Transfer Stock', 23),
+                      _buildSubMenuItem('Waste', 24),
+                    ],
+                    onTap: () {
+                      setState(() => _selectedIndex = STOCK_MANAGEMENT_MENU);
+                    },
+                    isMobile: isMobile,
+                  ),
+                  _buildMenuItem(
+                    icon: Icons.bar_chart_rounded,
+                    title: 'Inventory Report',
+                    index: 3,
+                    onTap: () {
+                      setState(() => _selectedIndex = 3);
+                      if (isMobile && closeDrawer != null) closeDrawer();
+                    },
+                  ),
+                  // Section TOOLS
+                  if (_isSidebarExpanded || isMobile)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                      child: Row(
+                        children: [
+                          Text(
+                            'TOOLS',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              letterSpacing: 1,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            height: 1,
+                            width: 100,
+                            color: Colors.grey.withOpacity(0.2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  _buildMenuItem(
+                    icon: Icons.settings_suggest_rounded,
+                    title: 'Account & Settings',
+                    index: 4,
+                    onTap: () {
+                      setState(() => _selectedIndex = 4);
+                      _navigateToPage(4);
+                      if (isMobile && closeDrawer != null) closeDrawer();
+                    },
+                  ),
+                  _buildMenuItem(
+                    icon: Icons.help_center_rounded,
+                    title: 'Help',
+                    index: 5,
+                    onTap: () {
+                      setState(() => _selectedIndex = 5);
+                      _navigateToPage(5);
+                      if (isMobile && closeDrawer != null) closeDrawer();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_isSidebarExpanded || isMobile) _buildProfileDropdown(),
+        ],
+      ),
+    );
+  }
+
+  // Modern Header Icon
+  Widget _modernHeaderIcon({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool badge = false,
+    bool isMobile = false,
+    Color? color,
+    bool glass = false,
+    double? iconSize,
+  }) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 180),
+          curve: Curves.easeInOut,
+          padding: EdgeInsets.all(isMobile ? 8 : 12),
+          decoration: BoxDecoration(
+            color: glass
+                ? Colors.white.withOpacity(0.35)
+                : (color?.withOpacity(0.13) ?? Colors.white.withOpacity(0.13)),
+            borderRadius: BorderRadius.circular(16),
+            border: glass
+                ? Border.all(color: Colors.white.withOpacity(0.32), width: 1.1)
+                : Border.all(color: (color ?? Colors.white).withOpacity(0.22)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(
+                icon,
+                color: Colors.white,
+                size: iconSize ?? (isMobile ? 24 : 28),
+              ),
+              if (badge)
+                Positioned(
+                  right: -2,
+                  top: -2,
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: color ?? Colors.pinkAccent,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Modern Header Avatar
+  Widget _modernHeaderAvatar({bool isMobile = false, bool glass = false}) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          _showProfileMenu(context);
+        },
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 180),
+          curve: Curves.easeInOut,
+          padding: EdgeInsets.all(isMobile ? 8 : 12),
+          decoration: BoxDecoration(
+            color: glass
+                ? Colors.white.withOpacity(0.35)
+                : Colors.white.withOpacity(0.13),
+            borderRadius: BorderRadius.circular(16),
+            border: glass
+                ? Border.all(color: Colors.white.withOpacity(0.32), width: 1.1)
+                : Border.all(color: Colors.white.withOpacity(0.22)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ClipOval(
+            child: Image.asset(
+              'assets/images/avatar.jpg',
+              fit: BoxFit.cover,
+              width: isMobile ? 24 : 28,
+              height: isMobile ? 24 : 28,
+              errorBuilder: (context, error, stackTrace) => Icon(
+                Icons.person,
+                color: Colors.grey[500],
+                size: isMobile ? 24 : 28,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Expandable Menu (Sidebar)
+  Widget _buildExpandableMenu({
+    required IconData icon,
+    required String title,
+    required bool isExpanded,
+    required List<Widget> children,
+    required VoidCallback onTap,
+    required int menuIndex,
+    bool isMobile = false,
+  }) {
+    final isMenuExpanded = _expandedMenuIndex == menuIndex;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: isExpanded ? lightPink.withOpacity(0.3) : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ListTile(
+            horizontalTitleGap: 12,
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isExpanded
+                    ? Colors.white.withOpacity(0.35)
+                    : Colors.white.withOpacity(0.13),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isExpanded
+                      ? Colors.white.withOpacity(0.32)
+                      : Colors.white.withOpacity(0.22),
+                  width: 1.1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                icon,
+                color: isExpanded ? deepPink : Colors.grey,
+                size: 20,
+              ),
+            ),
+            title: Text(
+              title,
+              style: GoogleFonts.poppins(
+                color: isExpanded ? deepPink : Colors.black87,
+                fontWeight: isExpanded ? FontWeight.bold : FontWeight.normal,
+                fontSize: 14,
+              ),
+            ),
+            trailing: AnimatedRotation(
+              turns: isMenuExpanded ? 0.5 : 0.0,
+              duration: Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+              child: Icon(
+                Icons.expand_more,
+                color: isExpanded ? deepPink : Colors.grey,
+              ),
+            ),
+            onTap: () {
+              _toggleMenu(menuIndex);
+              onTap();
+            },
+            dense: true,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+          ),
+        ),
+        if (isMenuExpanded && (_isSidebarExpanded || isMobile))
+          Container(
+            margin: const EdgeInsets.only(left: 16),
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: children,
+            ),
+          ),
+      ],
+    );
+  }
+
+  // Sub Menu Item (Sidebar)
+  Widget _buildSubMenuItem(String title, int index) {
+    return Container(
+      margin: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
+      decoration: BoxDecoration(
+        color: _selectedIndex == index
+            ? lightPink.withOpacity(0.3)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        horizontalTitleGap: 12,
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: _selectedIndex == index
+                ? Colors.white.withOpacity(0.35)
+                : Colors.white.withOpacity(0.13),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _selectedIndex == index
+                  ? Colors.white.withOpacity(0.32)
+                  : Colors.white.withOpacity(0.22),
+              width: 1.1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(
+            _getSubMenuIcon(index),
+            color: _selectedIndex == index ? deepPink : Colors.grey,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            color: _selectedIndex == index ? deepPink : Colors.black87,
+            fontWeight: _selectedIndex == index
+                ? FontWeight.bold
+                : FontWeight.normal,
+          ),
+        ),
+        selected: _selectedIndex == index,
+        onTap: () {
+          setState(() => _selectedIndex = index);
+          _navigateToPage(index);
+        },
+        dense: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      ),
+    );
+  }
+
+  // Icon untuk sub menu sidebar
+  IconData _getSubMenuIcon(int index) {
+    switch (index) {
+      case 11: // Direct Purchase
+        return Icons.shopping_bag_rounded;
+      case 12: // GRPO
+        return Icons.receipt_long_outlined;
+      case 21: // Material Request
+        return Icons.inventory_rounded;
+      case 22: // Stock Opname
+        return Icons.checklist_rtl_outlined;
+      case 23: // Transfer Stock
+        return Icons.swap_horiz_outlined;
+      case 24: // Waste
+        return Icons.delete_outline;
+      case 25: // Material Calculate
+        return Icons.inventory_rounded;
+      default:
+        return Icons.circle_outlined;
+    }
+  }
+
+  // Navigasi ke halaman lain
+  void _navigateToPage(int index) {
+    switch (index) {
+      case 11: // Direct Purchase
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => DirectPurchasePage()),
+        );
+        break;
+      case 12: // GRPO
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => GRPO_Page()),
+        );
+        break;
+      case 21: // Material Request
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => MaterialRequestPage()),
+        );
+        break;
+      case 22: // Stock Opname
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => StockOpnamePage()),
+        );
+        break;
+      case 23: // Transfer Stock
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => TransferStockPage()),
+        );
+        break;
+      case 24: // Waste
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => WastePage()),
+        );
+        break;
+      case 25: // Material Calculate
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => MaterialCalculatePage()),
+        );
+        break;
+      case 4: // Account & Settings
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const UserprofilePage()),
+        );
+        break;
+      case 5: // Help
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => HelpPage()),
+        );
+        break;
+    }
+  }
+}
+
+class TriangleClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.moveTo(0, size.height);
+    path.lineTo(size.width / 2, 0);
+    path.lineTo(size.width, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(TriangleClipper oldClipper) => false;
+}
 
 
 
