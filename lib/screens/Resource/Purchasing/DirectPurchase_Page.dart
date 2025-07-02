@@ -435,6 +435,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
 
   Widget _buildDirectPurchaseCardFromApi(dynamic item) {
     // Mapping status dan badge
+
     String status = item['status'] ?? 'Unknown';
     Color badgeColor, badgeTextColor;
     IconData badgeIcon;
@@ -459,6 +460,27 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
         badgeColor = Colors.grey.shade200;
         badgeTextColor = Colors.grey.shade800;
         badgeIcon = Icons.info_outline_rounded;
+=======
+    String status = item['status'] ?? '';
+    Color badgeColor = Colors.grey.shade200;
+    Color badgeTextColor = Colors.grey;
+    IconData badgeIcon = Icons.info_outline;
+    String badgeText = status;
+    if (status == 'Pending Area Manager') {
+      badgeColor = const Color(0xFFFFF9C4);
+      badgeTextColor = const Color(0xFFFBC02D);
+      badgeIcon = Icons.hourglass_empty_rounded;
+      badgeText = 'Pending Area Manager';
+    } else if (status == 'Approved Area Manager') {
+      badgeColor = const Color.fromARGB(255, 144, 202, 249);
+      badgeTextColor = const Color.fromARGB(255, 21, 101, 192);
+      badgeIcon = Icons.verified_user_rounded;
+      badgeText = 'Approved Area Manager';
+    } else if (status == 'Approved') {
+      badgeColor = const Color(0xFFC8E6C9);
+      badgeTextColor = const Color(0xFF388E3C);
+      badgeIcon = Icons.verified_rounded;
+      badgeText = status;
     }
 
     return Card(

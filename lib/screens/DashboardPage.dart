@@ -10,10 +10,13 @@ import 'Resource/Stock_Management/MaterialRequest_Page.dart';
 import 'Resource/Auth/UserProfile_Page.dart';
 import 'Resource/Auth/Help_Page.dart';
 import 'Resource/Auth/Notification_Page.dart';
-import 'Resource/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
 import 'dart:ui';
+import 'package:miniproject_flutter/widgets/Dashboard/TaskCard.dart';
+import 'package:miniproject_flutter/screens/TaskDetailPage.dart';
+import 'package:flutter/physics.dart';
+import 'package:miniproject_flutter/widgets/Dashboard/AnimatedSidebar.dart';
 
 class DashboardPage extends StatefulWidget {
   final int selectedIndex;
@@ -31,25 +34,38 @@ class _DashboardPageState extends State<DashboardPage>
   bool _isStoreMenuOpen = false;
   int? _expandedMenuIndex;
   bool _isSearchActive = false;
-
   int _selectedOpenItemTab = 0; // 0: PO, 1: Direct Purchase, 2: Transfer Out
 
   final Color primaryColor = const Color(0xFFF8BBD0);
   // final Color accentColor = const Color.fromARGB(255, 233, 30, 99);
   final Color deepPink = const Color.fromARGB(255, 233, 30, 99);
   final Color lightPink = const Color(0xFFFCE4EC);
+  final Color softPink = Color(0xFFF8BBD0).withOpacity(0.65);
 
   // Konstanta untuk menu index
   static const int PURCHASING_MENU = 1;
   static const int STOCK_MANAGEMENT_MENU = 2;
 
   final AuthService _authService = AuthService();
-
   late AnimationController _searchAnimationController;
   late AnimationController _notificationAnimationController;
+  late AnimationController _emailAnimationController;
 
   OverlayEntry? _notificationOverlayEntry;
   final GlobalKey _notificationIconKey = GlobalKey();
+  OverlayEntry? _emailOverlayEntry;
+  final GlobalKey _emailIconKey = GlobalKey();
+
+  final ScrollController _taskScrollController = ScrollController();
+
+  AnimationController? _sidebarController;
+  late Animation<double> _sidebarWidth;
+  late Animation<double> _sidebarOpacity;
+  late Animation<Offset> _sidebarOffset;
+  late Animation<double> _sidebarScale;
+  late Animation<double> _sidebarSpringAnim; // animasi manual spring
+
+  static const _macOSSmoothCurve = Cubic(0.77, 0, 0.175, 1);
 
   // Data notifikasi (diambil dari Notification_Page.dart)
   final List<Map<String, dynamic>> notifications = [
@@ -73,6 +89,28 @@ class _DashboardPageState extends State<DashboardPage>
       'message': 'Stock for Item ABC is below minimum level.',
       'time': '1 hour ago',
       'color': Color(0xFFE91E63),
+    },
+  ];
+
+  // Dummy data email
+  final List<Map<String, dynamic>> emails = [
+    {
+      'subject': 'Welcome to haus! Inventory',
+      'from': 'admin@haus.com',
+      'snippet': 'Thank you for registering your account.',
+      'time': '1 min ago',
+    },
+    {
+      'subject': 'PO-2024-0125 Approved',
+      'from': 'system@haus.com',
+      'snippet': 'Your PO-2024-0125 has been approved.',
+      'time': '10 min ago',
+    },
+    {
+      'subject': 'Monthly Report',
+      'from': 'report@haus.com',
+      'snippet': 'Your monthly inventory report is ready.',
+      'time': '1 hour ago',
     },
   ];
 
@@ -158,10 +196,10 @@ class _DashboardPageState extends State<DashboardPage>
     ],
   ];
 
-  // Tambahkan state untuk hover
+  // Todo : Tambahkan state untuk hover
   int? _hoveredIndex;
 
-  // Fungsi reusable untuk menentukan apakah menu sedang di-hover atau selected
+  //todo : Fungsi reusable untuk menentukan apakah menu sedang di-hover atau selected
   bool _isMenuActive(int index) {
     return _selectedIndex == index || _hoveredIndex == index;
   }
@@ -178,16 +216,62 @@ class _DashboardPageState extends State<DashboardPage>
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
+    _emailAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _taskScrollController.addListener(() {
+      AnimatedTooltipBadge.removeAllTooltips();
+      _removeTaskTooltip();
+    });
+    _sidebarController = AnimationController(
+      vsync: this,
+      lowerBound: 0.0,
+      upperBound: 1.0,
+      duration: const Duration(milliseconds: 800),
+    );
+    _sidebarSpringAnim = _sidebarController!;
+    if (_isSidebarExpanded) {
+      _sidebarController?.value = 1.0;
+    } else {
+      _sidebarController?.value = 0.0;
+    }
+  }
+
+  void _toggleSidebar() {
+    if (_sidebarController?.isAnimating ?? true) return;
+    setState(() {
+      _isSidebarExpanded = !_isSidebarExpanded;
+      final spring = SpringDescription(
+        mass: 1.0,
+        stiffness: 90.0,
+        damping: 12.0,
+      );
+      final sim = SpringSimulation(
+        spring,
+        _sidebarController!.value,
+        _isSidebarExpanded ? 1.0 : 0.0,
+        0.0,
+      );
+      _sidebarController!.animateWith(sim);
+    });
   }
 
   @override
   void dispose() {
     _searchAnimationController.dispose();
     _notificationAnimationController.dispose();
+    _emailAnimationController.dispose();
+    _taskScrollController.dispose();
+    _sidebarController?.dispose();
     // Pastikan overlay dihapus saat widget di-dispose
     if (_notificationOverlayEntry != null) {
       _notificationOverlayEntry!.remove();
       _notificationOverlayEntry = null;
+    }
+    if (_emailOverlayEntry != null) {
+      _emailOverlayEntry!.remove();
+      _emailOverlayEntry = null;
     }
     super.dispose();
   }
@@ -235,14 +319,26 @@ class _DashboardPageState extends State<DashboardPage>
     final position = renderBox.localToGlobal(Offset.zero);
 
     _notificationOverlayEntry = OverlayEntry(
-      builder: (context) => _buildNotificationBubbleAnimated(position, size),
+      builder: (context) => _buildNotificationTooltipAnimated(position, size),
     );
 
     Overlay.of(context).insert(_notificationOverlayEntry!);
     _notificationAnimationController.forward();
   }
 
-  Widget _buildNotificationBubbleAnimated(Offset position, Size size) {
+  Widget _buildNotificationTooltipAnimated(Offset position, Size size) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
+    final double popupWidth = isMobile ? screenWidth * 0.85 : 260;
+    // Posisi left agar arrow tepat di bawah icon notif dan popup tidak keluar layar
+    double left = position.dx + size.width / 2 - popupWidth / 2;
+    if (left < 8) left = 8;
+    if (left + popupWidth > screenWidth - 8)
+      left = screenWidth - popupWidth - 8;
+    // Arrow offset dari kiri popup
+    double arrowWidth = 22;
+    double arrowOffset =
+        (position.dx + size.width / 2) - left - (arrowWidth / 2) - 125;
     return Stack(
       children: [
         Positioned.fill(
@@ -254,7 +350,7 @@ class _DashboardPageState extends State<DashboardPage>
         ),
         Positioned(
           top: position.dy + size.height + 10,
-          right: 16,
+          left: left,
           child: AnimatedBuilder(
             animation: _notificationAnimationController,
             builder: (context, child) {
@@ -262,51 +358,66 @@ class _DashboardPageState extends State<DashboardPage>
               return FadeTransition(
                 opacity: _notificationAnimationController,
                 child: ScaleTransition(
-                  scale: Tween<double>(begin: 0.85, end: 1.0).animate(
+                  scale: Tween<double>(begin: 0.92, end: 1.0).animate(
                     CurvedAnimation(
                       parent: _notificationAnimationController,
                       curve: Curves.easeOutBack,
                     ),
                   ),
-                  alignment: Alignment.topRight,
+                  alignment: Alignment.topCenter,
                   child: child,
                 ),
               );
             },
-            child: _buildNotificationBubbleContent(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Arrow atas tepat di bawah icon notif
+                Row(
+                  children: [
+                    SizedBox(width: arrowOffset),
+                    CustomPaint(
+                      size: Size(arrowWidth, 10),
+                      painter: _NotifTooltipArrowPainter(
+                        color: Colors.white,
+                        borderColor: Colors.grey.withOpacity(0.13),
+                      ),
+                    ),
+                  ],
+                ),
+                _buildNotificationTooltipContent(),
+              ],
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildNotificationBubbleContent() {
+  Widget _buildNotificationTooltipContent() {
     final List<Map<String, dynamic>> previewNotifs = notifications
         .take(4)
         .toList();
     double screenWidth = MediaQuery.of(context).size.width;
     bool isMobile = screenWidth < 600;
     return Material(
-      color: Colors.white.withOpacity(0.98),
-      elevation: 16,
-      shadowColor: Colors.black.withOpacity(0.10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      type: MaterialType.transparency,
+      elevation: 0,
       child: Container(
-        width: isMobile ? screenWidth * 0.85 : 250,
+        width: isMobile ? screenWidth * 0.85 : 260,
         constraints: BoxConstraints(maxHeight: isMobile ? 220 : 180),
         padding: const EdgeInsets.only(top: 10, bottom: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color.fromARGB(255, 3, 1, 1).withOpacity(0.5),
+          ),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Triangle
-            Container(
-              margin: const EdgeInsets.only(right: 16, bottom: 2),
-              child: ClipPath(
-                clipper: TriangleClipper(),
-                child: Container(color: Colors.white, height: 10, width: 18),
-              ),
-            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
               child: Text(
@@ -336,6 +447,7 @@ class _DashboardPageState extends State<DashboardPage>
             else
               Flexible(
                 child: ListView.separated(
+                  shrinkWrap: true,
                   padding: const EdgeInsets.symmetric(vertical: 2),
                   itemCount: previewNotifs.length,
                   separatorBuilder: (_, __) =>
@@ -362,13 +474,25 @@ class _DashboardPageState extends State<DashboardPage>
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 alignment: Alignment.center,
-                child: Text(
-                  'Lihat Semua Notifikasi',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    color: deepPink,
-                    fontSize: 13,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.notifications_active_rounded,
+                      color: deepPink,
+                      size: 18,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Lihat Semua Notifikasi',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        color: deepPink,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -426,92 +550,6 @@ class _DashboardPageState extends State<DashboardPage>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildAnimatedSearchBar() {
-    return SizeTransition(
-      sizeFactor: CurvedAnimation(
-        parent: _searchAnimationController,
-        curve: Curves.easeInOutCubic,
-      ),
-      axisAlignment: -1.0,
-      child: Padding(
-        padding: const EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 12,
-          bottom: 12,
-        ),
-        child: _buildModernSearchBar(),
-      ),
-    );
-  }
-
-  Widget _buildModernSearchBar() {
-    double screenWidth = MediaQuery.of(context).size.width;
-    bool isMobile = screenWidth < 600;
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(24.0),
-      elevation: 12.0,
-      shadowColor: deepPink.withOpacity(0.10),
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: isMobile ? 10 : 20,
-          vertical: isMobile ? 8 : 12,
-        ),
-        child: FadeTransition(
-          opacity: CurvedAnimation(
-            parent: _searchAnimationController,
-            curve: const Interval(0.4, 1.0, curve: Curves.easeOut),
-          ),
-          child: SlideTransition(
-            position:
-                Tween<Offset>(
-                  begin: const Offset(0.0, 0.5), // Slide from bottom
-                  end: Offset.zero,
-                ).animate(
-                  CurvedAnimation(
-                    parent: _searchAnimationController,
-                    curve: Curves.easeOutCubic,
-                  ),
-                ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.search,
-                  color: Colors.white,
-                  size: isMobile ? 20 : 24,
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: TextField(
-                    style: GoogleFonts.poppins(
-                      fontSize: isMobile ? 14 : 16,
-                      color: Colors.black87,
-                    ),
-                    decoration: InputDecoration.collapsed(
-                      hintText: 'Search anything...',
-                      hintStyle: GoogleFonts.poppins(
-                        color: Colors.grey.shade500,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  color: Colors.white,
-                  splashRadius: 20,
-                  onPressed: _toggleSearch,
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -591,15 +629,14 @@ class _DashboardPageState extends State<DashboardPage>
     }
   }
 
-  //content season
-
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     bool isMobile = screenWidth < 600;
+    final double headerHeight = isMobile ? 68 : 80;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor: const Color.fromARGB(238, 255, 255, 255),
       extendBodyBehindAppBar: false,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(isMobile ? 72 : 84),
@@ -639,6 +676,18 @@ class _DashboardPageState extends State<DashboardPage>
                           color: Colors.white,
                         ),
                       ),
+                    )
+                  else
+                    Container(
+                      margin: const EdgeInsets.only(left: 4),
+                      child: _modernHeaderIcon(
+                        icon: Icons.grid_view_rounded,
+                        onTap: _toggleSidebar,
+                        isMobile: false,
+                        glass: true,
+                        iconSize: 24,
+                        color: Colors.white,
+                      ),
                     ),
                   if (isMobile) const SizedBox(width: 8),
                   Expanded(
@@ -671,61 +720,185 @@ class _DashboardPageState extends State<DashboardPage>
               ),
             )
           : null,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Sidebar (desktop/tablet)
-            if (!isMobile)
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          AnimatedTooltipBadge.removeAllTooltips();
+          _removeTaskTooltip();
+        },
+        child: SafeArea(
+          child: Stack(
+            children: [
+              // Sidebar (desktop/tablet)
+              if (!isMobile)
+                AnimatedSidebar(
+                  controller: _sidebarController!,
+                  isSidebarExpanded: _isSidebarExpanded,
+                  child: _buildSidebarContent(isMobile: false),
+                ),
+              // Main Content Area
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                width: _isSidebarExpanded ? 250 : 70,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 0),
-                    ),
-                  ],
-                ),
-                child: _buildSidebarContent(isMobile: false),
-              ),
-            // Main Content Area
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              margin: isMobile
-                  ? EdgeInsets.zero
-                  : EdgeInsets.only(left: _isSidebarExpanded ? 250 : 70),
-              child: Column(
-                children: [
-                  Expanded(
+                margin: isMobile
+                    ? EdgeInsets.zero
+                    : EdgeInsets.only(left: _isSidebarExpanded ? 250 : 70),
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    top: 8,
+                    left: isMobile ? 12 : 32,
+                    right: isMobile ? 12 : 32,
+                  ),
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (notification) {
+                      FocusScope.of(context).unfocus();
+                      return false;
+                    },
                     child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Divider(
-                              color: Colors.grey.withOpacity(0.13),
-                              thickness: 1.2,
-                              height: 0,
+                          SizedBox(
+                            height: 18,
+                          ), // Jarak rapi antara header dan search bar
+                          // Search bar modern lebih menarik
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 0,
+                              vertical: 0,
+                            ),
+                            child: StatefulBuilder(
+                              builder: (context, setState) {
+                                bool isFocused = false;
+                                return FocusScope(
+                                  child: Focus(
+                                    onFocusChange: (focus) =>
+                                        setState(() => isFocused = focus),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 220,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.82),
+                                        borderRadius: BorderRadius.circular(22),
+                                        border: Border.all(
+                                          width: 1.5,
+                                          color: isFocused
+                                              ? const Color(0xFFF48FB1)
+                                              : Colors.purple.withOpacity(0.10),
+                                        ),
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Colors.white.withOpacity(0.82),
+                                            Color(0xFFF8BBD0).withOpacity(0.13),
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.purple.withOpacity(
+                                              0.06,
+                                            ),
+                                            blurRadius: 16,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                            ),
+                                            child: Icon(
+                                              Icons.search,
+                                              color: const Color(
+                                                0xFFF06292,
+                                              ), // pink pastel
+                                              size: 26,
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: TextField(
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 15,
+                                                color: Colors.black87,
+                                              ),
+                                              decoration: InputDecoration(
+                                                hintText: 'seacrh... ',
+                                                hintStyle: GoogleFonts.poppins(
+                                                  color: Colors.grey,
+                                                  fontSize: 14,
+                                                ),
+                                                border: InputBorder.none,
+                                              ),
+                                              cursorColor: const Color(
+                                                0xFFF06292,
+                                              ),
+                                              onTap: () => setState(
+                                                () => isFocused = true,
+                                              ),
+                                              onEditingComplete: () => setState(
+                                                () => isFocused = false,
+                                              ),
+                                            ),
+                                          ),
+                                          MouseRegion(
+                                            cursor: SystemMouseCursors.click,
+                                            child: GestureDetector(
+                                              onTap: () {},
+                                              child: AnimatedContainer(
+                                                duration: const Duration(
+                                                  milliseconds: 180,
+                                                ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 8,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: isFocused
+                                                      ? Color(
+                                                          0xFFF8BBD0,
+                                                        ).withOpacity(0.18)
+                                                      : Colors.transparent,
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                ),
+                                                child: Icon(
+                                                  Icons.tune,
+                                                  color: isFocused
+                                                      ? const Color(0xFFF06292)
+                                                      : Colors.grey.shade400,
+                                                  size: 22,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 18),
                           _buildTaskSection(),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 22),
                           _buildOutstandingCards(),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 22),
                           _buildOpenItemList(),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 16),
                         ],
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -754,19 +927,19 @@ class _DashboardPageState extends State<DashboardPage>
               color: Colors.white,
             ),
           ),
-          SizedBox(width: isMobile ? 10 : 18),
-          _modernHeaderIcon(
-            icon: Icons.mail_outline,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => EmailPage()),
-              );
-            },
-            isMobile: isMobile,
-            glass: true,
-            iconSize: isMobile ? 24 : 28,
-            color: Colors.white,
+          SizedBox(width: isMobile ? 8 : 14),
+          // Pastikan icon email selalu muncul
+          SizedBox(
+            key: _emailIconKey,
+            child: _modernHeaderIcon(
+              icon: Icons.mail_outline_rounded,
+              onTap: _toggleEmailOverlay,
+              badge: emails.isNotEmpty,
+              isMobile: isMobile,
+              glass: true,
+              iconSize: isMobile ? 24 : 28,
+              color: Colors.white,
+            ),
           ),
           SizedBox(width: isMobile ? 10 : 18),
           _modernHeaderAvatar(isMobile: isMobile, glass: true),
@@ -776,511 +949,824 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   Widget _buildTaskSection() {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
+        gradient: LinearGradient(
+          colors: [
+            const Color.fromARGB(
+              255,
+              255,
+              213,
+              244,
+            ).withOpacity(0.96), // abu-abu sangat muda
+            const Color.fromARGB(
+              255,
+              255,
+              241,
+              247,
+            ).withOpacity(0.92), // abu-abu kebiruan
+            Colors.white.withOpacity(0.90),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
           BoxShadow(
-            color: Colors.black12,
-            blurRadius: 12,
-            offset: Offset(0, 8),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
+        border: Border.all(
+          color: const Color(0xFFF8BBD0), // pink pastel
+          width: 1.3,
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Tasks",
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.black87,
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  // Handle "Show All" press
-                },
-                child: Row(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
                   children: [
-                    Text(
-                      "Show All",
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
                     Icon(
-                      Icons.arrow_outward_rounded,
-                      size: 14,
-                      color: const Color.fromARGB(246, 0, 0, 0),
+                      Icons.task_alt_rounded,
+                      color: Color(0xFFE91E63),
+                      size: 26,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Tasks",
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: isMobile ? 16 : 20,
+                        color: Colors.black87,
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _buildTaskCard(
-            "Stock Opname has not been performed",
-            "12/03/2025 09:42",
-            "High Priority",
-            "Needs Attention",
-          ),
-          const SizedBox(height: 8),
-          _buildTaskCard(
-            "PO-2024-0125 awaiting acceptance from PTK",
-            "12/03/2025 09:42",
-            "Medium Priority",
-            "Waiting for Action",
-          ),
-          const SizedBox(height: 8),
-          _buildTaskCard(
-            "PO-2025-0222 awaiting acceptance from PTK",
-            "12/03/2025 09:42",
-            "High Priority",
-            "Needs Attention",
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTaskCard(
-    String taskTitle,
-    String date,
-    String priority,
-    String status,
-  ) {
-    Color priorityColor;
-    IconData priorityIcon;
-    Color statusColor;
-    String statusText;
-
-    if (priority == "High Priority") {
-      priorityColor = Colors.red;
-      priorityIcon = Icons.error;
-    } else if (priority == "Medium Priority") {
-      priorityColor = Colors.orange;
-      priorityIcon = Icons.warning;
-    } else {
-      priorityColor = Colors.green;
-      priorityIcon = Icons.check_circle;
-    }
-
-    if (status == "Needs Attention") {
-      statusColor = Colors.red;
-      statusText = "Needs Attention";
-    } else if (status == "Waiting for Action") {
-      statusColor = Colors.orange;
-      statusText = "Waiting for Action";
-    } else {
-      statusColor = Colors.green;
-      statusText = "Resolved";
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 0),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Icon(priorityIcon, color: priorityColor, size: 30),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        taskTitle,
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        date,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
+                TextButton.icon(
+                  onPressed: () {},
+                  icon: Icon(
+                    Icons.arrow_outward_rounded,
+                    size: 18,
+                    color: Color(0xFFE91E63),
+                  ),
+                  label: Text(
+                    "Lihat Semua",
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: Color(0xFFE91E63),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Color(0xFFE91E63),
+                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+              ],
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              height: isMobile ? 210 : 200,
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  _removeTaskTooltip();
+                  AnimatedTooltipBadge.removeAllTooltips();
+                  return false;
+                },
+                child: ListView(
+                  controller: _taskScrollController,
+                  scrollDirection: Axis.horizontal,
+                  physics: BouncingScrollPhysics(),
+                  padding: EdgeInsets.only(left: 4),
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        statusText,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: statusColor,
-                        ),
-                      ),
+                    TaskCard(
+                      taskTitle: "Stock Opname belum dilakukan",
+                      date: "12/03/2025 09:42",
+                      priority: "High Priority",
+                      status: "Needs Attention",
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TaskDetailPage(),
+                          ),
+                        );
+                      },
+                      onStatusTap: (tapContext, tapPosition) {
+                        _showTaskTooltip(
+                          tapContext,
+                          "Status: Needs Attention",
+                          tapPosition,
+                        );
+                      },
+                      onPriorityTap: (tapContext, tapPosition) {
+                        _showTaskTooltip(
+                          tapContext,
+                          "Priority: High Priority",
+                          tapPosition,
+                        );
+                      },
                     ),
-                    const SizedBox(height: 4),
-                    IconButton(
-                      icon: Icon(Icons.chevron_right, color: Colors.grey),
-                      onPressed: () {
-                        // Handle task click (navigate or show details)
+                    TaskCard(
+                      taskTitle: "PO-2024-0125 menunggu acceptance dari PTK",
+                      date: "12/03/2025 09:42",
+                      priority: "Medium Priority",
+                      status: "Waiting for Action",
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TaskDetailPage(),
+                          ),
+                        );
+                      },
+                      onStatusTap: (tapContext, tapPosition) {
+                        _showTaskTooltip(
+                          tapContext,
+                          "Status: Waiting for Action",
+                          tapPosition,
+                        );
+                      },
+                      onPriorityTap: (tapContext, tapPosition) {
+                        _showTaskTooltip(
+                          tapContext,
+                          "Priority: Medium Priority",
+                          tapPosition,
+                        );
+                      },
+                    ),
+                    TaskCard(
+                      taskTitle: "PO-2025-0222 menunggu acceptance dari PTK",
+                      date: "12/03/2025 09:42",
+                      priority: "High Priority",
+                      status: "Needs Attention",
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TaskDetailPage(),
+                          ),
+                        );
+                      },
+                      onStatusTap: (tapContext, tapPosition) {
+                        _showTaskTooltip(
+                          tapContext,
+                          "Status: Needs Attention",
+                          tapPosition,
+                        );
+                      },
+                      onPriorityTap: (tapContext, tapPosition) {
+                        _showTaskTooltip(
+                          tapContext,
+                          "Priority: High Priority",
+                          tapPosition,
+                        );
                       },
                     ),
                   ],
                 ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.swipe, size: 18, color: Colors.grey),
+                SizedBox(width: 6),
+                Text(
+                  'Geser untuk melihat lebih banyak',
+                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+                ),
               ],
             ),
-            const SizedBox(height: 6),
-            Divider(color: Colors.grey.withOpacity(0.18), thickness: 1),
           ],
         ),
       ),
     );
   }
 
+  //todo : styling taks jika di perlukan
+  // Widget _build3DTaskCard(Widget child, bool isMobile) {
+  //   return Padding(
+  //     padding: const EdgeInsets.only(right: 24),
+  //     child: Card(
+  //       elevation: 28,
+  //       shadowColor: Colors.black.withOpacity(0.22),
+  //       shape: RoundedRectangleBorder(
+  //         borderRadius: BorderRadius.circular(36),
+  //         side: BorderSide(color: Colors.grey.withOpacity(0.07), width: 1.2),
+  //       ),
+  //       color: Colors.white,
+  //       child: Container(
+  //         width: isMobile ? 320 : 400,
+  //         padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 22),
+  //         child: child,
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _buildOutstandingCards() {
     final List<Map<String, dynamic>> items = [
-      {'title': 'Outstanding PO', 'count': '3'},
-      {'title': 'Outstanding Direct Purchase', 'count': '5'},
-      {'title': 'Outstanding Transfer Out', 'count': '8'},
+      {
+        'title': 'Outstanding PO',
+        'count': '3',
+        'icon': Icons.assignment_turned_in,
+        'color': Color(0xFF42A5F5), // vivid blue
+        'gradient': [Color(0xFF90CAF9), Color(0xFF42A5F5)],
+      },
+      {
+        'title': 'Outstanding Direct Purchase',
+        'count': '5',
+        'icon': Icons.shopping_bag_rounded,
+        'color': Color(0xFFF06292), // vivid pink
+        'gradient': [Color(0xFFF8BBD0), Color(0xFFF06292)],
+      },
+      {
+        'title': 'Outstanding Transfer Out',
+        'count': '8',
+        'icon': Icons.swap_horiz_rounded,
+        'color': Color(0xFFFFD600), // vivid yellow
+        'gradient': [Color(0xFFFFF59D), Color(0xFFFFD600)],
+      },
     ];
 
-    double screenWidth = MediaQuery.of(context).size.width;
-    bool isMobile = screenWidth < 600;
-
-    if (isMobile) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        child: Column(
-          children: items.map((item) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Padding(
+    return Column(
+      children: items.map((item) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            bool isPressed = false;
+            return GestureDetector(
+              onTapDown: (_) => setState(() => isPressed = true),
+              onTapUp: (_) => setState(() => isPressed = false),
+              onTapCancel: () => setState(() => isPressed = false),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                margin: const EdgeInsets.symmetric(vertical: 10),
                 padding: const EdgeInsets.symmetric(
-                  vertical: 24,
-                  horizontal: 16,
+                  vertical: 20,
+                  horizontal: 18,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item['count'],
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 32,
-                        color: deepPink,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      item['title'],
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      );
-    } else {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: items.map((item) {
-            return Expanded(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 10),
-                padding: const EdgeInsets.symmetric(
-                  vertical: 28,
-                  horizontal: 16,
-                ),
+                transform: isPressed
+                    ? (Matrix4.identity()..scale(0.97))
+                    : Matrix4.identity(),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border(
+                    left: BorderSide(color: (item['color'] as Color), width: 5),
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                      item['count'],
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 32,
-                        color: deepPink,
+                    // Icon dengan background soft
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: (item['color'] as Color).withOpacity(0.13),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        item['icon'] as IconData,
+                        color: (item['color'] as Color),
+                        size: 30,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      item['title'],
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                        color: Colors.black87,
+                    const SizedBox(width: 18),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item['count'],
+                            style: GoogleFonts.robotoMono(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 26,
+                              color: (item['color'] as Color),
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            item['title'],
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              color: Colors.black87,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
               ),
             );
-          }).toList(),
-        ),
-      );
-    }
+          },
+        );
+      }).toList(),
+    );
   }
 
   Widget _buildOpenItemList() {
     double screenWidth = MediaQuery.of(context).size.width;
     bool isMobile = screenWidth < 600;
 
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: EdgeInsets.symmetric(
-        vertical: isMobile ? 14 : 24,
-        horizontal: 20,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 12,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    // Soft pastel gradient
+    final List<Color> softGradient = [
+      Color(0xFFF8BBD0).withOpacity(0.65), // pink pastel
+      Color(0xFFCE93D8).withOpacity(0.55), // ungu pastel
+    ];
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.92, end: 1),
+      duration: const Duration(milliseconds: 650),
+      curve: Curves.easeOutBack,
+      builder: (context, value, child) {
+        final safeValue = value.clamp(0.0, 1.0);
+        return Opacity(
+          opacity: safeValue,
+          child: Transform.scale(scale: safeValue, child: child),
+        );
+      },
+      child: Stack(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Open Item List",
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: isMobile ? 18 : screenWidth * 0.045,
-                ),
-              ),
-              GestureDetector(
-                onTap: () {},
-                child: Row(
-                  children: [
-                    Icon(Icons.filter_list, size: 16, color: Colors.black54),
-                    const SizedBox(width: 4),
-                    Text(
-                      "Filter",
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
+          // Card utama
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 2.0),
-            child: _buildTaskBar(),
-          ),
-          const SizedBox(height: 10),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minWidth: screenWidth - (isMobile ? 24 : 64),
-              ),
-              child: DataTable(
-                headingRowHeight: 50,
-                columns: [
-                  DataColumn(
-                    label: SizedBox(
-                      width: 100,
-                      child: Text(
-                        'PO Number',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(22),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 0,
+                    vertical: 0,
                   ),
-                  DataColumn(
-                    label: SizedBox(
-                      width: 80,
-                      child: Text(
-                        'Date',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+                  padding: EdgeInsets.symmetric(
+                    vertical: isMobile ? 14 : 24,
+                    horizontal: isMobile ? 12 : 18,
                   ),
-                  DataColumn(
-                    label: SizedBox(
-                      width: 120,
-                      child: Text(
-                        'Supplier',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withOpacity(0.90),
+                        Color(0xFFF8BBD0).withOpacity(0.10),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                  ),
-                  DataColumn(
-                    label: SizedBox(
-                      width: 70,
-                      child: Text(
-                        'Status',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: softPink, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.pink.withOpacity(0.06),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
                       ),
-                    ),
-                  ),
-                  DataColumn(
-                    label: SizedBox(
-                      width: 70,
-                      child: Text(
-                        'Action',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-                rows: _openItemRows[_selectedOpenItemTab],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.list_alt_rounded,
+                                color: deepPink,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                "Open Item List",
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: isMobile ? 18 : screenWidth * 0.045,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                          GestureDetector(
+                            onTap: () {},
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.filter_list,
+                                  size: 16,
+                                  color: Colors.black54,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  "Filter",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Divider(
+                        color: softGradient[0].withOpacity(0.18),
+                        thickness: 1.1,
+                        height: 1,
+                      ),
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 6.0,
+                          horizontal: 2.0,
+                        ),
+                        child: _buildTaskBar(),
+                      ),
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: NotificationListener<ScrollNotification>(
+                            onNotification: (notification) {
+                              AnimatedTooltipBadge.removeAllTooltips();
+                              _removeTaskTooltip();
+                              return false;
+                            },
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minWidth: screenWidth - (isMobile ? 8 : 32),
+                                ),
+                                child: _buildModernDataTable(),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.swipe_left_rounded,
+                              size: 18,
+                              color: Colors.grey[500],
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Geser untuk melihat data lain',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Page on',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.chevron_left),
+                                splashRadius: 20,
+                                onPressed: () {},
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(color: Colors.black12),
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.06),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      '1',
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.bold,
+                                        color: softGradient[0],
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '2',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.black54,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '3',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.black54,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.chevron_right),
+                                splashRadius: 20,
+                                onPressed: () {},
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Page on',
-                style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
-              ),
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left),
-                    splashRadius: 20,
-                    onPressed: () {},
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: Colors.black12),
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          '1',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
-                            color: deepPink,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '2',
-                          style: GoogleFonts.poppins(
-                            color: Colors.black54,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '3',
-                          style: GoogleFonts.poppins(
-                            color: Colors.black54,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right),
-                    splashRadius: 20,
-                    onPressed: () {},
-                  ),
-                ],
-              ),
-            ],
           ),
         ],
       ),
     );
   }
 
+  // DataTable dengan efek hover pada baris (khusus desktop)
+  Widget _buildModernDataTable() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isMobile = constraints.maxWidth < 600;
+        // Header style
+        final headerBg = Color(0xFFFDE4EC).withOpacity(0.85); // soft pink
+        final headerTextStyle = GoogleFonts.poppins(
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+          fontSize: isMobile ? 13.5 : 15,
+          letterSpacing: 1.1,
+        );
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.pink.withOpacity(0.06),
+                blurRadius: 10,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: DataTable(
+            headingRowHeight: isMobile ? 54 : 60,
+            dataRowMinHeight: isMobile ? 44 : 54,
+            dataRowMaxHeight: isMobile ? 60 : 72,
+            columnSpacing: isMobile ? 10 : 22,
+            horizontalMargin: isMobile ? 8 : 16,
+            headingRowColor: MaterialStateProperty.all(headerBg),
+            columns: [
+              DataColumn(
+                label: Container(
+                  alignment: Alignment.centerLeft,
+                  padding: EdgeInsets.only(left: 12),
+                  child: Text(
+                    'PO NUMBER',
+                    style: headerTextStyle,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+              DataColumn(
+                label: Center(
+                  child: Text(
+                    'DATE',
+                    style: headerTextStyle,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+              DataColumn(
+                label: Container(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'SUPPLIER',
+                    style: headerTextStyle,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+              DataColumn(
+                label: Container(
+                  alignment: Alignment.center,
+                  padding: EdgeInsets.symmetric(horizontal: isMobile ? 2 : 3),
+                  child: Text(
+                    'STATUS',
+                    style: headerTextStyle.copyWith(
+                      fontSize: isMobile ? 12.5 : 13.5,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              DataColumn(
+                label: Center(
+                  child: Text(
+                    'ACTION',
+                    style: headerTextStyle,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ],
+            rows: List.generate(_openItemRows[_selectedOpenItemTab].length, (
+              i,
+            ) {
+              final row = _openItemRows[_selectedOpenItemTab][i];
+              return DataRow(
+                color: MaterialStateProperty.resolveWith<Color?>((states) {
+                  if (states.contains(MaterialState.hovered)) {
+                    return deepPink.withOpacity(0.07);
+                  }
+                  return i % 2 == 0
+                      ? Colors.white
+                      : Color(0xFFFCE4EC).withOpacity(0.5);
+                }),
+                cells: List.generate(row.cells.length, (j) {
+                  final cell = row.cells[j];
+                  // PO Number
+                  if (j == 0) {
+                    return DataCell(
+                      Container(
+                        alignment: Alignment.centerLeft,
+                        padding: EdgeInsets.symmetric(
+                          vertical: isMobile ? 8 : 12,
+                          horizontal: isMobile ? 8 : 14,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.grey.withOpacity(0.13),
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        child: DefaultTextStyle(
+                          style: GoogleFonts.poppins(
+                            fontSize: isMobile ? 13 : 14,
+                            color: Colors.black87,
+                          ),
+                          child: cell.child,
+                        ),
+                      ),
+                    );
+                  }
+                  // Status badge
+                  if (j == 3) {
+                    return DataCell(
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          vertical: isMobile ? 4 : 6,
+                          horizontal: isMobile ? 4 : 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              cell.child is Text &&
+                                  (cell.child as Text).data!
+                                      .toLowerCase()
+                                      .contains('open')
+                              ? Color(0xFFB2FFB2).withOpacity(0.7)
+                              : Color(0xFFFFF9C4).withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.grey.withOpacity(0.13),
+                          ),
+                        ),
+                        child: DefaultTextStyle(
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            color:
+                                cell.child is Text &&
+                                    (cell.child as Text).data!
+                                        .toLowerCase()
+                                        .contains('open')
+                                ? Colors.green[700]
+                                : Colors.orange[800],
+                            fontSize: isMobile ? 12 : 13.5,
+                          ),
+                          child: cell.child is Text
+                              ? Text(
+                                  (cell.child as Text).data ?? '',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w600,
+                                    color:
+                                        cell.child is Text &&
+                                            (cell.child as Text).data!
+                                                .toLowerCase()
+                                                .contains('open')
+                                        ? Colors.green[700]
+                                        : Colors.orange[800],
+                                    fontSize: isMobile ? 12 : 13.5,
+                                  ),
+                                )
+                              : cell.child,
+                        ),
+                      ),
+                    );
+                  }
+                  // Default cell
+                  return DataCell(
+                    Container(
+                      alignment: j == 1
+                          ? Alignment.center
+                          : Alignment.centerLeft,
+                      padding: EdgeInsets.symmetric(
+                        vertical: isMobile ? 8 : 12,
+                        horizontal: isMobile ? 6 : 10,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.grey.withOpacity(0.13),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: DefaultTextStyle(
+                        style: GoogleFonts.poppins(
+                          fontSize: isMobile ? 13 : 14,
+                          color: Colors.black87,
+                        ),
+                        child: cell.child,
+                      ),
+                    ),
+                  );
+                }),
+              );
+            }),
+          ),
+        );
+      },
+    );
+  }
+
+  // Todo : build taksbar menu di open item list
   Widget _buildTaskBar() {
     final tabLabels = ['PO', 'Direct Purchase', 'Transfer Out'];
     return SingleChildScrollView(
@@ -1987,7 +2473,10 @@ class _DashboardPageState extends State<DashboardPage>
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () {
-          _showProfileMenu(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const UserprofilePage()),
+          );
         },
         child: AnimatedContainer(
           duration: Duration(milliseconds: 180),
@@ -2266,6 +2755,303 @@ class _DashboardPageState extends State<DashboardPage>
         break;
     }
   }
+
+  // --- Email Overlay Logic ---
+  void _toggleEmailOverlay() {
+    if (!mounted) return;
+    if (_emailAnimationController.isAnimating) return;
+    if (_emailOverlayEntry == null) {
+      _showEmailBubble();
+    } else {
+      _removeEmailOverlay();
+    }
+  }
+
+  void _removeEmailOverlay() {
+    if (!mounted) return;
+    if (_emailOverlayEntry != null) {
+      _emailAnimationController.reverse().then((_) {
+        if (_emailOverlayEntry != null && _emailOverlayEntry!.mounted) {
+          _emailOverlayEntry!.remove();
+          _emailOverlayEntry = null;
+        }
+        _emailAnimationController.reset(); // reset controller setelah reverse
+      });
+    }
+  }
+
+  void _showEmailBubble() {
+    if (!mounted) return;
+    if (_emailOverlayEntry != null) return; // cegah overlay ganda
+    final RenderBox renderBox =
+        _emailIconKey.currentContext!.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final position = renderBox.localToGlobal(Offset.zero);
+
+    _emailOverlayEntry = OverlayEntry(
+      builder: (context) => _buildEmailTooltipAnimated(position, size),
+    );
+
+    Overlay.of(context).insert(_emailOverlayEntry!);
+    _emailAnimationController.forward();
+  }
+
+  Widget _buildEmailTooltipAnimated(Offset position, Size size) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
+    final double popupWidth = isMobile ? screenWidth * 0.85 : 260;
+    double left = position.dx + size.width / 2 - popupWidth / 2;
+    if (left < 8) left = 8;
+    if (left + popupWidth > screenWidth - 8)
+      left = screenWidth - popupWidth - 8;
+    double arrowWidth = 22;
+    double arrowOffset =
+        (position.dx + size.width / 2) - left - (arrowWidth / 2) - 75;
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: _removeEmailOverlay,
+            behavior: HitTestBehavior.opaque,
+            child: Container(color: Colors.transparent),
+          ),
+        ),
+        Positioned(
+          top: position.dy + size.height + 10,
+          left: left,
+          child: AnimatedBuilder(
+            animation: _emailAnimationController,
+            builder: (context, child) {
+              return FadeTransition(
+                opacity: _emailAnimationController,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.92, end: 1.0).animate(
+                    CurvedAnimation(
+                      parent: _emailAnimationController,
+                      curve: Curves.easeOutBack,
+                    ),
+                  ),
+                  alignment: Alignment.topCenter,
+                  child: child,
+                ),
+              );
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    SizedBox(width: arrowOffset),
+                    CustomPaint(
+                      size: Size(arrowWidth, 10),
+                      painter: _NotifTooltipArrowPainter(
+                        color: Colors.white,
+                        borderColor: Colors.grey.withOpacity(0.13),
+                      ),
+                    ),
+                  ],
+                ),
+                _buildEmailTooltipContent(),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmailTooltipContent() {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
+    final List<Map<String, dynamic>> previewEmails = emails.take(3).toList();
+    return Material(
+      type: MaterialType.transparency,
+      elevation: 0,
+      child: Container(
+        width: isMobile ? screenWidth * 0.85 : 260,
+        constraints: BoxConstraints(maxHeight: isMobile ? 220 : 180),
+        padding: const EdgeInsets.only(top: 10, bottom: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.5),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
+              child: Text(
+                'Email',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
+            if (previewEmails.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 16,
+                ),
+                child: Text(
+                  'Tidak ada email baru.',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              )
+            else
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  itemCount: previewEmails.length,
+                  separatorBuilder: (_, __) =>
+                      Divider(height: 1, color: Colors.grey.shade100),
+                  itemBuilder: (context, i) =>
+                      _buildEmailBubbleItem(previewEmails[i]),
+                ),
+              ),
+            const SizedBox(height: 2),
+            InkWell(
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+              onTap: () {
+                _removeEmailOverlay();
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  // Navigasi ke halaman email jika ada
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.mail_outline_rounded, color: deepPink, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'Lihat Semua Email',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        color: deepPink,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmailBubbleItem(Map<String, dynamic> email) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            backgroundColor: deepPink.withOpacity(0.13),
+            child: Icon(Icons.mail_outline_rounded, color: deepPink, size: 16),
+            radius: 13,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  email['subject'],
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: deepPink,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  email['snippet'],
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.5,
+                    color: Colors.grey[800],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  email['time'],
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    color: Colors.grey[400],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Tambahkan state untuk overlay tooltip task
+  OverlayEntry? _taskTooltipOverlayEntry;
+
+  void _showTaskTooltip(BuildContext context, String text, Offset position) {
+    _removeTaskTooltip();
+    _taskTooltipOverlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        left: position.dx,
+        top: position.dy,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.black87,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(
+              text,
+              style: TextStyle(color: Colors.white, fontSize: 13),
+            ),
+          ),
+        ),
+      ),
+    );
+    Overlay.of(context).insert(_taskTooltipOverlayEntry!);
+  }
+
+  void _removeTaskTooltip() {
+    if (_taskTooltipOverlayEntry != null) {
+      _taskTooltipOverlayEntry!.remove();
+      _taskTooltipOverlayEntry = null;
+    }
+  }
 }
 
 class TriangleClipper extends CustomClipper<Path> {
@@ -2281,4 +3067,28 @@ class TriangleClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(TriangleClipper oldClipper) => false;
+}
+
+class _NotifTooltipArrowPainter extends CustomPainter {
+  final Color color;
+  final Color borderColor;
+  _NotifTooltipArrowPainter({required this.color, required this.borderColor});
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()..color = color;
+    final Paint borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final Path path = Path();
+    path.moveTo(0, size.height);
+    path.lineTo(size.width / 2, 0);
+    path.lineTo(size.width, size.height);
+    path.close();
+    canvas.drawPath(path, paint);
+    canvas.drawPath(path, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(_NotifTooltipArrowPainter oldDelegate) => false;
 }
