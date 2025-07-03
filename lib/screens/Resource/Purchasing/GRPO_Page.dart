@@ -51,6 +51,9 @@ class GrpoPageState extends State<GRPO_Page> {
 
   final AuthService _authService = AuthService();
 
+  String? _selectedPONumber;
+  dynamic _selectedPO;
+
   @override
   void initState() {
     super.initState();
@@ -1986,14 +1989,50 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
   final List<Map<String, dynamic>> _items = [];
   List<File> _files = [];
   bool _isSubmitting = false;
+  List<dynamic> _availablePOs = [];
+  String? _selectedPONumber; // <-- Add this line
 
   final GrpoService _grpoService = GrpoService();
 
   @override
   void initState() {
     super.initState();
+    _fetchAvailablePOs();
     _addItem();
     _supplierController.text = 'MTP';
+  }
+
+  Future<void> _fetchAvailablePOs() async {
+    final pos = await _grpoService.fetchShippingPOs();
+    setState(() {
+      _availablePOs = pos;
+      // Reset _selectedPONumber jika tidak ada di list
+      if (_selectedPONumber == null ||
+          !_availablePOs.any(
+            (po) => po['purchaseOrderNumber'] == _selectedPONumber,
+          )) {
+        _selectedPONumber = null;
+      }
+    });
+  }
+
+  Future<void> _fillFormFromPO(dynamic po) async {
+    setState(() {
+      _poController.text = po['purchaseOrderNumber'] ?? '';
+      _supplierController.text = po['supplier'] ?? '';
+      // Kosongkan dan isi ulang _items
+      _items.clear();
+      for (var item in po['items'] ?? []) {
+        _items.add({
+          'code': TextEditingController(text: item['item_code'] ?? ''),
+          'name': TextEditingController(text: item['item_name'] ?? ''),
+          'qty': TextEditingController(
+            text: item['quantity']?.toString() ?? '1',
+          ),
+          'unit': item['unit'] ?? 'PCS',
+        });
+      }
+    });
   }
 
   void _addItem() {
@@ -2200,6 +2239,34 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    DropdownButtonFormField<String>(
+                      value: _selectedPONumber,
+                      items: _availablePOs.map<DropdownMenuItem<String>>((po) {
+                        return DropdownMenuItem<String>(
+                          value: po['purchaseOrderNumber'],
+                          child: Text(po['purchaseOrderNumber'] ?? ''),
+                        );
+                      }).toList(),
+                      onChanged: (poNumber) async {
+                        setState(() {
+                          _selectedPONumber = poNumber;
+                          _poController.text = poNumber ?? '';
+                        });
+                        final selectedPO = _availablePOs.firstWhere(
+                          (po) => po['purchaseOrderNumber'] == poNumber,
+                          orElse: () => null,
+                        );
+                        if (selectedPO != null) {
+                          await _fillFormFromPO(selectedPO);
+                        }
+                      },
+                      decoration: InputDecoration(
+                        labelText: 'Pilih Purchase Order',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
                     _buildSection(
                       title: "Basic Information",
                       icon: Icons.info_outline,
