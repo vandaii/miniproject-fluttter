@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Purchasing/DirectPurchase_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialCalculate_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/StockOpname_Page.dart';
@@ -12,7 +15,12 @@ import 'package:miniproject_flutter/screens/Resource/Auth/Help_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/Waste_Page.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/services/GrpoService.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/screens/DashboardPage.dart';
+<<<<<<< HEAD
+=======
+import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
+>>>>>>> 15df221166c603545acd598fe6df3734adfcf758
 import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';

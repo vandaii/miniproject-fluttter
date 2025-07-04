@@ -34,7 +34,7 @@ class AuthService {
         ..fields['phone'] = phone;
 
       if (storeLocation != null) {
-        request.fields['store_location'] = storeLocation;
+        request.fields['store_location_id'] = storeLocation;
       }
 
       if (photoProfile != null) {

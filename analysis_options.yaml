@@ -11,6 +11,8 @@ analyzer:
   errors:
     file_names: ignore
     deprecated_member_use: ignore
+    unused_element: ignore
+    dead_code: ignore
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

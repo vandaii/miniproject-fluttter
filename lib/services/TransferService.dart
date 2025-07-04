@@ -5,28 +5,25 @@ import 'package:miniproject_flutter/config/APi.dart';
 import 'package:dio/dio.dart';
 
 class TransferService {
-
   final storage = FlutterSecureStorage();
 
   final http.Client client = ApiConfig.client;
   final String baseUrl = ApiConfig.baseUrl;
-    final Dio dio = Dio();
-
+  final Dio dio = Dio();
 
   Future<List<dynamic>> getTransferOutlist(String token) async {
-    final  response = await http.get(
+    final response = await http.get(
       Uri.parse('$baseUrl/transfer-out'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
       return jsonDecode(response.body)['data'];
-    }else {
+    } else {
       throw Exception('Failed to load Transfer Out');
     }
   }
-    Future<Map<String, dynamic>> createTransferOut({
+
+  Future<Map<String, dynamic>> createTransferOut({
     required String token,
     required String transferOutDate,
     required int destinationLocationId,
@@ -41,7 +38,10 @@ class TransferService {
       'items': items,
       if (deliveryNotesPath != null)
         'delivery_note': deliveryNotesPath.map((filePath) {
-          return MultipartFile.fromFileSync(filePath, filename: filePath.split('/').last);
+          return MultipartFile.fromFileSync(
+            filePath,
+            filename: filePath.split('/').last,
+          );
         }).toList(),
     });
 
@@ -54,7 +54,10 @@ class TransferService {
     return response.data;
   }
 
-  Future<Map<String, dynamic>> getTransferOutDetail(int id, String token) async {
+  Future<Map<String, dynamic>> getTransferOutDetail(
+    int id,
+    String token,
+  ) async {
     final response = await http.get(
       Uri.parse('$baseUrl/transfer-out/$id'),
       headers: {'Authorization': 'Bearer $token'},
@@ -65,9 +68,7 @@ class TransferService {
   Future<List<dynamic>> getTransferInList(String token) async {
     final response = await http.get(
       Uri.parse('$baseUrl/transfer-in'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
       return jsonDecode(response.body)['data'];
@@ -95,7 +96,10 @@ class TransferService {
       'items': items,
       if (deliveryNotesPath != null)
         'delivery_note': deliveryNotesPath.map((filePath) {
-          return MultipartFile.fromFileSync(filePath, filename: filePath.split('/').last);
+          return MultipartFile.fromFileSync(
+            filePath,
+            filename: filePath.split('/').last,
+          );
         }).toList(),
     });
 
