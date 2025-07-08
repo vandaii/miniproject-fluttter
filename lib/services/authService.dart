@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:miniproject_flutter/config/APi.dart';
@@ -86,6 +87,69 @@ class AuthService {
     }
   }
 
+  /// FORGOT PASSWORD
+  Future<Map<String, dynamic>> forgotPassword(String email) async {
+    final url = Uri.parse('$baseUrl/forgot-password');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {'status': true, 'message': data['message']};
+      } else {
+        return {
+          'status': false,
+          'message': data['message'] ?? 'Terjadi kesalahan',
+        };
+      }
+    } catch (e) {
+      return {'status': false, 'message': 'Gagal menghubungi server: $e'};
+    }
+  }
+
+  /// RESET PASSWORD
+  Future<Map<String, dynamic>> resetPassword({
+    required String email,
+    required String token,
+    required String password,
+    required String confirmPassword,
+  }) async {
+    final url = Uri.parse('$baseUrl/reset-password');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'token': token,
+          'password': password,
+          'password_confirmation': confirmPassword,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {'status': true, 'message': data['message']};
+      } else {
+        return {
+          'status': false,
+          'message': data['message'] ?? 'Reset password gagal',
+        };
+      }
+    } catch (e) {
+      return {'status': false, 'message': 'Gagal menghubungi server: $e'};
+    }
+  }
+
+  /// Update user profile with optional parameters
   Future<bool> updateProfile({
     String? name,
     String? email,

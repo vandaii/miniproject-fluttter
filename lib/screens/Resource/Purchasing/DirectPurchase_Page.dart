@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
@@ -17,9 +18,10 @@ import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:intl/intl.dart';
-// import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
+import 'package:miniproject_flutter/widgets/Dashboard/AnimatedSidebar.dart';
 
 class DirectPurchasePage extends StatefulWidget {
   final int selectedIndex;
@@ -30,7 +32,8 @@ class DirectPurchasePage extends StatefulWidget {
   _DirectPurchasePageState createState() => _DirectPurchasePageState();
 }
 
-class _DirectPurchasePageState extends State<DirectPurchasePage> {
+class _DirectPurchasePageState extends State<DirectPurchasePage>
+    with TickerProviderStateMixin {
   bool isOutstandingSelected =
       true; // Track selected tab (Outstanding or Approved)
   bool _isSidebarExpanded = true;
@@ -48,6 +51,70 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   String _searchQuery = '';
   final AuthService _authService = AuthService();
 
+  late AnimationController _sidebarController;
+  late Animation<double> _sidebarWidth;
+  late Animation<double> _sidebarOpacity;
+  late Animation<Offset> _sidebarOffset;
+  late Animation<double> _sidebarScale;
+  late Animation<double> _sidebarSpringAnim;
+
+  // Tambahkan variabel dan fungsi yang diperlukan untuk header AppBar modern
+  late AnimationController _headerAnimationController;
+
+  // Dummy data notifikasi dan email
+  final List<Map<String, dynamic>> notifications = [
+    {
+      'icon': Icons.shopping_cart,
+      'title': 'Purchase Approved',
+      'message': 'Your direct purchase request has been approved.',
+      'time': '2 min ago',
+      'color': Color(0xFFE91E63),
+    },
+    {
+      'icon': Icons.assignment_turned_in,
+      'title': 'GRPO Received',
+      'message': 'Goods receipt has been completed for PO-2023-12.',
+      'time': '10 min ago',
+      'color': Color(0xFFE91E63),
+    },
+    {
+      'icon': Icons.warning_amber_rounded,
+      'title': 'Stock Low',
+      'message': 'Stock for Item ABC is below minimum level.',
+      'time': '1 hour ago',
+      'color': Color(0xFFE91E63),
+    },
+  ];
+  final List<Map<String, dynamic>> emails = [
+    {
+      'subject': 'Welcome to haus! Inventory',
+      'from': 'admin@haus.com',
+      'snippet': 'Thank you for registering your account.',
+      'time': '1 min ago',
+    },
+    {
+      'subject': 'PO-2024-0125 Approved',
+      'from': 'system@haus.com',
+      'snippet': 'Your PO-2024-0125 has been approved.',
+      'time': '10 min ago',
+    },
+    {
+      'subject': 'Monthly Report',
+      'from': 'report@haus.com',
+      'snippet': 'Your monthly inventory report is ready.',
+      'time': '1 hour ago',
+    },
+  ];
+  late AnimationController _notificationAnimationController;
+  late AnimationController _emailAnimationController;
+  OverlayEntry? _notificationOverlayEntry;
+  final GlobalKey _notificationIconKey = GlobalKey();
+  OverlayEntry? _emailOverlayEntry;
+  final GlobalKey _emailIconKey = GlobalKey();
+
+  // Tambahkan variabel state untuk tab Rejected
+  int _tabIndex = 0; // 0: Outstanding, 1: Approved, 2: Rejected
+
   @override
   void initState() {
     super.initState();
@@ -59,10 +126,92 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       _expandedMenuIndex = STOCK_MANAGEMENT_MENU;
     }
     _fetchDirectPurchases();
+    // Tambahkan dummy data jika kosong (untuk testing UI)
+    Future.delayed(Duration(milliseconds: 500), () {
+      if (mounted && _directPurchases.isEmpty) {
+        setState(() {
+          _directPurchases = [
+            {
+              'no_direct': 'DP-2024-0001',
+              'supplier': 'PT. Sumber Makmur',
+              'directPurchaseDate': DateTime.now().toIso8601String(),
+              'status': 'Pending Area Manager',
+              'items': [
+                {
+                  'itemName': 'Gula',
+                  'quantity': 10,
+                  'price': 15000,
+                  'totalPrice': 150000,
+                },
+                {
+                  'itemName': 'Kopi',
+                  'quantity': 5,
+                  'price': 30000,
+                  'totalPrice': 150000,
+                },
+              ],
+              'totalAmount': 300000,
+              'expenseType': 'Inventory',
+              'note': 'Pembelian bahan baku',
+              'purchase_proof': '-',
+            },
+            {
+              'no_direct': 'DP-2024-0002',
+              'supplier': 'CV. Aneka Jaya',
+              'directPurchaseDate': DateTime.now()
+                  .subtract(Duration(days: 2))
+                  .toIso8601String(),
+              'status': 'Approved',
+              'items': [
+                {
+                  'itemName': 'Susu',
+                  'quantity': 20,
+                  'price': 12000,
+                  'totalPrice': 240000,
+                },
+              ],
+              'totalAmount': 240000,
+              'expenseType': 'Non Inventory',
+              'note': 'Pembelian susu',
+              'purchase_proof': '-',
+            },
+          ];
+        });
+      }
+    });
+    _headerAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _notificationAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _emailAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+  }
+
+  @override
+  void dispose() {
+    // Hapus overlay SEBELUM dispose controller
+    if (_notificationOverlayEntry != null) {
+      _notificationOverlayEntry!.remove();
+      _notificationOverlayEntry = null;
+    }
+    if (_emailOverlayEntry != null) {
+      _emailOverlayEntry!.remove();
+      _emailOverlayEntry = null;
+    }
+    _headerAnimationController.dispose();
+    _notificationAnimationController.dispose();
+    _emailAnimationController.dispose();
+    super.dispose();
   }
 
   final Color pastelPink = const Color(0xFFF8BBD0);
-  final Color deepPink = const Color(0xFFE91E63);
+  final Color deepPink = const Color.fromARGB(255, 233, 30, 99);
   final Color lightPink = const Color(0xFFFCE4EC);
   final Color accentPurple = const Color(0xFF7B1FA2);
 
@@ -96,22 +245,24 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       _errorMessage = null;
     });
     try {
-      final status = isOutstandingSelected ? null : 'Approved';
-
+      String? status;
+      if (_tabIndex == 1) {
+        status = 'Approved';
+      } else if (_tabIndex == 2) {
+        status = 'Rejected';
+      }
       final data = await _directService.getDirectPurchases(
         search: _searchQuery.isNotEmpty ? _searchQuery : null,
         status: status, // Akan mengirim null untuk tab outstanding
       );
-
       List<dynamic> allPurchases = data['data'] ?? [];
-
       setState(() {
-        // Jika di tab Outstanding, kita filter secara manual di sini
-        if (isOutstandingSelected) {
+        if (_tabIndex == 0) {
           _directPurchases = allPurchases.where((item) {
             final itemStatus = item['status'] as String?;
-            // Item dianggap outstanding jika statusnya BUKAN 'Approved'.
-            return itemStatus != null && itemStatus != 'Approved';
+            return itemStatus != null &&
+                itemStatus != 'Approved' &&
+                itemStatus != 'Rejected';
           }).toList();
         } else {
           _directPurchases = allPurchases;
@@ -133,9 +284,10 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     _fetchDirectPurchases();
   }
 
-  void _onTabChanged(bool outstanding) {
+  void _onTabChanged(int index) {
     setState(() {
-      isOutstandingSelected = outstanding;
+      _tabIndex = index;
+      isOutstandingSelected = (index == 0);
     });
     _fetchDirectPurchases();
   }
@@ -177,707 +329,1139 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
   //===================================================================================================================== //
   //Todo:Rangkaian fungsi dan styling untuk header dan item lain
   Widget build(BuildContext context) {
+    final double width = MediaQuery.of(context).size.width;
+    final bool isMobile = width < 700;
     return Scaffold(
+      backgroundColor: const Color.fromARGB(238, 255, 255, 255),
+      extendBody: true, // penting agar Stack bisa sampai ke bawah
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(70),
-        child: AppBar(
-          backgroundColor: deepPink,
-          elevation: 6,
-          centerTitle: false,
-          titleSpacing: 32,
-          title: Padding(
-            padding: const EdgeInsets.only(left: 8.0),
-            child: Text(
-              'Direct Purchase',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w800,
-                fontSize: 28,
-                color: Colors.white,
-                letterSpacing: 0.5,
+        preferredSize: Size.fromHeight(isMobile ? 72 : 84),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(32),
+            bottomRight: Radius.circular(32),
+          ),
+          child: AppBar(
+            backgroundColor: const Color.fromARGB(255, 255, 30, 105),
+            elevation: 0,
+            automaticallyImplyLeading: false,
+            toolbarHeight: isMobile ? 72 : 84,
+            titleSpacing: 0,
+            title: Padding(
+              padding: EdgeInsets.only(
+                left: isMobile ? 12 : 24,
+                right: isMobile ? 10 : 24,
+                top: isMobile ? 8 : 12,
+                bottom: isMobile ? 12 : 16,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (isMobile)
+                    Builder(
+                      builder: (context) => Container(
+                        margin: const EdgeInsets.only(left: 4),
+                        child: _modernHeaderIcon(
+                          icon: Icons.grid_view_rounded,
+                          onTap: () {
+                            Scaffold.of(context).openDrawer();
+                          },
+                          isMobile: isMobile,
+                          glass: true,
+                          iconSize: 24,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      margin: const EdgeInsets.only(left: 4),
+                      child: _modernHeaderIcon(
+                        icon: Icons.grid_view_rounded,
+                        onTap: () {
+                          setState(() {
+                            _isSidebarExpanded = !_isSidebarExpanded;
+                          });
+                        },
+                        isMobile: false,
+                        glass: true,
+                        iconSize: 24,
+                        color: Colors.white,
+                      ),
+                    ),
+                  if (isMobile) const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Haus Inventory',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: isMobile ? 20 : 24,
+                        color: Colors.white,
+                        letterSpacing: 0.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.left,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _modernHeaderIconBarNoSearch(isMobile),
+                ],
               ),
             ),
           ),
-          actions: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => NotificationPage(),
-                        ),
-                      );
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Icon(
-                        Icons.notifications_none,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => EmailPage()),
-                      );
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Icon(
-                        Icons.mail_outline,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    onTap: () {
-                      setState(() {
-                        _isProfileMenuOpen = !_isProfileMenuOpen;
-                        _isStoreMenuOpen = false;
-                      });
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: CircleAvatar(
-                        backgroundColor: Colors.white,
-                        radius: 20,
-                        child: Text(
-                          'J',
-                          style: GoogleFonts.poppins(
-                            color: deepPink,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 24),
-              ],
-            ),
-          ],
         ),
       ),
       drawer: Drawer(
         child: Container(
-          color: Colors.white,
-          child: Column(
-            children: [
-              // Logo dan nama aplikasi
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Colors.grey.withOpacity(0.1),
-                      width: 1,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.75),
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(32),
+              bottomRight: Radius.circular(32),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.07),
+                blurRadius: 24,
+                offset: Offset(4, 0),
+              ),
+            ],
+            border: Border.all(color: Color(0xFFE0E0E0), width: 1),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(32),
+              bottomRight: Radius.circular(32),
+            ),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Column(
+                children: [
+                  // Logo dan nama aplikasi
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.7),
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(32),
+                        bottomLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(20),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Color(0xFFF8BBD0),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: EdgeInsets.all(6),
+                          child: Image.asset(
+                            'assets/images/icons-haus.png',
+                            height: 32,
+                            width: 32,
+                          ),
+                        ),
+                        if (_isSidebarExpanded) const SizedBox(width: 14),
+                        if (_isSidebarExpanded)
+                          Text(
+                            'haus! Inventory',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 19,
+                              color: Color(0xFFE91E63),
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                ),
-                child: Row(
-                  children: [
-                    Image.asset(
-                      'assets/images/icons-haus.png',
-                      height: 36,
-                      width: 36,
-                    ),
-                    if (_isSidebarExpanded) const SizedBox(width: 12),
-                    if (_isSidebarExpanded)
-                      Text(
-                        'haus! Inventory',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: deepPink,
-                        ),
+                  if (_isSidebarExpanded) _buildStoreDropdown(),
+                  // Menu Items dengan Expanded
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        children: [
+                          if (_isSidebarExpanded)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'GENERAL',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: Colors.black54,
+                                      letterSpacing: 1,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Container(
+                                    height: 1,
+                                    width: 80,
+                                    color: Colors.grey.withOpacity(0.13),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          _buildMenuItem(
+                            icon: Icons.dashboard_outlined,
+                            title: 'Dashboard',
+                            index: 0,
+                            onTap: () {
+                              if (_selectedIndex != 0) {
+                                _navigateToPage(0);
+                              }
+                            },
+                          ),
+                          _buildExpandableMenu(
+                            icon: Icons.shopping_cart_outlined,
+                            title: 'Purchasing',
+                            isExpanded: _isMenuExpanded(PURCHASING_MENU, [
+                              11,
+                              12,
+                            ]),
+                            menuIndex: PURCHASING_MENU,
+                            children: [
+                              _buildSubMenuItem('Direct Purchase', 11),
+                              _buildSubMenuItem('GRPO', 12),
+                            ],
+                            onTap: () {
+                              if (_selectedIndex != PURCHASING_MENU) {
+                                _navigateToPage(PURCHASING_MENU);
+                              }
+                            },
+                          ),
+                          _buildExpandableMenu(
+                            icon: Icons.inventory_2_outlined,
+                            title: 'Stock Management',
+                            isExpanded: _isMenuExpanded(STOCK_MANAGEMENT_MENU, [
+                              21,
+                              22,
+                              23,
+                              24,
+                              25,
+                            ]),
+                            menuIndex: STOCK_MANAGEMENT_MENU,
+                            children: [
+                              _buildSubMenuItem('Material Request', 21),
+                              _buildSubMenuItem('Material Calculate', 25),
+                              _buildSubMenuItem('Stock Opname', 22),
+                              _buildSubMenuItem('Transfer Stock', 23),
+                              _buildSubMenuItem('Waste', 24),
+                            ],
+                            onTap: () {
+                              if (_selectedIndex != STOCK_MANAGEMENT_MENU) {
+                                _navigateToPage(STOCK_MANAGEMENT_MENU);
+                              }
+                            },
+                          ),
+                          _buildMenuItem(
+                            icon: Icons.assessment_outlined,
+                            title: 'Inventory Report',
+                            index: 3,
+                            onTap: () {
+                              if (_selectedIndex != 3) {
+                                _navigateToPage(3);
+                              }
+                            },
+                          ),
+                          if (_isSidebarExpanded)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'TOOLS',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: Colors.black54,
+                                      letterSpacing: 1,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Container(
+                                    height: 1,
+                                    width: 80,
+                                    color: Colors.grey.withOpacity(0.13),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          _buildMenuItem(
+                            icon: Icons.settings_outlined,
+                            title: 'Account & Settings',
+                            index: 4,
+                            onTap: () {
+                              if (_selectedIndex != 4) {
+                                _navigateToPage(4);
+                              }
+                            },
+                          ),
+                          _buildMenuItem(
+                            icon: Icons.help_outline,
+                            title: 'Help',
+                            index: 5,
+                            onTap: () {
+                              if (_selectedIndex != 5) {
+                                _navigateToPage(5);
+                              }
+                            },
+                          ),
+                        ],
                       ),
+                    ),
+                  ),
+                  if (_isSidebarExpanded)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 18,
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: _buildProfileDropdown(),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: SingleChildScrollView(
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 16 : 32,
+                  vertical: isMobile ? 16 : 24,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header Section
+                    _buildAIHeaderSection(),
+                    SizedBox(height: 24),
+                    SizedBox(height: 16),
+                    // Card besar pembungkus tab dan data
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(32),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 12,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      padding: EdgeInsets.fromLTRB(16, 16, 16, 24),
+                      margin: EdgeInsets.only(bottom: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildQuantumTabNavigation(),
+                          SizedBox(height: 16),
+                          _isLoading
+                              ? _buildHolographicLoading()
+                              : _errorMessage != null
+                              ? _buildErrorDisplay()
+                              : _directPurchases.isEmpty
+                              ? _buildHolographicEmptyState()
+                              : _buildHolographicDataGrid(),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
+            ),
+          ),
+          if (isMobile)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 24,
+              child: Center(child: _MobileFloatingNavBarGlass()),
+            ),
+        ],
+      ),
+    );
+  }
 
-              //todo: Info toko dengan dropdown
-              if (_isSidebarExpanded) _buildStoreDropdown(),
-
-              //todo: Menu Items dengan Expanded
+  // AI-Powered Header Section
+  Widget _buildAIHeaderSection() {
+    return Container(
+      padding: EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Color(0xFFE91E63), // solid merah muda mencolok
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          // Header Row
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  Icons.shopping_cart_checkout_rounded,
+                  color: Color(0xFFE91E63),
+                  size: 32,
+                ),
+              ),
+              SizedBox(width: 20),
               Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    children: [
-                      // Section GENERAL
-                      if (_isSidebarExpanded)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                          child: Row(
-                            children: [
-                              Text(
-                                'GENERAL',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: Colors.black54,
-                                  letterSpacing: 1,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const Spacer(),
-                              Container(
-                                height: 1,
-                                width: 100,
-                                color: Colors.grey.withOpacity(0.2),
-                              ),
-                            ],
-                          ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'Haus Inventory',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.roboto(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
                         ),
-                      _buildMenuItem(
-                        icon: Icons.dashboard_outlined,
-                        title: 'Dashboard',
-                        index: 0,
-                        onTap: () {
-                          if (_selectedIndex != 0) {
-                            _navigateToPage(0);
-                          }
-                        },
                       ),
-                      _buildExpandableMenu(
-                        icon: Icons.shopping_cart_outlined,
-                        title: 'Purchasing',
-                        isExpanded: _isMenuExpanded(PURCHASING_MENU, [11, 12]),
-                        menuIndex: PURCHASING_MENU,
-                        children: [
-                          _buildSubMenuItem('Direct Purchase', 11),
-                          _buildSubMenuItem('GRPO', 12),
-                        ],
-                        onTap: () {
-                          if (_selectedIndex != PURCHASING_MENU) {
-                            _navigateToPage(PURCHASING_MENU);
-                          }
-                        },
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Inventory Management System',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.roboto(
+                        fontSize: 15,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 0.1,
                       ),
-                      _buildExpandableMenu(
-                        icon: Icons.inventory_2_outlined,
-                        title: 'Stock Management',
-                        isExpanded: _isMenuExpanded(STOCK_MANAGEMENT_MENU, [
-                          21,
-                          22,
-                          23,
-                          24,
-                          25,
-                        ]),
-                        menuIndex: STOCK_MANAGEMENT_MENU,
-                        children: [
-                          _buildSubMenuItem('Material Request', 21),
-                          _buildSubMenuItem('Material Calculate', 25),
-                          _buildSubMenuItem('Stock Opname', 22),
-                          _buildSubMenuItem('Transfer Stock', 23),
-                          _buildSubMenuItem('Waste', 24),
-                        ],
-                        onTap: () {
-                          if (_selectedIndex != STOCK_MANAGEMENT_MENU) {
-                            _navigateToPage(STOCK_MANAGEMENT_MENU);
-                          }
-                        },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          // Search and Filter Row
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: TextField(
+                    onChanged: _onSearchChanged,
+                    style: GoogleFonts.roboto(
+                      fontSize: 16,
+                      color: Colors.grey[800],
+                      fontWeight: FontWeight.w500,
+                    ),
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Colors.grey[600],
+                        size: 22,
                       ),
-                      _buildMenuItem(
-                        icon: Icons.assessment_outlined,
-                        title: 'Inventory Report',
-                        index: 3,
-                        onTap: () {
-                          if (_selectedIndex != 3) {
-                            _navigateToPage(3);
-                          }
-                        },
+                      hintText: 'Search for direct purchases...',
+                      hintStyle: GoogleFonts.roboto(
+                        color: Colors.grey[500],
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
                       ),
-                      // Section TOOLS
-                      if (_isSidebarExpanded)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                          child: Row(
-                            children: [
-                              Text(
-                                'TOOLS',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: Colors.black54,
-                                  letterSpacing: 1,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const Spacer(),
-                              Container(
-                                height: 1,
-                                width: 100,
-                                color: Colors.grey.withOpacity(0.2),
-                              ),
-                            ],
-                          ),
-                        ),
-                      _buildMenuItem(
-                        icon: Icons.settings_outlined,
-                        title: 'Account & Settings',
-                        index: 4,
-                        onTap: () {
-                          if (_selectedIndex != 4) {
-                            _navigateToPage(4);
-                          }
-                        },
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
                       ),
-                      _buildMenuItem(
-                        icon: Icons.help_outline,
-                        title: 'Help',
-                        index: 5,
-                        onTap: () {
-                          if (_selectedIndex != 5) {
-                            _navigateToPage(5);
-                          }
-                        },
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
                       ),
-                    ],
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[400]!),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 14,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
                   ),
                 ),
               ),
-              // User profile dengan dropdown (selalu di bawah)
-              if (_isSidebarExpanded) _buildProfileDropdown(),
+              SizedBox(width: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: _fetchDirectPurchases,
+                    child: Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Icon(
+                        Icons.tune,
+                        color: Color(0xFFE91E63),
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Quantum Tab Navigation
+  Widget _buildQuantumTabNavigation() {
+    final tabData = [
+      {'label': 'Outstanding', 'icon': Icons.timelapse},
+      {'label': 'Approved', 'icon': Icons.verified},
+      {'label': 'Rejected', 'icon': Icons.close},
+    ];
+    final List<GlobalKey> tabKeys = List.generate(
+      tabData.length,
+      (_) => GlobalKey(),
+    );
+    return StatefulBuilder(
+      builder: (context, setTabState) {
+        double indicatorLeft = 0;
+        double indicatorWidth = 60; // fallback default width
+        void updateIndicator() {
+          final keyContext = tabKeys[_tabIndex].currentContext;
+          if (keyContext != null) {
+            final box = keyContext.findRenderObject() as RenderBox;
+            final offset = box.localToGlobal(
+              Offset.zero,
+              ancestor: context.findRenderObject(),
+            );
+            final parentOffset = (context.findRenderObject() as RenderBox)
+                .localToGlobal(Offset.zero);
+            final newLeft = offset.dx - parentOffset.dx;
+            final newWidth = box.size.width;
+            if (indicatorLeft != newLeft || indicatorWidth != newWidth) {
+              setTabState(() {
+                indicatorLeft = newLeft;
+                indicatorWidth = newWidth;
+              });
+            }
+          } else {
+            setTabState(() {
+              indicatorLeft = 0;
+              indicatorWidth = 60;
+            });
+          }
+        }
+
+        WidgetsBinding.instance.addPostFrameCallback((_) => updateIndicator());
+        return Container(
+          padding: EdgeInsets.symmetric(vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: SizedBox(
+            height: 48,
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (notif) {
+                WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => updateIndicator(),
+                );
+                return false;
+              },
+              child: Stack(
+                children: [
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: List.generate(tabData.length, (i) {
+                        final isSelected = _tabIndex == i;
+                        return Container(
+                          key: tabKeys[i],
+                          margin: EdgeInsets.symmetric(horizontal: 4),
+                          child: GestureDetector(
+                            onTap: () {
+                              _onTabChanged(i);
+                              setTabState(() {});
+                            },
+                            child: AnimatedContainer(
+                              duration: Duration(milliseconds: 250),
+                              curve: Curves.ease,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    tabData[i]['icon'] as IconData,
+                                    color: isSelected
+                                        ? Color(0xFF1976D2)
+                                        : Colors.grey[500],
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    tabData[i]['label'] as String,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: isSelected
+                                          ? Color(0xFF1976D2)
+                                          : Colors.grey[700],
+                                      fontSize: 15,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                  // Animated border indicator di bawah tab
+                  AnimatedPositioned(
+                    duration: Duration(milliseconds: 350),
+                    curve: Curves.easeInOutCubic,
+                    left: indicatorLeft,
+                    bottom: 0,
+                    width: indicatorWidth,
+                    height: 3,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(2),
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF1976D2), Color(0xFF7B1FA2)],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildQuantumTabButton({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      margin: EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        gradient: isSelected
+            ? LinearGradient(
+                colors: [Color(0xFFE040FB), Color(0xFF7B1FA2)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
+        color: isSelected ? null : Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: Color(0xFFE040FB).withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ]
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  color: isSelected ? Colors.white : Colors.grey[600],
+                  size: 20,
+                ),
+                SizedBox(width: 8),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.orbitron(
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? Colors.white : Colors.grey[600],
+                        fontSize: 14,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Holographic Data Grid
+  Widget _buildHolographicDataGrid() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.only(bottom: 20),
+      itemCount: _directPurchases.length,
+      itemBuilder: (context, index) {
+        return _buildHolographicCard(_directPurchases[index]);
+      },
+    );
+  }
+
+  Widget _buildHolographicCard(dynamic item) {
+    String status = item['status'] ?? '';
+    Color statusColor = _getStatusColor(status);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        // Tidak ada color, transparan agar menyatu dengan card besar
+      ),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.5,
+        ),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with status
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFFE040FB), Color(0xFF7B1FA2)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0xFFE040FB).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.shopping_cart,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          getNoDirect(item),
+                          style: GoogleFonts.orbitron(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Color(0xFF1A1A2E),
+                            letterSpacing: 0.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 4),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: statusColor.withOpacity(0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            status,
+                            style: GoogleFonts.orbitron(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: statusColor,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              _buildDataRow(
+                icon: Icons.store,
+                label: 'Supplier',
+                value: item['supplier'] ?? '-',
+                iconColor: Color(0xFFE040FB),
+              ),
+              SizedBox(height: 12),
+              _buildDataRow(
+                icon: Icons.calendar_today,
+                label: 'Date',
+                value: getDate(item),
+                iconColor: Color(0xFF4CAF50),
+              ),
+              SizedBox(height: 12),
+              _buildDataRow(
+                icon: Icons.inventory_2,
+                label: 'Items',
+                value: '${item['items']?.length ?? 0} items',
+                iconColor: Color(0xFFFF9800),
+              ),
+              SizedBox(height: 12),
+              if (item['totalAmount'] != null)
+                _buildDataRow(
+                  icon: Icons.attach_money,
+                  label: 'Total',
+                  value: item['totalAmount'].toString(),
+                  iconColor: Color(0xFF4CAF50),
+                ),
+              SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _showDetailPopup(item),
+                  icon: Icon(Icons.visibility, size: 18),
+                  label: Text(
+                    'View Details',
+                    style: GoogleFonts.orbitron(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFFE040FB),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       ),
-      backgroundColor: const Color(0xFFF3F4F6),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Search Bar Section
-            Padding(
-              padding: const EdgeInsets.only(top: 32.0, bottom: 24.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: deepPink.withOpacity(0.08),
-                            blurRadius: 16,
-                            offset: Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: TextField(
-                        onChanged: _onSearchChanged,
-                        style: GoogleFonts.poppins(fontSize: 15, color: Colors.black87),
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: deepPink,
-                            size: 24,
-                          ),
-                          hintText: 'Search by No Direct, Supplier…',
-                          hintStyle: GoogleFonts.poppins(
-                            color: Colors.grey[400],
-                            fontSize: 15,
-                            fontWeight: FontWeight.w400,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(18),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                            vertical: 18,
-                            horizontal: 20,
-                          ),
-                          filled: true,
-                          fillColor: Colors.white.withOpacity(0.95),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [pastelPink, deepPink],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: deepPink.withOpacity(0.10),
-                          blurRadius: 10,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: Icon(Icons.filter_alt, color: Colors.white, size: 26),
-                      onPressed: _fetchDirectPurchases,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Taskbar for Outstanding and Approved
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildTabButton(
-                  label: 'Outstanding',
-                  selected: isOutstandingSelected,
-                  onTap: () => _onTabChanged(true),
+    );
+  }
+
+  Widget _buildDataRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color iconColor,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: iconColor.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: iconColor, size: 16),
+        ),
+        SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
                 ),
-                const SizedBox(width: 18),
-                _buildTabButton(
-                  label: 'Approved',
-                  selected: !isOutstandingSelected,
-                  onTap: () => _onTabChanged(false),
-                  isApproved: true,
+              ),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.orbitron(
+                  fontSize: 13,
+                  color: Color(0xFF1A1A2E),
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Pending Area Manager':
+        return Color(0xFFFF9800);
+      case 'Approved Area Manager':
+        return Color.fromARGB(255, 53, 39, 176);
+      case 'Approved':
+        return Color(0xFF4CAF50);
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // Holographic Loading
+  Widget _buildHolographicLoading() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFE040FB), Color(0xFF7B1FA2)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0xFFE040FB).withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: Offset(0, 8),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            // Responsive Grid for Cards
-            Expanded(
-              child: _isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  : _errorMessage != null
-                  ? Center(child: Text(_errorMessage!))
-                  : _directPurchases.isEmpty
-                  ? Center(child: Text('Tidak ada data'))
-                  : RefreshIndicator(
-                      onRefresh: _fetchDirectPurchases,
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          int crossAxisCount = 1;
-                          double width = constraints.maxWidth;
-                          if (width > 1100) {
-                            crossAxisCount = 3;
-                          } else if (width > 700) {
-                            crossAxisCount = 2;
-                          }
-                          return GridView.builder(
-                            padding: const EdgeInsets.only(bottom: 24),
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: crossAxisCount,
-                              crossAxisSpacing: 24,
-                              mainAxisSpacing: 24,
-                              childAspectRatio: 1.25,
-                            ),
-                            itemCount: _directPurchases.length,
-                            itemBuilder: (context, index) {
-                              final item = _directPurchases[index];
-                              return _buildDirectPurchaseCardFromApi(item);
-                            },
-                          );
-                        },
-                      ),
-                    ),
+            child: Center(
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: Colors.white,
+                ),
+              ),
             ),
-          ],
-        ),
+          ),
+          SizedBox(height: 24),
+          Text(
+            'Loading Neural Data...',
+            style: GoogleFonts.orbitron(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFE040FB),
+              letterSpacing: 1,
+            ),
+          ),
+        ],
       ),
-      floatingActionButton: Tooltip(
-        message: "Add New Direct Purchase",
-        child: FloatingActionButton(
-          onPressed: _showAddDirectPurchaseForm,
-          backgroundColor: const Color(0xFFE91E63),
-          child: const Icon(Icons.add, size: 30),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
-  Widget _buildTabButton({
-    required String label,
-    required bool selected,
-    required VoidCallback onTap,
-    bool isApproved = false,
-  }) {
-    final Color selectedGradientStart = isApproved ? Color(0xFFE91E63) : Color(0xFFF8BBD0);
-    final Color selectedGradientEnd = isApproved ? Color(0xFFF8BBD0) : Color(0xFFE91E63);
-    final Color unselectedColor = Colors.white;
-    final Color selectedTextColor = Colors.white;
-    final Color unselectedTextColor = Color(0xFFE91E63);
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: AnimatedContainer(
-        duration: Duration(milliseconds: 180),
-        curve: Curves.easeInOut,
+  // Error Display
+  Widget _buildErrorDisplay() {
+    return Center(
+      child: Container(
+        padding: EdgeInsets.all(32),
         decoration: BoxDecoration(
-          gradient: selected
-              ? LinearGradient(
-                  colors: [selectedGradientStart, selectedGradientEnd],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: selected ? null : unselectedColor,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            if (selected)
-              BoxShadow(
-                color: Color(0xFFE91E63).withOpacity(0.10),
-                blurRadius: 10,
-                offset: Offset(0, 4),
-              ),
-          ],
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? Colors.transparent : Color(0xFFE91E63),
-            width: 2,
+            color: Color(0xFFFF5722).withOpacity(0.3),
+            width: 1,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: Offset(0, 8),
+            ),
+          ],
         ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(18),
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
-              child: Text(
-                label,
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  color: selected ? selectedTextColor : unselectedTextColor,
-                  fontSize: 16,
-                  letterSpacing: 0.5,
-                ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Color(0xFFFF5722)),
+            SizedBox(height: 16),
+            Text(
+              'Neural Error',
+              style: GoogleFonts.orbitron(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFFF5722),
+                letterSpacing: 1,
               ),
             ),
-          ),
+            SizedBox(height: 8),
+            Text(
+              _errorMessage!,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600]),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildDirectPurchaseCardFromApi(dynamic item) {
-    String status = item['status'] ?? '';
-    Color badgeColor = Colors.grey.shade200;
-    Color badgeTextColor = Colors.grey;
-    IconData badgeIcon = Icons.info_outline;
-    String badgeText = status;
-    if (status == 'Pending Area Manager') {
-      badgeColor = pastelPink;
-      badgeTextColor = deepPink;
-      badgeIcon = Icons.hourglass_empty_rounded;
-      badgeText = 'Pending Area Manager';
-    } else if (status == 'Approved Area Manager') {
-      badgeColor = accentPurple.withOpacity(0.15);
-      badgeTextColor = accentPurple;
-      badgeIcon = Icons.verified_user_rounded;
-      badgeText = 'Approved Area Manager';
-    } else if (status == 'Approved') {
-      badgeColor = const Color(0xFFC8E6C9);
-      badgeTextColor = const Color(0xFF388E3C);
-      badgeIcon = Icons.verified_rounded;
-      badgeText = status;
-    }
-    // Highlight urgent/recent
-    bool isUrgent = status == 'Pending Area Manager';
-    bool isRecent = item['isNew'] == true;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: StatefulBuilder(
-        builder: (context, setCardState) {
-          bool isHovered = false;
-          return GestureDetector(
-            onTap: () => _showDetailPopup(item),
-            child: AnimatedContainer(
-              duration: Duration(milliseconds: 180),
-              curve: Curves.easeInOut,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: isHovered
-                        ? deepPink.withOpacity(0.18)
-                        : deepPink.withOpacity(0.10),
-                    blurRadius: isHovered ? 18 : 10,
-                    offset: Offset(0, isHovered ? 8 : 4),
-                  ),
-                  if (isUrgent)
-                    BoxShadow(
-                      color: pastelPink.withOpacity(0.25),
-                      blurRadius: 8,
-                      spreadRadius: 1,
-                    ),
-                ],
-                border: Border.all(
-                  color: isUrgent
-                      ? deepPink
-                      : isRecent
-                          ? accentPurple.withOpacity(0.5)
-                          : Colors.transparent,
-                  width: isUrgent || isRecent ? 2 : 1,
-                ),
+  // Holographic Empty State
+  Widget _buildHolographicEmptyState() {
+    return Center(
+      child: SingleChildScrollView(
+        child: Container(
+          padding: EdgeInsets.all(40),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Color(0xFFE040FB).withOpacity(0.3),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: Offset(0, 8),
               ),
-              margin: const EdgeInsets.only(bottom: 0),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(10),
-                onTap: () => _showDetailPopup(item),
-                onHover: (hovering) => setCardState(() => isHovered = hovering),
-                child: Stack(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(28.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      getNoDirect(item),
-                                      style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 22,
-                                        color: deepPink,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      item['supplier'] ?? '-',
-                                      style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 16,
-                                        color: accentPurple,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      getDate(item),
-                                      style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w400,
-                                        fontSize: 13,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // Status badge
-                              Container(
-                                margin: const EdgeInsets.only(left: 8),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 7,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: badgeColor,
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: badgeColor.withOpacity(0.18),
-                                      blurRadius: 4,
-                                      offset: Offset(0, 1),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(badgeIcon, color: badgeTextColor, size: 16),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      badgeText,
-                                      style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 12,
-                                        color: badgeTextColor,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Spacer(),
-                          Align(
-                            alignment: Alignment.bottomRight,
-                            child: OutlinedButton(
-                              onPressed: () => _showDetailPopup(item),
-                              style: OutlinedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                side: BorderSide(color: deepPink, width: 2),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                                elevation: 0,
-                                minimumSize: Size(120, 44),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                foregroundColor: deepPink,
-                              ),
-                              child: Text(
-                                'Detail',
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.bold,
-                                  color: deepPink,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFE040FB), Color(0xFF7B1FA2)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFFE040FB).withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: Offset(0, 8),
                     ),
-                    // Notification badge (example, can be extended)
-                    if (isRecent)
-                      Positioned(
-                        top: 10,
-                        left: 10,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: accentPurple,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            'NEW',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ),
-                      ),
                   ],
                 ),
+                child: Icon(Icons.inbox, size: 48, color: Colors.white),
               ),
-            ),
-          );
-        },
+              SizedBox(height: 24),
+              Text(
+                'No Data Found',
+                style: GoogleFonts.orbitron(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFE040FB),
+                  letterSpacing: 1.5,
+                ),
+              ),
+              SizedBox(height: 12),
+              Text(
+                'Neural network detected no direct purchase data',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1052,7 +1636,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
+        color: isActive ? Colors.pink.shade50 : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
@@ -1060,16 +1644,20 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: isActive
-                ? deepPink.withOpacity(0.1)
+                ? Colors.pink.withOpacity(0.1)
                 : Colors.grey.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: isActive ? deepPink : Colors.grey, size: 20),
+          child: Icon(
+            icon,
+            color: isActive ? Colors.pink : Colors.grey,
+            size: 20,
+          ),
         ),
         title: Text(
           title,
           style: GoogleFonts.poppins(
-            color: isActive ? deepPink : Colors.grey,
+            color: isActive ? Colors.pink : Colors.grey,
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
             fontSize: 14,
           ),
@@ -1092,26 +1680,20 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     required int menuIndex,
   }) {
     final isMenuExpanded = _expandedMenuIndex == menuIndex;
-    // Cek jika ada submenu yang sedang aktif pada menu ini
     bool isAnySubMenuActive = false;
     if (menuIndex == PURCHASING_MENU) {
       isAnySubMenuActive = [11, 12].contains(_selectedIndex);
     } else if (menuIndex == STOCK_MANAGEMENT_MENU) {
       isAnySubMenuActive = [21, 22, 23, 24, 25].contains(_selectedIndex);
     }
-
-    // Jika ada submenu aktif, nonaktifkan hover/active background pada parent
     final bool highlightParent = isExpanded && !isAnySubMenuActive;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: highlightParent
-                ? lightPink.withOpacity(0.3)
-                : Colors.transparent,
+            color: highlightParent ? Colors.pink.shade50 : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: ListTile(
@@ -1119,20 +1701,20 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: highlightParent
-                    ? deepPink.withOpacity(0.1)
+                    ? Colors.pink.withOpacity(0.1)
                     : Colors.grey.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 icon,
-                color: highlightParent ? deepPink : Colors.grey,
+                color: highlightParent ? Colors.pink : Colors.grey,
                 size: 20,
               ),
             ),
             title: Text(
               title,
               style: GoogleFonts.poppins(
-                color: highlightParent ? deepPink : Colors.grey,
+                color: highlightParent ? Colors.pink : Colors.grey,
                 fontWeight: highlightParent
                     ? FontWeight.bold
                     : FontWeight.normal,
@@ -1141,7 +1723,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
             ),
             trailing: Icon(
               isMenuExpanded ? Icons.expand_less : Icons.expand_more,
-              color: highlightParent ? deepPink : Colors.grey,
+              color: highlightParent ? Colors.pink : Colors.grey,
             ),
             onTap: () {
               setState(() {
@@ -1162,7 +1744,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
             ),
           ),
         ),
-        if (isMenuExpanded && _isSidebarExpanded)
+        if (isMenuExpanded)
           Container(
             margin: const EdgeInsets.only(left: 16),
             decoration: BoxDecoration(
@@ -1200,7 +1782,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       child: Container(
         margin: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
         decoration: BoxDecoration(
-          color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
+          color: isActive ? Colors.pink.shade50 : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: ListTile(
@@ -1208,13 +1790,13 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: isActive
-                  ? deepPink.withOpacity(0.1)
+                  ? Colors.pink.withOpacity(0.1)
                   : Colors.grey.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               _getSubMenuIcon(index),
-              color: isActive ? deepPink : Colors.grey,
+              color: isActive ? Colors.pink : Colors.grey,
               size: 20,
             ),
           ),
@@ -1222,7 +1804,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
             title,
             style: GoogleFonts.poppins(
               fontSize: 13,
-              color: isActive ? deepPink : Colors.black87,
+              color: isActive ? Colors.pink : Colors.black87,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
             ),
           ),
@@ -1231,7 +1813,6 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
             if (_selectedIndex != index) {
               setState(() {
                 _selectedIndex = index;
-                // Pastikan parent menu tetap expanded
                 if ([11, 12].contains(index)) {
                   _expandedMenuIndex = PURCHASING_MENU;
                 } else if ([21, 22, 23, 24, 25].contains(index)) {
@@ -1253,7 +1834,31 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
     );
   }
 
-  //Todo : Routing navigation page for each menu
+  IconData _getSubMenuIcon(int index) {
+    switch (index) {
+      case 11:
+        return Icons.shopping_cart_outlined;
+      case 12:
+        return Icons.receipt_long_outlined;
+      case 21:
+        return Icons.inventory_2_outlined;
+      case 22:
+        return Icons.checklist_rtl_outlined;
+      case 23:
+        return Icons.swap_horiz_outlined;
+      case 24:
+        return Icons.delete_outline;
+      case 25:
+        return Icons.inventory_2_outlined;
+      default:
+        return Icons.circle_outlined;
+    }
+  }
+
+  void _navigateToPage(int index) {
+    Navigator.pushReplacement(context, _getPageRouteByIndex(index));
+  }
+
   Route _getPageRouteByIndex(int index) {
     switch (index) {
       case 0:
@@ -1288,109 +1893,20 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
         return MaterialPageRoute(
           builder: (context) => MaterialCalculatePage(selectedIndex: 25),
         );
+      case 3:
+        // Replace with your Inventory Report page if available
+        return MaterialPageRoute(
+          builder: (context) => DashboardPage(selectedIndex: 0),
+        );
+      case 4:
+        // Replace with your Account & Settings page if available
+        return MaterialPageRoute(builder: (context) => UserprofilePage());
+      case 5:
+        return MaterialPageRoute(builder: (context) => HelpPage());
       default:
         return MaterialPageRoute(
-          builder: (context) => DirectPurchasePage(selectedIndex: 11),
+          builder: (context) => DashboardPage(selectedIndex: 0),
         );
-    }
-  }
-
-  // Todo :Routing navigation page for each dropdown page
-  void _navigateToPage(int index) {
-    switch (index) {
-      case 0: // Dashboard
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DashboardPage(selectedIndex: 0),
-          ),
-        );
-        break;
-      case 11: // Direct Purchase
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DirectPurchasePage(selectedIndex: 11),
-          ),
-        );
-        break;
-      case 12: // GRPO
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => GRPO_Page(selectedIndex: 12)),
-        );
-        break;
-      case 21: // Material Request
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MaterialRequestPage(selectedIndex: 21),
-          ),
-        );
-        break;
-      case 22: // Stock Opname
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => StockOpnamePage(selectedIndex: 22),
-          ),
-        );
-        break;
-      case 23: // Transfer Stock
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => TransferStockPage(selectedIndex: 23),
-          ),
-        );
-        break;
-      case 24: // Waste
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => WastePage(selectedIndex: 24)),
-        );
-        break;
-      case 25: // Material Calculate
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MaterialCalculatePage(selectedIndex: 25),
-          ),
-        );
-        break;
-      case 4:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => NotificationPage()),
-        );
-        break;
-      case 5:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HelpPage()),
-        );
-    }
-  }
-
-  //Todo : Icons
-  IconData _getSubMenuIcon(int index) {
-    switch (index) {
-      case 11: // Direct Purchase
-        return Icons.shopping_cart_outlined;
-      case 12: // GRPO
-        return Icons.receipt_long_outlined;
-      case 21: // Material Request
-        return Icons.inventory_2_outlined;
-      case 22: // Stock Opname
-        return Icons.checklist_rtl_outlined;
-      case 23: // Transfer Stock
-        return Icons.swap_horiz_outlined;
-      case 24: // Waste
-        return Icons.delete_outline;
-      case 25: //material calculate
-        return Icons.inventory_2_outlined;
-      default:
-        return Icons.circle_outlined;
     }
   }
 
@@ -1718,9 +2234,698 @@ class _DirectPurchasePageState extends State<DirectPurchasePage> {
       return rawDate;
     }
   }
+
+  Widget _modernHeaderIcon({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool badge = false,
+    bool isMobile = false,
+    Color? color,
+    bool glass = false,
+    double? iconSize,
+  }) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 180),
+          curve: Curves.easeInOut,
+          padding: EdgeInsets.all(isMobile ? 8 : 12),
+          decoration: BoxDecoration(
+            color: glass
+                ? Colors.white.withOpacity(0.35)
+                : (color?.withOpacity(0.13) ?? Colors.white.withOpacity(0.13)),
+            borderRadius: BorderRadius.circular(16),
+            border: glass
+                ? Border.all(color: Colors.white.withOpacity(0.32), width: 1.1)
+                : Border.all(color: (color ?? Colors.white).withOpacity(0.22)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(
+                icon,
+                color: Colors.white,
+                size: iconSize ?? (isMobile ? 24 : 28),
+              ),
+              if (badge)
+                Positioned(
+                  right: -2,
+                  top: -2,
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: color ?? Colors.pinkAccent,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _modernHeaderIconBarNoSearch(bool isMobile) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.white.withOpacity(0.22), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            key: _notificationIconKey,
+            child: _modernHeaderIcon(
+              icon: Icons.notifications_none_outlined,
+              onTap: _toggleNotificationOverlay,
+              badge: notifications.isNotEmpty,
+              isMobile: isMobile,
+              glass: true,
+              iconSize: isMobile ? 24 : 28,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(width: isMobile ? 8 : 14),
+          SizedBox(
+            key: _emailIconKey,
+            child: _modernHeaderIcon(
+              icon: Icons.mail_outline_rounded,
+              onTap: _toggleEmailOverlay,
+              badge: emails.isNotEmpty,
+              isMobile: isMobile,
+              glass: true,
+              iconSize: isMobile ? 24 : 28,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(width: isMobile ? 10 : 18),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const UserprofilePage(),
+                ),
+              );
+            },
+            child: AnimatedContainer(
+              duration: Duration(milliseconds: 180),
+              curve: Curves.easeInOut,
+              padding: EdgeInsets.all(isMobile ? 8 : 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.35),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.32),
+                  width: 1.1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/avatar.jpg',
+                  fit: BoxFit.cover,
+                  width: isMobile ? 24 : 28,
+                  height: isMobile ? 24 : 28,
+                  errorBuilder: (context, error, stackTrace) => Icon(
+                    Icons.person,
+                    color: Colors.grey[500],
+                    size: isMobile ? 24 : 28,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Notification Overlay Logic ---
+  void _toggleNotificationOverlay() {
+    if (!mounted) return;
+    if (_notificationAnimationController.isAnimating) return;
+    if (_notificationOverlayEntry == null) {
+      _showNotificationBubble();
+    } else {
+      _removeNotificationOverlay();
+    }
+  }
+
+  void _removeNotificationOverlay() {
+    if (!mounted) return;
+    if (_notificationOverlayEntry != null) {
+      _notificationAnimationController.reverse().then((_) {
+        if (_notificationOverlayEntry != null &&
+            _notificationOverlayEntry!.mounted) {
+          _notificationOverlayEntry!.remove();
+          _notificationOverlayEntry = null;
+        }
+      });
+    }
+  }
+
+  void _showNotificationBubble() {
+    if (!mounted) return;
+    if (_notificationOverlayEntry != null) return;
+    final RenderBox renderBox =
+        _notificationIconKey.currentContext!.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final position = renderBox.localToGlobal(Offset.zero);
+    _notificationOverlayEntry = OverlayEntry(
+      builder: (context) => _buildNotificationTooltipAnimated(position, size),
+    );
+    Overlay.of(context).insert(_notificationOverlayEntry!);
+    _notificationAnimationController.forward();
+  }
+
+  Widget _buildNotificationTooltipAnimated(Offset position, Size size) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
+    final double popupWidth = isMobile ? screenWidth * 0.85 : 260;
+    double left = position.dx + size.width / 2 - popupWidth / 2;
+    if (left < 8) left = 8;
+    if (left + popupWidth > screenWidth - 8)
+      left = screenWidth - popupWidth - 8;
+    double arrowWidth = 22;
+    double arrowOffset =
+        (position.dx + size.width / 2) - left - (arrowWidth / 2) - 125;
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: _removeNotificationOverlay,
+            behavior: HitTestBehavior.opaque,
+            child: Container(color: Colors.transparent),
+          ),
+        ),
+        Positioned(
+          top: position.dy + size.height + 10,
+          left: left,
+          child: AnimatedBuilder(
+            animation: _notificationAnimationController,
+            builder: (context, child) {
+              return FadeTransition(
+                opacity: _notificationAnimationController,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.92, end: 1.0).animate(
+                    CurvedAnimation(
+                      parent: _notificationAnimationController,
+                      curve: Curves.easeOutBack,
+                    ),
+                  ),
+                  alignment: Alignment.topCenter,
+                  child: child,
+                ),
+              );
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    SizedBox(width: arrowOffset),
+                    CustomPaint(
+                      size: Size(arrowWidth, 10),
+                      painter: _NotifTooltipArrowPainter(
+                        color: Colors.white,
+                        borderColor: Colors.grey.withOpacity(0.13),
+                      ),
+                    ),
+                  ],
+                ),
+                _buildNotificationTooltipContent(),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNotificationTooltipContent() {
+    final List<Map<String, dynamic>> previewNotifs = notifications
+        .take(4)
+        .toList();
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
+    return Material(
+      type: MaterialType.transparency,
+      elevation: 0,
+      child: Container(
+        width: isMobile ? screenWidth * 0.85 : 260,
+        constraints: BoxConstraints(maxHeight: isMobile ? 220 : 180),
+        padding: const EdgeInsets.only(top: 10, bottom: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color.fromARGB(255, 3, 1, 1).withOpacity(0.5),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
+              child: Text(
+                'Notifikasi',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
+            if (previewNotifs.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 16,
+                ),
+                child: Text(
+                  'Belum ada notifikasi.',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              )
+            else
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  itemCount: previewNotifs.length,
+                  separatorBuilder: (_, __) =>
+                      Divider(height: 1, color: Colors.grey.shade100),
+                  itemBuilder: (context, i) =>
+                      _buildNotificationBubbleItem(previewNotifs[i]),
+                ),
+              ),
+            const SizedBox(height: 2),
+            InkWell(
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+              onTap: () {
+                _removeNotificationOverlay();
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => NotificationPage()),
+                  );
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.notifications_active_rounded,
+                      color: deepPink,
+                      size: 18,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Lihat Semua Notifikasi',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        color: deepPink,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationBubbleItem(Map<String, dynamic> notif) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            backgroundColor: (notif['color'] as Color).withOpacity(0.13),
+            child: Icon(notif['icon'], color: notif['color'], size: 16),
+            radius: 13,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  notif['title'],
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: notif['color'],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  notif['message'],
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.5,
+                    color: Colors.grey[800],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  notif['time'],
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    color: Colors.grey[400],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Email Overlay Logic ---
+  void _toggleEmailOverlay() {
+    if (!mounted) return;
+    if (_emailAnimationController.isAnimating) return;
+    if (_emailOverlayEntry == null) {
+      _showEmailBubble();
+    } else {
+      _removeEmailOverlay();
+    }
+  }
+
+  void _removeEmailOverlay() {
+    if (!mounted) return;
+    if (_emailOverlayEntry != null) {
+      _emailAnimationController.reverse().then((_) {
+        if (_emailOverlayEntry != null && _emailOverlayEntry!.mounted) {
+          _emailOverlayEntry!.remove();
+          _emailOverlayEntry = null;
+        }
+        _emailAnimationController.reset(); // reset controller setelah reverse
+      });
+    }
+  }
+
+  void _showEmailBubble() {
+    if (!mounted) return;
+    if (_emailOverlayEntry != null) return; // cegah overlay ganda
+    final RenderBox renderBox =
+        _emailIconKey.currentContext!.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final position = renderBox.localToGlobal(Offset.zero);
+
+    _emailOverlayEntry = OverlayEntry(
+      builder: (context) => _buildEmailTooltipAnimated(position, size),
+    );
+
+    Overlay.of(context).insert(_emailOverlayEntry!);
+    _emailAnimationController.forward();
+  }
+
+  Widget _buildEmailTooltipAnimated(Offset position, Size size) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
+    final double popupWidth = isMobile ? screenWidth * 0.85 : 260;
+    double left = position.dx + size.width / 2 - popupWidth / 2;
+    if (left < 8) left = 8;
+    if (left + popupWidth > screenWidth - 8)
+      left = screenWidth - popupWidth - 8;
+    double arrowWidth = 22;
+    double arrowOffset =
+        (position.dx + size.width / 2) - left - (arrowWidth / 2) - 75;
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: _removeEmailOverlay,
+            behavior: HitTestBehavior.opaque,
+            child: Container(color: Colors.transparent),
+          ),
+        ),
+        Positioned(
+          top: position.dy + size.height + 10,
+          left: left,
+          child: AnimatedBuilder(
+            animation: _emailAnimationController,
+            builder: (context, child) {
+              return FadeTransition(
+                opacity: _emailAnimationController,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.92, end: 1.0).animate(
+                    CurvedAnimation(
+                      parent: _emailAnimationController,
+                      curve: Curves.easeOutBack,
+                    ),
+                  ),
+                  alignment: Alignment.topCenter,
+                  child: child,
+                ),
+              );
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    SizedBox(width: arrowOffset),
+                    CustomPaint(
+                      size: Size(arrowWidth, 10),
+                      painter: _NotifTooltipArrowPainter(
+                        color: Colors.white,
+                        borderColor: Colors.grey.withOpacity(0.13),
+                      ),
+                    ),
+                  ],
+                ),
+                _buildEmailTooltipContent(),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmailTooltipContent() {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
+    final List<Map<String, dynamic>> previewEmails = emails.take(3).toList();
+    return Material(
+      type: MaterialType.transparency,
+      elevation: 0,
+      child: Container(
+        width: isMobile ? screenWidth * 0.85 : 260,
+        constraints: BoxConstraints(maxHeight: isMobile ? 220 : 180),
+        padding: const EdgeInsets.only(top: 10, bottom: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.5),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
+              child: Text(
+                'Email',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
+            if (previewEmails.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 16,
+                ),
+                child: Text(
+                  'Tidak ada email baru.',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              )
+            else
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  itemCount: previewEmails.length,
+                  separatorBuilder: (_, __) =>
+                      Divider(height: 1, color: Colors.grey.shade100),
+                  itemBuilder: (context, i) =>
+                      _buildEmailBubbleItem(previewEmails[i]),
+                ),
+              ),
+            const SizedBox(height: 2),
+            InkWell(
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+              onTap: () {
+                _removeEmailOverlay();
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  // Navigasi ke halaman email jika ada
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.mail_outline_rounded, color: deepPink, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'Lihat Semua Email',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        color: deepPink,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmailBubbleItem(Map<String, dynamic> email) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            backgroundColor: deepPink.withOpacity(0.13),
+            child: Icon(Icons.mail_outline_rounded, color: deepPink, size: 16),
+            radius: 13,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  email['subject'],
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: deepPink,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  email['snippet'],
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.5,
+                    color: Colors.grey[800],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  email['time'],
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    color: Colors.grey[400],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-// Todo : ini souce line untuk menambahkan data baru di database
+// Move this class to top-level (outside of any class)
+class _NotifTooltipArrowPainter extends CustomPainter {
+  final Color color;
+  final Color borderColor;
+  _NotifTooltipArrowPainter({required this.color, required this.borderColor});
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()..color = color;
+    final Paint borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final Path path = Path();
+    path.moveTo(0, size.height);
+    path.lineTo(size.width / 2, 0);
+    path.lineTo(size.width, size.height);
+    path.close();
+    canvas.drawPath(path, paint);
+    canvas.drawPath(path, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(_NotifTooltipArrowPainter oldDelegate) => false;
+}
+
+/// Add Direct Purchase Form Content Widget
 class _AddDirectPurchaseFormContent extends StatefulWidget {
   final VoidCallback onSuccess;
   const _AddDirectPurchaseFormContent({Key? key, required this.onSuccess})
@@ -1890,12 +3095,10 @@ class _AddDirectPurchaseFormContentState
     }
   }
 
-  // Todo : styling souce line untuk item konten
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           // Header
@@ -2080,9 +3283,9 @@ class _AddDirectPurchaseFormContentState
       margin: const EdgeInsets.only(bottom: 16.0),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2188,8 +3391,8 @@ class _AddDirectPurchaseFormContentState
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
             decoration: BoxDecoration(
-              color: Colors.grey[50],
-              border: Border.all(color: Colors.grey[300]!),
+              color: Colors.white,
+              border: Border.all(color: Colors.grey[400]!),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -2255,14 +3458,15 @@ class _AddDirectPurchaseFormContentState
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 237, 243, 255),
+        color: const Color.fromARGB(255, 97, 110, 255),
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color.fromARGB(255, 43, 42, 66)),
       ),
       child: Row(
         children: [
           Icon(
             Icons.info_outline,
-            color: const Color.fromARGB(255, 25, 118, 210),
+            color: const Color.fromARGB(255, 255, 255, 255),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -2270,7 +3474,7 @@ class _AddDirectPurchaseFormContentState
               'Purchases will require approval from the Area Manager and Head Office before being processed.',
               style: GoogleFonts.poppins(
                 fontSize: 12,
-                color: const Color.fromARGB(255, 23, 100, 177),
+                color: const Color.fromARGB(255, 255, 255, 255),
                 fontWeight: FontWeight.w400,
               ),
             ),
@@ -2292,7 +3496,7 @@ class _AddDirectPurchaseFormContentState
             offset: const Offset(0, -2),
           ),
         ],
-        border: Border(top: BorderSide(color: Colors.grey[200]!)),
+        border: Border(top: BorderSide(color: Colors.grey[300]!)),
       ),
       child: Row(
         children: [
@@ -2390,12 +3594,9 @@ class _AddDirectPurchaseFormContentState
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: deepPink),
+              borderSide: BorderSide(color: Colors.grey[400]!),
             ),
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 12,
-              horizontal: 16,
-            ),
+            contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
           ),
         ),
       ],
@@ -2441,11 +3642,11 @@ class _AddDirectPurchaseFormContentState
                 : null,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: Colors.grey[400]!),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: Colors.grey[400]!),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -2494,6 +3695,430 @@ class _AddDirectPurchaseFormContentState
           const Divider(height: 24),
           ...children,
         ],
+      ),
+    );
+  }
+}
+
+class _StatusBadgeHorizontal extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color color;
+  final Color textColor;
+  const _StatusBadgeHorizontal({
+    required this.icon,
+    required this.text,
+    required this.color,
+    required this.textColor,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(maxWidth: 110),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.13),
+            blurRadius: 2,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: textColor, size: 15),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              text,
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+                color: textColor,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModernTooltip extends StatelessWidget {
+  final String description;
+  final VoidCallback onClose;
+  const _ModernTooltip({
+    required this.description,
+    required this.onClose,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.10),
+                blurRadius: 12,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.info_outline, color: Color(0xFFE91E63), size: 18),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  description,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: onClose,
+                child: Icon(Icons.close, size: 16, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          top: -10,
+          left: 24,
+          child: CustomPaint(
+            size: Size(18, 10),
+            painter: _TooltipArrowPainter(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TooltipArrowPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    final path = Path();
+    path.moveTo(0, size.height);
+    path.lineTo(size.width / 2, 0);
+    path.lineTo(size.width, size.height);
+    path.close();
+    canvas.drawShadow(path, Colors.black.withOpacity(0.10), 3, true);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _InfoRowIcon extends StatelessWidget {
+  final IconData icon;
+  final Color iconBg;
+  final String label;
+  final String value;
+  const _InfoRowIcon({
+    required this.icon,
+    required this.iconBg,
+    required this.label,
+    required this.value,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
+          child: Icon(icon, color: Colors.white, size: 16),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          label + ':',
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            value,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _InfoRowIconModern extends StatelessWidget {
+  final IconData icon;
+  final Color iconBg;
+  final String label;
+  final String value;
+  const _InfoRowIconModern({
+    required this.icon,
+    required this.iconBg,
+    required this.label,
+    required this.value,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: iconBg,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(color: iconBg.withOpacity(0.18), blurRadius: 6),
+            ],
+          ),
+          child: Icon(icon, color: Colors.white, size: 20),
+        ),
+        const SizedBox(width: 16),
+        Text(
+          label + ':',
+          style: GoogleFonts.orbitron(
+            fontSize: 13,
+            color: Colors.black87,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.1,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            style: GoogleFonts.orbitron(
+              fontSize: 15,
+              color: Colors.black87,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.1,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _InfoValueRow extends StatelessWidget {
+  final IconData icon;
+  final Color iconBg;
+  final String value;
+  const _InfoValueRow({
+    required this.icon,
+    required this.iconBg,
+    required this.value,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: iconBg,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(color: iconBg.withOpacity(0.13), blurRadius: 3),
+            ],
+          ),
+          child: Icon(icon, color: Colors.white, size: 15),
+        ),
+        const SizedBox(width: 10),
+        Flexible(
+          child: Text(
+            value,
+            style: GoogleFonts.orbitron(
+              fontSize: 13,
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.05,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MobileFloatingNavBarGlass extends StatelessWidget {
+  const _MobileFloatingNavBarGlass({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final double navBarHeight = 62;
+    final double fabSize = 54;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.94,
+          height: navBarHeight,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.18),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.5),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.10),
+                blurRadius: 16,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _NavBarIcon(
+                icon: Icons.home_rounded,
+                label: 'Home',
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DashboardPage(selectedIndex: 0),
+                    ),
+                  );
+                },
+              ),
+              // Tombol Add di tengah, lebih besar
+              GestureDetector(
+                onTap: () async {
+                  final state = context
+                      .findAncestorStateOfType<_DirectPurchasePageState>();
+                  state?._showAddDirectPurchaseForm();
+                },
+                child: Container(
+                  width: fabSize,
+                  height: fabSize,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFFE040FB), Color(0xFF7B1FA2)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0xFFE040FB).withOpacity(0.18),
+                        blurRadius: 10,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: Center(
+                    child: Icon(Icons.add, color: Colors.white, size: 32),
+                  ),
+                ),
+              ),
+              _NavBarIcon(
+                icon: Icons.person_rounded,
+                label: 'Profile',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const UserprofilePage(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+//icon for navigation bar
+class _NavBarIcon extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _NavBarIcon({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Color(0xFF7B1FA2), size: 25),
+              SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF7B1FA2),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

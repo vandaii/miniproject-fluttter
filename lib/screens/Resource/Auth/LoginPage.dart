@@ -3,6 +3,7 @@ import 'package:miniproject_flutter/screens/Resource/Auth/register_page.dart';
 import 'package:miniproject_flutter/screens/DashboardPage.dart';
 import 'package:miniproject_flutter/widgets/CustomPage_Login.dart';
 import 'package:miniproject_flutter/services/authService.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/ForgotPasswordPage.dart';
 
 class LoginPage extends StatefulWidget {
   final String? initialId;
@@ -119,8 +120,11 @@ class _LoginPageState extends State<LoginPage> {
                     }
                   },
                   onForgetPasswordPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Lupa Password diklik')),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ForgotPasswordPage(),
+                      ),
                     );
                   },
                   onSignUpPressed: () {
