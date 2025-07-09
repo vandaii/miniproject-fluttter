@@ -1,5 +1,3 @@
-// TODO:regristrasi eror
-
 import 'package:flutter/material.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/widgets/customPageRegister.dart';
@@ -10,7 +8,6 @@ class RegisterPage extends StatefulWidget {
   @override
   State<RegisterPage> createState() => _RegisterPageState();
 }
-
 class _RegisterPageState extends State<RegisterPage> {
   final _employeeIdController = TextEditingController();
   final _nameController = TextEditingController();
