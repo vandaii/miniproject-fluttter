@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
@@ -8,15 +9,33 @@ class ForgotPasswordPage extends StatefulWidget {
   State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
 }
 
-class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
+class _ForgotPasswordPageState extends State<ForgotPasswordPage>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _emailController = TextEditingController();
   bool _isLoading = false;
-  String? _feedbackMessage;
-  bool _isSuccess = false;
+  String? _message;
+  bool _success = false;
+  late AnimationController _animController;
+  late Animation<double> _fadeAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnim = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeInOut,
+    );
+    _animController.forward();
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
+    _animController.dispose();
     super.dispose();
   }
 
@@ -24,166 +43,164 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
       setState(() {
-        _feedbackMessage = 'Silakan masukkan email Anda.';
-        _isSuccess = false;
+        _message = 'Email tidak boleh kosong!';
+        _success = false;
       });
       return;
     }
     setState(() {
       _isLoading = true;
-      _feedbackMessage = null;
+      _message = null;
     });
     final result = await AuthService().forgotPassword(email);
     setState(() {
       _isLoading = false;
-      _isSuccess = result['status'] == true;
-      _feedbackMessage = result['message'] ?? (_isSuccess ? 'Email reset password telah dikirim.' : 'Terjadi kesalahan.');
+      _message = result['message'];
+      _success = result['status'] == true;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final Color themeColor = const Color(0xFFFF2D8B); // Pink mencolok
-    final Color gradientStart = const Color(0xFFFF5FA2); // Pink terang
-    final Color gradientEnd = const Color(0xFFFF2D8B); // Pink gelap
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF6F8FF),
       appBar: AppBar(
         title: const Text('Lupa Password'),
-        backgroundColor: themeColor,
+        backgroundColor: Colors.blueAccent,
         elevation: 0,
-        centerTitle: true,
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Ilustrasi digital modern
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [gradientStart, gradientEnd],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+      body: FadeTransition(
+        opacity: _fadeAnim,
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Animasi Lottie di atas form
+                Lottie.asset(
+                  'assets/lottie/email.json',
+                  width: 160,
+                  repeat: true,
+                  animate: true,
+                ),
+                const SizedBox(height: 8),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeInOut,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withOpacity(0.85),
+                        Colors.blue.shade50.withOpacity(0.85),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.blue.shade100.withOpacity(0.18),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                    // Glassmorphism effect
+                    backgroundBlendMode: BlendMode.overlay,
                   ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: themeColor.withOpacity(0.25),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Icon(Icons.lock_reset_rounded, size: 54, color: Colors.white),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Text(
-                'Reset Password',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: themeColor,
-                  letterSpacing: 1.2,
-                  shadows: [
-                    Shadow(
-                      color: themeColor.withOpacity(0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Masukkan email yang terdaftar untuk menerima link reset password.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 15, color: Colors.grey[700]),
-              ),
-              const SizedBox(height: 32),
-              // Card Form
-              Card(
-                elevation: 8,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 32),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      const Text(
+                        'Masukkan email yang terdaftar untuk reset password',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
                       TextField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.email_outlined),
                           labelText: 'Email',
-                          labelStyle: TextStyle(color: themeColor),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                          prefixIcon: Icon(Icons.email_outlined, color: themeColor),
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.9),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: themeColor, width: 2),
-                          ),
-                        ),
-                        cursorColor: themeColor,
-                        enabled: !_isLoading,
-                      ),
-                      const SizedBox(height: 28),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _submit,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            elevation: 3,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            backgroundColor: themeColor,
-                            foregroundColor: Colors.white,
-                            textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                )
-                              : const Text('Kirim Email Reset'),
-                        ),
-                      ),
-                      if (_feedbackMessage != null) ...[
-                        const SizedBox(height: 20),
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: _isSuccess ? Colors.green[50] : Colors.red[50],
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: _isSuccess ? Colors.green : Colors.red,
-                              width: 1.2,
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: const BorderSide(
+                              color: Colors.blueAccent,
+                              width: 2,
                             ),
                           ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 6,
+                            shadowColor: Colors.blueAccent.withOpacity(0.2),
+                          ),
+                          onPressed: _isLoading ? null : _submit,
+                          child: _isLoading
+                              ? Lottie.asset(
+                                  'assets/lottie/email.json',
+                                  width: 36,
+                                  height: 36,
+                                  repeat: true,
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(Icons.send_rounded),
+                                    SizedBox(width: 8),
+                                    Text('Kirim'),
+                                  ],
+                                ),
+                        ),
+                      ),
+                      if (_message != null) ...[
+                        const SizedBox(height: 18),
+                        AnimatedOpacity(
+                          opacity: 1.0,
+                          duration: const Duration(milliseconds: 500),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                _isSuccess ? Icons.check_circle : Icons.error_outline,
-                                color: _isSuccess ? Colors.green : Colors.red,
-                                size: 20,
-                              ),
+                              if (_success)
+                                Lottie.asset(
+                                  'assets/lottie/success.json',
+                                  width: 36,
+                                  repeat: false,
+                                )
+                              else
+                                Lottie.asset(
+                                  'assets/lottie/error.json',
+                                  width: 36,
+                                  repeat: false,
+                                ),
                               const SizedBox(width: 8),
                               Flexible(
                                 child: Text(
-                                  _feedbackMessage!,
+                                  _message!,
                                   style: TextStyle(
-                                    color: _isSuccess ? Colors.green[900] : Colors.red[900],
+                                    color: _success ? Colors.green : Colors.red,
                                     fontWeight: FontWeight.w600,
                                   ),
-                                  textAlign: TextAlign.center,
                                 ),
                               ),
                             ],
@@ -193,17 +210,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 32),
-              // Kembali ke login
-              TextButton(
-                onPressed: _isLoading ? null : () => Navigator.pop(context),
-                child: Text(
-                  'Kembali ke Login',
-                  style: TextStyle(color: themeColor, fontWeight: FontWeight.w600, fontSize: 15),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

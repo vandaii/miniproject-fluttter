@@ -210,11 +210,13 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
     super.dispose();
   }
 
+  // color palate
   final Color pastelPink = const Color(0xFFF8BBD0);
   final Color deepPink = const Color.fromARGB(255, 233, 30, 99);
   final Color lightPink = const Color(0xFFFCE4EC);
   final Color accentPurple = const Color(0xFF7B1FA2);
 
+  //define menu indexes
   static const int PURCHASING_MENU = 1;
   static const int STOCK_MANAGEMENT_MENU = 2;
 

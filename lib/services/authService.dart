@@ -74,7 +74,7 @@ class AuthService {
       final resData = jsonDecode(response.body);
       print('Login Response: $resData');
 
-      if (response.statusCode == 200 && resData['token'] != null) {
+      if (response.statusCode == 200 && resData['status'] == 'success') {
         await storage.write(key: 'token', value: resData['token']);
         return true;
       } else {
@@ -100,7 +100,7 @@ class AuthService {
 
       final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && data['status'] == 'success') {
         return {'status': true, 'message': data['message']};
       } else {
         return {
@@ -136,7 +136,7 @@ class AuthService {
 
       final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && data['status'] == 'success') {
         return {'status': true, 'message': data['message']};
       } else {
         return {
@@ -165,14 +165,15 @@ class AuthService {
 
       var request = http.MultipartRequest('POST', uri);
       request.headers['Authorization'] = 'Bearer $token';
-      request.fields.addAll({
-        if (name != null) 'name': name,
-        if (email != null) 'email': email,
-        if (phone != null) 'phone': phone,
-        if (password != null) 'password': password,
-        if (confirmPassword != null) 'password_confirmation': confirmPassword,
-        if (storeLocation != null) 'store_location': storeLocation,
-      });
+      request.headers['Accept'] = 'application/json';
+      
+      // Hanya tambahkan field yang tidak null
+      if (name != null) request.fields['name'] = name;
+      if (email != null) request.fields['email'] = email;
+      if (phone != null) request.fields['phone'] = phone;
+      if (password != null) request.fields['password'] = password;
+      if (confirmPassword != null) request.fields['password_confirmation'] = confirmPassword;
+      if (storeLocation != null) request.fields['store_location'] = storeLocation;
 
       if (photoProfile != null) {
         request.files.add(
@@ -196,14 +197,14 @@ class AuthService {
     try {
       final token = await storage.read(key: 'token');
       if (token != null) {
+        final headers = await ApiConfig.getHeadersWithAuth();
         final response = await client.post(
           Uri.parse('$baseUrl/logout'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
+          headers: headers,
         );
+        
         await storage.delete(key: 'token');
+        
         if (response.statusCode != 200) {
           throw Exception('Logout failed: ${response.statusCode}');
         }
@@ -222,15 +223,17 @@ class AuthService {
   Future<Map<String, dynamic>?> getCurrentUser() async {
     try {
       final token = await storage.read(key: 'token');
+      if (token == null) return null;
+      
+      final headers = await ApiConfig.getHeadersWithAuth();
       final response = await client.get(
         Uri.parse('$baseUrl/profile'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-        },
+        headers: headers,
       );
+      
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        return data['data'] ?? data; // Sesuaikan dengan response Laravel
       } else {
         print('Get User Failed: ${response.body}');
         return null;
