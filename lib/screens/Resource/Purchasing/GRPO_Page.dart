@@ -17,10 +17,7 @@ import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/services/GrpoService.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/screens/DashboardPage.dart';
-<<<<<<< HEAD
-=======
 import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
->>>>>>> 15df221166c603545acd598fe6df3734adfcf758
 import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
@@ -1997,50 +1994,14 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
   final List<Map<String, dynamic>> _items = [];
   List<File> _files = [];
   bool _isSubmitting = false;
-  List<dynamic> _availablePOs = [];
-  String? _selectedPONumber; // <-- Add this line
 
   final GrpoService _grpoService = GrpoService();
 
   @override
   void initState() {
     super.initState();
-    _fetchAvailablePOs();
     _addItem();
     _supplierController.text = 'MTP';
-  }
-
-  Future<void> _fetchAvailablePOs() async {
-    final pos = await _grpoService.fetchShippingPOs();
-    setState(() {
-      _availablePOs = pos;
-      // Reset _selectedPONumber jika tidak ada di list
-      if (_selectedPONumber == null ||
-          !_availablePOs.any(
-            (po) => po['purchaseOrderNumber'] == _selectedPONumber,
-          )) {
-        _selectedPONumber = null;
-      }
-    });
-  }
-
-  Future<void> _fillFormFromPO(dynamic po) async {
-    setState(() {
-      _poController.text = po['purchaseOrderNumber'] ?? '';
-      _supplierController.text = po['supplier'] ?? '';
-      // Kosongkan dan isi ulang _items
-      _items.clear();
-      for (var item in po['items'] ?? []) {
-        _items.add({
-          'code': TextEditingController(text: item['item_code'] ?? ''),
-          'name': TextEditingController(text: item['item_name'] ?? ''),
-          'qty': TextEditingController(
-            text: item['quantity']?.toString() ?? '1',
-          ),
-          'unit': item['unit'] ?? 'PCS',
-        });
-      }
-    });
   }
 
   void _addItem() {
@@ -2169,7 +2130,7 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
           '${_receiveDate!.year}-${_receiveDate!.month.toString().padLeft(2, '0')}-${_receiveDate!.day.toString().padLeft(2, '0')}';
 
       print('Submitting GRPO with data:');
-      print('no_po: ${_poController.text.trim()}');
+      print('purchase_order_number: ${_poController.text.trim()}');
       print('receive_date: $dateStr');
       print('expense_type: ${_expenseType ?? 'Inventory'}');
       print('shipper_name: ${_shipperController.text.trim()}');
@@ -2178,7 +2139,7 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
       print('files count: ${_files.length}');
 
       await _grpoService.createGrpo(
-        noPo: _poController.text.trim(),
+        purchaseOrderNumber: _poController.text.trim(),
         receiveDate: dateStr,
         expenseType: _expenseType ?? 'Inventory',
         shipperName: _shipperController.text.trim(),
@@ -2247,34 +2208,6 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    DropdownButtonFormField<String>(
-                      value: _selectedPONumber,
-                      items: _availablePOs.map<DropdownMenuItem<String>>((po) {
-                        return DropdownMenuItem<String>(
-                          value: po['purchaseOrderNumber'],
-                          child: Text(po['purchaseOrderNumber'] ?? ''),
-                        );
-                      }).toList(),
-                      onChanged: (poNumber) async {
-                        setState(() {
-                          _selectedPONumber = poNumber;
-                          _poController.text = poNumber ?? '';
-                        });
-                        final selectedPO = _availablePOs.firstWhere(
-                          (po) => po['purchaseOrderNumber'] == poNumber,
-                          orElse: () => null,
-                        );
-                        if (selectedPO != null) {
-                          await _fillFormFromPO(selectedPO);
-                        }
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'Pilih Purchase Order',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
                     _buildSection(
                       title: "Basic Information",
                       icon: Icons.info_outline,

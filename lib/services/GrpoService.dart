@@ -155,7 +155,7 @@ class GrpoService {
 
   /// Simpan data GRPO baru
   Future<Map<String, dynamic>> createGrpo({
-    required String noPo,
+    required String purchaseOrderNumber,
     required String receiveDate,
     required String expenseType,
     required String shipperName,
@@ -177,7 +177,7 @@ class GrpoService {
     request.headers['Accept'] = 'application/json';
 
     // Basic fields
-    request.fields['no_po'] = noPo;
+    request.fields['purchase_order_number'] = purchaseOrderNumber;
     request.fields['receive_date'] = receiveDate;
     request.fields['expense_type'] = expenseType;
     request.fields['shipper_name'] = shipperName;

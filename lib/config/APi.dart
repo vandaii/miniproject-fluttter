@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 
 class ApiConfig {
-  static const String baseUrl = 'http://192.168.119.54:8000/api';
+  static const String baseUrl = 'http://192.168.134.121:8000/api';
 
   static http.Client client = IOClient(
     HttpClient()

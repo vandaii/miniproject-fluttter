@@ -23,7 +23,7 @@ import 'dart:ui';
 class DirectPurchasePage extends StatefulWidget {
   final int selectedIndex;
   const DirectPurchasePage({this.selectedIndex = 11, Key? key})
-      : super(key: key);
+    : super(key: key);
 
   @override
   _DirectPurchasePageState createState() => _DirectPurchasePageState();
@@ -306,9 +306,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
                 const SizedBox(width: 14),
                 _modernHeaderIcon(
                   icon: Icons.filter_alt_outlined,
-                  onTap: () {
-                    // TODO: Implement filter logic
-                  },
+                  onTap: () {},
                   isMobile: isMobile,
                   color: deepPink,
                 ),
@@ -325,26 +323,25 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _errorMessage != null
-                    ? Center(child: Text(_errorMessage!))
-                    : _directPurchases.isEmpty
-                        ? Center(
-                            child: Text(
-                              'Tidak ada data',
-                              style: GoogleFonts.poppins(fontSize: 16),
-                            ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: _fetchDirectPurchases,
-                            child: ListView.builder(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 20),
-                              itemCount: _directPurchases.length,
-                              itemBuilder: (context, index) {
-                                final item = _directPurchases[index];
-                                return _buildDirectPurchaseCardFromApi(item);
-                              },
-                            ),
-                          ),
+                ? Center(child: Text(_errorMessage!))
+                : _directPurchases.isEmpty
+                ? Center(
+                    child: Text(
+                      'Tidak ada data',
+                      style: GoogleFonts.poppins(fontSize: 16),
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _fetchDirectPurchases,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: _directPurchases.length,
+                      itemBuilder: (context, index) {
+                        final item = _directPurchases[index];
+                        return _buildDirectPurchaseCardFromApi(item);
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
@@ -436,31 +433,6 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
   Widget _buildDirectPurchaseCardFromApi(dynamic item) {
     // Mapping status dan badge
 
-    String status = item['status'] ?? 'Unknown';
-    Color badgeColor, badgeTextColor;
-    IconData badgeIcon;
-
-    switch (status) {
-      case 'Pending Area Manager':
-        badgeColor = const Color(0xFFFFF9C4); // Light Yellow
-        badgeTextColor = const Color(0xFFFBC02D); // Amber
-        badgeIcon = Icons.hourglass_top_rounded;
-        break;
-      case 'Approved Area Manager':
-        badgeColor = const Color(0xFFD1C4E9); // Light Purple
-        badgeTextColor = const Color(0xFF5E35B1); // Deep Purple
-        badgeIcon = Icons.verified_user_rounded;
-        break;
-      case 'Approved':
-        badgeColor = const Color(0xFFC8E6C9); // Light Green
-        badgeTextColor = const Color(0xFF388E3C); // Green
-        badgeIcon = Icons.check_circle_rounded;
-        break;
-      default:
-        badgeColor = Colors.grey.shade200;
-        badgeTextColor = Colors.grey.shade800;
-        badgeIcon = Icons.info_outline_rounded;
-=======
     String status = item['status'] ?? '';
     Color badgeColor = Colors.grey.shade200;
     Color badgeTextColor = Colors.grey;
@@ -1113,8 +1085,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
               title,
               style: GoogleFonts.poppins(
                 color: highlightParent ? deepPink : Colors.grey[800],
-                fontWeight:
-                    highlightParent ? FontWeight.bold : FontWeight.w500,
+                fontWeight: highlightParent ? FontWeight.bold : FontWeight.w500,
                 fontSize: 14,
               ),
             ),
@@ -2020,8 +1991,9 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
   }
 
   Widget _buildNotificationBubbleContent() {
-    final List<Map<String, dynamic>> previewNotifs =
-        notifications.take(4).toList();
+    final List<Map<String, dynamic>> previewNotifs = notifications
+        .take(4)
+        .toList();
     double screenWidth = MediaQuery.of(context).size.width;
     bool isMobile = screenWidth < 600;
     return Material(
@@ -2045,9 +2017,10 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
                 child: ClipPath(
                   clipper: TriangleClipper(),
                   child: Container(
-                      color: Colors.white.withOpacity(0.98),
-                      height: 10,
-                      width: 18),
+                    color: Colors.white.withOpacity(0.98),
+                    height: 10,
+                    width: 18,
+                  ),
                 ),
               ),
             ),
@@ -2196,7 +2169,7 @@ class TriangleClipper extends CustomClipper<Path> {
 class _AddDirectPurchaseFormContent extends StatefulWidget {
   final VoidCallback onSuccess;
   const _AddDirectPurchaseFormContent({Key? key, required this.onSuccess})
-      : super(key: key);
+    : super(key: key);
 
   @override
   State<_AddDirectPurchaseFormContent> createState() =>
