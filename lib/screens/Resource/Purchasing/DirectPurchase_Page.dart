@@ -19,7 +19,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
+import 'package:miniproject_flutter/widgets/Dashboard/AnimatedSidebar.dart';
 
 class DirectPurchasePage extends StatefulWidget {
   final int selectedIndex;
@@ -124,7 +126,68 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
       _expandedMenuIndex = STOCK_MANAGEMENT_MENU;
     }
     _fetchDirectPurchases();
+    // Tambahkan dummy data jika kosong (untuk testing UI)
+    Future.delayed(Duration(milliseconds: 500), () {
+      if (mounted && _directPurchases.isEmpty) {
+        setState(() {
+          _directPurchases = [
+            {
+              'no_direct': 'DP-2024-0001',
+              'supplier': 'PT. Sumber Makmur',
+              'directPurchaseDate': DateTime.now().toIso8601String(),
+              'status': 'Pending Area Manager',
+              'items': [
+                {
+                  'itemName': 'Gula',
+                  'quantity': 10,
+                  'price': 15000,
+                  'totalPrice': 150000,
+                },
+                {
+                  'itemName': 'Kopi',
+                  'quantity': 5,
+                  'price': 30000,
+                  'totalPrice': 150000,
+                },
+              ],
+              'totalAmount': 300000,
+              'expenseType': 'Inventory',
+              'note': 'Pembelian bahan baku',
+              'purchase_proof': '-',
+            },
+            {
+              'no_direct': 'DP-2024-0002',
+              'supplier': 'CV. Aneka Jaya',
+              'directPurchaseDate': DateTime.now()
+                  .subtract(Duration(days: 2))
+                  .toIso8601String(),
+              'status': 'Approved',
+              'items': [
+                {
+                  'itemName': 'Susu',
+                  'quantity': 20,
+                  'price': 12000,
+                  'totalPrice': 240000,
+                },
+              ],
+              'totalAmount': 240000,
+              'expenseType': 'Non Inventory',
+              'note': 'Pembelian susu',
+              'purchase_proof': '-',
+            },
+          ];
+        });
+      }
+    });
+    _headerAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
     _notificationAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _emailAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
@@ -132,19 +195,28 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
 
   @override
   void dispose() {
-    _notificationAnimationController.dispose();
+    // Hapus overlay SEBELUM dispose controller
     if (_notificationOverlayEntry != null) {
       _notificationOverlayEntry!.remove();
       _notificationOverlayEntry = null;
     }
+    if (_emailOverlayEntry != null) {
+      _emailOverlayEntry!.remove();
+      _emailOverlayEntry = null;
+    }
+    _headerAnimationController.dispose();
+    _notificationAnimationController.dispose();
+    _emailAnimationController.dispose();
     super.dispose();
   }
 
-  final Color primaryColor = const Color(0xFFF8BBD0);
+  // color palate
+  final Color pastelPink = const Color(0xFFF8BBD0);
   final Color deepPink = const Color.fromARGB(255, 233, 30, 99);
   final Color lightPink = const Color(0xFFFCE4EC);
   final Color accentPurple = const Color(0xFF7B1FA2);
 
+  //define menu indexes
   static const int PURCHASING_MENU = 1;
   static const int STOCK_MANAGEMENT_MENU = 2;
 
@@ -272,7 +344,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
             bottomRight: Radius.circular(32),
           ),
           child: AppBar(
-            backgroundColor: const Color.fromARGB(255, 233, 30, 99),
+            backgroundColor: const Color.fromARGB(255, 255, 30, 105),
             elevation: 0,
             automaticallyImplyLeading: false,
             toolbarHeight: isMobile ? 72 : 84,
@@ -302,11 +374,27 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
                           color: Colors.white,
                         ),
                       ),
+                    )
+                  else
+                    Container(
+                      margin: const EdgeInsets.only(left: 4),
+                      child: _modernHeaderIcon(
+                        icon: Icons.grid_view_rounded,
+                        onTap: () {
+                          setState(() {
+                            _isSidebarExpanded = !_isSidebarExpanded;
+                          });
+                        },
+                        isMobile: false,
+                        glass: true,
+                        iconSize: 24,
+                        color: Colors.white,
+                      ),
                     ),
                   if (isMobile) const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Direct Purchase',
+                      'Haus Inventory',
                       style: GoogleFonts.poppins(
                         fontWeight: FontWeight.bold,
                         fontSize: isMobile ? 20 : 24,
@@ -319,7 +407,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _modernHeaderIconBar(isMobile),
+                  _modernHeaderIconBarNoSearch(isMobile),
                 ],
               ),
             ),
@@ -327,374 +415,875 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
         ),
       ),
       drawer: Drawer(
-        child: _buildSidebarContent(
-          isMobile: true,
-          closeDrawer: () => Navigator.pop(context),
-        ),
-      ),
-      backgroundColor: const Color(0xFFF3F4F6),
-      body: Column(
-        children: [
-          // Search Bar & Filter
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-            child: Row(
-              children: [
-                Expanded(child: _buildModernSearchBar()),
-                const SizedBox(width: 14),
-                _modernHeaderIcon(
-                  icon: Icons.filter_alt_outlined,
-                  onTap: () {
-                    // TODO: Implement filter logic
-                  },
-                  isMobile: isMobile,
-                  color: deepPink,
-                ),
-              ],
-            ),
-          ),
-          // Status Tabs
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8.0),
-            child: _buildStatusTabs(),
-          ),
-          // Content
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _errorMessage != null
-                    ? Center(child: Text(_errorMessage!))
-                    : _directPurchases.isEmpty
-                        ? Center(
-                            child: Text(
-                              'Tidak ada data',
-                              style: GoogleFonts.poppins(fontSize: 16),
-                            ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: _fetchDirectPurchases,
-                            child: ListView.builder(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 20),
-                              itemCount: _directPurchases.length,
-                              itemBuilder: (context, index) {
-                                final item = _directPurchases[index];
-                                return _buildDirectPurchaseCardFromApi(item);
-                              },
-                            ),
-                          ),
-          ),
-        ],
-      ),
-      floatingActionButton: Tooltip(
-        message: "Add New Direct Purchase",
-        child: FloatingActionButton(
-          onPressed: _showAddDirectPurchaseForm,
-          backgroundColor: deepPink,
-          child: const Icon(Icons.add, size: 30, color: Colors.white),
-          shape: const CircleBorder(),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-    );
-  }
-
-  Widget _buildModernSearchBar() {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16.0),
-      elevation: 4.0,
-      shadowColor: Colors.black.withOpacity(0.05),
-      child: TextField(
-        onChanged: _onSearchChanged,
-        style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
-        decoration: InputDecoration(
-          prefixIcon: Icon(Icons.search, color: Colors.grey[500], size: 22),
-          hintText: 'Search by No Direct, Supplier, etc.',
-          hintStyle: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 14),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 16,
-            horizontal: 18,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusTabs() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(6),
-      child: Row(
-        children: [
-          _buildTabItem('Outstanding', true),
-          _buildTabItem('Approved', false),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabItem(String title, bool isOutstandingTab) {
-    final isSelected = isOutstandingSelected == isOutstandingTab;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => _onTabChanged(isOutstandingTab),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Container(
           decoration: BoxDecoration(
-            color: isSelected ? deepPink : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              color: isSelected ? Colors.white : Colors.grey[600],
-              fontSize: 15,
+            color: Colors.white.withOpacity(0.75),
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(32),
+              bottomRight: Radius.circular(32),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.07),
+                blurRadius: 24,
+                offset: Offset(4, 0),
+              ),
+            ],
+            border: Border.all(color: Color(0xFFE0E0E0), width: 1),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDirectPurchaseCardFromApi(dynamic item) {
-    // Mapping status dan badge
-
-    String status = item['status'] ?? 'Unknown';
-    Color badgeColor, badgeTextColor;
-    IconData badgeIcon;
-
-    switch (status) {
-      case 'Pending Area Manager':
-        badgeColor = const Color(0xFFFFF9C4); // Light Yellow
-        badgeTextColor = const Color(0xFFFBC02D); // Amber
-        badgeIcon = Icons.hourglass_top_rounded;
-        break;
-      case 'Approved Area Manager':
-        badgeColor = const Color(0xFFD1C4E9); // Light Purple
-        badgeTextColor = const Color(0xFF5E35B1); // Deep Purple
-        badgeIcon = Icons.verified_user_rounded;
-        break;
-      case 'Approved':
-        badgeColor = const Color(0xFFC8E6C9); // Light Green
-        badgeTextColor = const Color(0xFF388E3C); // Green
-        badgeIcon = Icons.check_circle_rounded;
-        break;
-      default:
-        badgeColor = Colors.grey.shade200;
-        badgeTextColor = Colors.grey.shade800;
-        badgeIcon = Icons.info_outline_rounded;
-=======
-    String status = item['status'] ?? '';
-    Color badgeColor = Colors.grey.shade200;
-    Color badgeTextColor = Colors.grey;
-    IconData badgeIcon = Icons.info_outline;
-    String badgeText = status;
-    if (status == 'Pending Area Manager') {
-      badgeColor = const Color(0xFFFFF9C4);
-      badgeTextColor = const Color(0xFFFBC02D);
-      badgeIcon = Icons.hourglass_empty_rounded;
-      badgeText = 'Pending Area Manager';
-    } else if (status == 'Approved Area Manager') {
-      badgeColor = const Color.fromARGB(255, 144, 202, 249);
-      badgeTextColor = const Color.fromARGB(255, 21, 101, 192);
-      badgeIcon = Icons.verified_user_rounded;
-      badgeText = 'Approved Area Manager';
-    } else if (status == 'Approved') {
-      badgeColor = const Color(0xFFC8E6C9);
-      badgeTextColor = const Color(0xFF388E3C);
-      badgeIcon = Icons.verified_rounded;
-      badgeText = status;
-    }
-
-    return Card(
-      elevation: 4,
-      shadowColor: Colors.black.withOpacity(0.05),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      margin: const EdgeInsets.only(bottom: 16),
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header: No Direct & Status
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'NO. DIRECT PURCHASE',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[500],
-                        ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(32),
+              bottomRight: Radius.circular(32),
+            ),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Column(
+                children: [
+                  // Logo dan nama aplikasi
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.7),
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(32),
+                        bottomLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(20),
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              getNoDirect(item),
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: deepPink,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Color(0xFFF8BBD0),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: EdgeInsets.all(6),
+                          child: Image.asset(
+                            'assets/images/icons-haus.png',
+                            height: 32,
+                            width: 32,
+                          ),
+                        ),
+                        if (_isSidebarExpanded) const SizedBox(width: 14),
+                        if (_isSidebarExpanded)
+                          Text(
+                            'haus! Inventory',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 19,
+                              color: Color(0xFFE91E63),
+                              letterSpacing: 0.2,
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          IconButton(
-                            icon: Icon(
-                              Icons.copy,
-                              size: 18,
-                              color: Colors.grey[400],
+                      ],
+                    ),
+                  ),
+                  if (_isSidebarExpanded) _buildStoreDropdown(),
+                  // Menu Items dengan Expanded
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        children: [
+                          if (_isSidebarExpanded)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'GENERAL',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: Colors.black54,
+                                      letterSpacing: 1,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Container(
+                                    height: 1,
+                                    width: 80,
+                                    color: Colors.grey.withOpacity(0.13),
+                                  ),
+                                ],
+                              ),
                             ),
-                            tooltip: 'Copy No Direct',
-                            onPressed: () {
-                              Clipboard.setData(
-                                ClipboardData(text: getNoDirect(item)),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('No Direct berhasil disalin!'),
-                                  backgroundColor: Colors.green,
-                                  duration: Duration(seconds: 1),
-                                ),
-                              );
+                          _buildMenuItem(
+                            icon: Icons.dashboard_outlined,
+                            title: 'Dashboard',
+                            index: 0,
+                            onTap: () {
+                              if (_selectedIndex != 0) {
+                                _navigateToPage(0);
+                              }
                             },
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+                          ),
+                          _buildExpandableMenu(
+                            icon: Icons.shopping_cart_outlined,
+                            title: 'Purchasing',
+                            isExpanded: _isMenuExpanded(PURCHASING_MENU, [
+                              11,
+                              12,
+                            ]),
+                            menuIndex: PURCHASING_MENU,
+                            children: [
+                              _buildSubMenuItem('Direct Purchase', 11),
+                              _buildSubMenuItem('GRPO', 12),
+                            ],
+                            onTap: () {
+                              if (_selectedIndex != PURCHASING_MENU) {
+                                _navigateToPage(PURCHASING_MENU);
+                              }
+                            },
+                          ),
+                          _buildExpandableMenu(
+                            icon: Icons.inventory_2_outlined,
+                            title: 'Stock Management',
+                            isExpanded: _isMenuExpanded(STOCK_MANAGEMENT_MENU, [
+                              21,
+                              22,
+                              23,
+                              24,
+                              25,
+                            ]),
+                            menuIndex: STOCK_MANAGEMENT_MENU,
+                            children: [
+                              _buildSubMenuItem('Material Request', 21),
+                              _buildSubMenuItem('Material Calculate', 25),
+                              _buildSubMenuItem('Stock Opname', 22),
+                              _buildSubMenuItem('Transfer Stock', 23),
+                              _buildSubMenuItem('Waste', 24),
+                            ],
+                            onTap: () {
+                              if (_selectedIndex != STOCK_MANAGEMENT_MENU) {
+                                _navigateToPage(STOCK_MANAGEMENT_MENU);
+                              }
+                            },
+                          ),
+                          _buildMenuItem(
+                            icon: Icons.assessment_outlined,
+                            title: 'Inventory Report',
+                            index: 3,
+                            onTap: () {
+                              if (_selectedIndex != 3) {
+                                _navigateToPage(3);
+                              }
+                            },
+                          ),
+                          if (_isSidebarExpanded)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'TOOLS',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: Colors.black54,
+                                      letterSpacing: 1,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Container(
+                                    height: 1,
+                                    width: 80,
+                                    color: Colors.grey.withOpacity(0.13),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          _buildMenuItem(
+                            icon: Icons.settings_outlined,
+                            title: 'Account & Settings',
+                            index: 4,
+                            onTap: () {
+                              if (_selectedIndex != 4) {
+                                _navigateToPage(4);
+                              }
+                            },
+                          ),
+                          _buildMenuItem(
+                            icon: Icons.help_outline,
+                            title: 'Help',
+                            index: 5,
+                            onTap: () {
+                              if (_selectedIndex != 5) {
+                                _navigateToPage(5);
+                              }
+                            },
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
+                  if (_isSidebarExpanded)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 18,
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: _buildProfileDropdown(),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: SingleChildScrollView(
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 16 : 32,
+                  vertical: isMobile ? 16 : 24,
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: badgeColor,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(badgeIcon, color: badgeTextColor, size: 16),
-                      const SizedBox(width: 6),
-                      Text(
-                        status,
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          color: badgeTextColor,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header Section
+                    _buildAIHeaderSection(),
+                    SizedBox(height: 24),
+                    SizedBox(height: 16),
+                    // Card besar pembungkus tab dan data
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(32),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 12,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      padding: EdgeInsets.fromLTRB(16, 16, 16, 24),
+                      margin: EdgeInsets.only(bottom: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildQuantumTabNavigation(),
+                          SizedBox(height: 16),
+                          _isLoading
+                              ? _buildHolographicLoading()
+                              : _errorMessage != null
+                              ? _buildErrorDisplay()
+                              : _directPurchases.isEmpty
+                              ? _buildHolographicEmptyState()
+                              : _buildHolographicDataGrid(),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (isMobile)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 24,
+              child: Center(child: _MobileFloatingNavBarGlass()),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // AI-Powered Header Section
+  Widget _buildAIHeaderSection() {
+    return Container(
+      padding: EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Color(0xFFE91E63), // solid merah muda mencolok
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          // Header Row
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  Icons.shopping_cart_checkout_rounded,
+                  color: Color(0xFFE91E63),
+                  size: 32,
+                ),
+              ),
+              SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'Haus Inventory',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.roboto(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
                         ),
                       ),
-                    ],
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Inventory Management System',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.roboto(
+                        fontSize: 15,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 0.1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          // Search and Filter Row
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: TextField(
+                    onChanged: _onSearchChanged,
+                    style: GoogleFonts.roboto(
+                      fontSize: 16,
+                      color: Colors.grey[800],
+                      fontWeight: FontWeight.w500,
+                    ),
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Colors.grey[600],
+                        size: 22,
+                      ),
+                      hintText: 'Search for direct purchases...',
+                      hintStyle: GoogleFonts.roboto(
+                        color: Colors.grey[500],
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[400]!),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 14,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: _fetchDirectPurchases,
+                    child: Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Icon(
+                        Icons.tune,
+                        color: Color(0xFFE91E63),
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Quantum Tab Navigation
+  Widget _buildQuantumTabNavigation() {
+    final tabData = [
+      {'label': 'Outstanding', 'icon': Icons.timelapse},
+      {'label': 'Approved', 'icon': Icons.verified},
+      {'label': 'Rejected', 'icon': Icons.close},
+    ];
+    final List<GlobalKey> tabKeys = List.generate(
+      tabData.length,
+      (_) => GlobalKey(),
+    );
+    return StatefulBuilder(
+      builder: (context, setTabState) {
+        double indicatorLeft = 0;
+        double indicatorWidth = 60; // fallback default width
+        void updateIndicator() {
+          final keyContext = tabKeys[_tabIndex].currentContext;
+          if (keyContext != null) {
+            final box = keyContext.findRenderObject() as RenderBox;
+            final offset = box.localToGlobal(
+              Offset.zero,
+              ancestor: context.findRenderObject(),
+            );
+            final parentOffset = (context.findRenderObject() as RenderBox)
+                .localToGlobal(Offset.zero);
+            final newLeft = offset.dx - parentOffset.dx;
+            final newWidth = box.size.width;
+            if (indicatorLeft != newLeft || indicatorWidth != newWidth) {
+              setTabState(() {
+                indicatorLeft = newLeft;
+                indicatorWidth = newWidth;
+              });
+            }
+          } else {
+            setTabState(() {
+              indicatorLeft = 0;
+              indicatorWidth = 60;
+            });
+          }
+        }
+
+        WidgetsBinding.instance.addPostFrameCallback((_) => updateIndicator());
+        return Container(
+          padding: EdgeInsets.symmetric(vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: SizedBox(
+            height: 48,
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (notif) {
+                WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => updateIndicator(),
+                );
+                return false;
+              },
+              child: Stack(
+                children: [
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: List.generate(tabData.length, (i) {
+                        final isSelected = _tabIndex == i;
+                        return Container(
+                          key: tabKeys[i],
+                          margin: EdgeInsets.symmetric(horizontal: 4),
+                          child: GestureDetector(
+                            onTap: () {
+                              _onTabChanged(i);
+                              setTabState(() {});
+                            },
+                            child: AnimatedContainer(
+                              duration: Duration(milliseconds: 250),
+                              curve: Curves.ease,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    tabData[i]['icon'] as IconData,
+                                    color: isSelected
+                                        ? Color(0xFF1976D2)
+                                        : Colors.grey[500],
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    tabData[i]['label'] as String,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: isSelected
+                                          ? Color(0xFF1976D2)
+                                          : Colors.grey[700],
+                                      fontSize: 15,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                  // Animated border indicator di bawah tab
+                  AnimatedPositioned(
+                    duration: Duration(milliseconds: 350),
+                    curve: Curves.easeInOutCubic,
+                    left: indicatorLeft,
+                    bottom: 0,
+                    width: indicatorWidth,
+                    height: 3,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(2),
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF1976D2), Color(0xFF7B1FA2)],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildQuantumTabButton({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      margin: EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        gradient: isSelected
+            ? LinearGradient(
+                colors: [Color(0xFFE040FB), Color(0xFF7B1FA2)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
+        color: isSelected ? null : Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: Color(0xFFE040FB).withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ]
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  color: isSelected ? Colors.white : Colors.grey[600],
+                  size: 20,
+                ),
+                SizedBox(width: 8),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.orbitron(
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? Colors.white : Colors.grey[600],
+                        fontSize: 14,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 12),
-            // Details: Supplier and Date
-            _buildInfoRow(
-              icon: Icons.store_mall_directory_outlined,
-              label: 'Supplier',
-              value: item['supplier'] ?? '-',
-            ),
-            const SizedBox(height: 12),
-            _buildInfoRow(
-              icon: Icons.calendar_today_outlined,
-              label: 'Date',
-              value: getDate(item),
-            ),
-            const SizedBox(height: 20),
-            // Action Button
-            Align(
-              alignment: Alignment.bottomRight,
-              child: ElevatedButton.icon(
-                onPressed: () => _showDetailPopup(item),
-                icon: const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 14,
-                  color: Colors.white,
-                ),
-                label: Text(
-                  'View Details',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: deepPink,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildInfoRow({
+  // Holographic Data Grid
+  Widget _buildHolographicDataGrid() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.only(bottom: 20),
+      itemCount: _directPurchases.length,
+      itemBuilder: (context, index) {
+        return _buildHolographicCard(_directPurchases[index]);
+      },
+    );
+  }
+
+  Widget _buildHolographicCard(dynamic item) {
+    String status = item['status'] ?? '';
+    Color statusColor = _getStatusColor(status);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        // Tidak ada color, transparan agar menyatu dengan card besar
+      ),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.5,
+        ),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with status
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFFE040FB), Color(0xFF7B1FA2)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0xFFE040FB).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.shopping_cart,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          getNoDirect(item),
+                          style: GoogleFonts.orbitron(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Color(0xFF1A1A2E),
+                            letterSpacing: 0.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 4),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: statusColor.withOpacity(0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            status,
+                            style: GoogleFonts.orbitron(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: statusColor,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              _buildDataRow(
+                icon: Icons.store,
+                label: 'Supplier',
+                value: item['supplier'] ?? '-',
+                iconColor: Color(0xFFE040FB),
+              ),
+              SizedBox(height: 12),
+              _buildDataRow(
+                icon: Icons.calendar_today,
+                label: 'Date',
+                value: getDate(item),
+                iconColor: Color(0xFF4CAF50),
+              ),
+              SizedBox(height: 12),
+              _buildDataRow(
+                icon: Icons.inventory_2,
+                label: 'Items',
+                value: '${item['items']?.length ?? 0} items',
+                iconColor: Color(0xFFFF9800),
+              ),
+              SizedBox(height: 12),
+              if (item['totalAmount'] != null)
+                _buildDataRow(
+                  icon: Icons.attach_money,
+                  label: 'Total',
+                  value: item['totalAmount'].toString(),
+                  iconColor: Color(0xFF4CAF50),
+                ),
+              SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _showDetailPopup(item),
+                  icon: Icon(Icons.visibility, size: 18),
+                  label: Text(
+                    'View Details',
+                    style: GoogleFonts.orbitron(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFFE040FB),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDataRow({
     required IconData icon,
     required String label,
     required String value,
+    required Color iconColor,
   }) {
     return Row(
       children: [
-        Icon(icon, color: Colors.grey[500], size: 20),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[800],
+        Container(
+          padding: EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: iconColor.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: iconColor, size: 16),
+        ),
+        SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-          ],
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.orbitron(
+                  fontSize: 13,
+                  color: Color(0xFF1A1A2E),
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -3009,10 +3598,7 @@ class _AddDirectPurchaseFormContentState
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: Colors.grey[400]!),
             ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
+            contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
           ),
         ),
       ],
