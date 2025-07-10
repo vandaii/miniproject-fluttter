@@ -8,17 +8,12 @@ import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialCa
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/StockOpname_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/TransferStock_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialRequest_Page.dart';
-import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
-import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/UserProfile_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Help_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/Waste_Page.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/services/GrpoService.dart';
-import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/screens/DashboardPage.dart';
-import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
-import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 
