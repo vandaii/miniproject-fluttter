@@ -35,7 +35,7 @@ class AuthService {
         ..fields['phone'] = phone;
 
       if (storeLocation != null) {
-        request.fields['store_location_id'] = storeLocation;
+        request.fields['store_location'] = storeLocation;
       }
 
       if (photoProfile != null) {
@@ -47,14 +47,19 @@ class AuthService {
       var streamedResponse = await client.send(request);
       var response = await http.Response.fromStream(streamedResponse);
 
-      final resData = jsonDecode(response.body);
-      print('Register Response: $resData');
-
+      // Cek status code dan tipe response
       if (response.statusCode == 200 || response.statusCode == 201) {
-        await storage.write(key: 'token', value: resData['access_token']);
-        return true;
+        try {
+          final resData = jsonDecode(response.body);
+          await storage.write(key: 'token', value: resData['access_token']);
+          return true;
+        } catch (e) {
+          print('Gagal decode JSON: ${response.body}');
+          return false;
+        }
       } else {
-        print('Register Failed: ${resData['message']}');
+        print('Register gagal. Status: ${response.statusCode}');
+        print('Response: ${response.body}');
         return false;
       }
     } catch (e) {
@@ -118,7 +123,7 @@ class AuthService {
     required String email,
     required String token,
     required String password,
-    required String confirmPassword,
+    required String passwordConfirmation, // ganti nama variabel agar jelas
   }) async {
     final url = Uri.parse('$baseUrl/reset-password');
 
@@ -130,7 +135,8 @@ class AuthService {
           'email': email,
           'token': token,
           'password': password,
-          'password_confirmation': confirmPassword,
+          'password_confirmation':
+              passwordConfirmation, // harus sama dengan backend
         }),
       );
 
@@ -142,6 +148,32 @@ class AuthService {
         return {
           'status': false,
           'message': data['message'] ?? 'Reset password gagal',
+        };
+      }
+    } catch (e) {
+      return {'status': false, 'message': 'Gagal menghubungi server: $e'};
+    }
+  }
+
+  /// VERIFY OTP
+  Future<Map<String, dynamic>> verifyOtp({
+    required String email,
+    required String token,
+  }) async {
+    final url = Uri.parse('$baseUrl/validate-token');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'token': token}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['status'] == 'success') {
+        return {'status': true, 'message': data['message']};
+      } else {
+        return {
+          'status': false,
+          'message': data['message'] ?? 'Kode OTP tidak valid',
         };
       }
     } catch (e) {
@@ -166,14 +198,16 @@ class AuthService {
       var request = http.MultipartRequest('POST', uri);
       request.headers['Authorization'] = 'Bearer $token';
       request.headers['Accept'] = 'application/json';
-      
+
       // Hanya tambahkan field yang tidak null
       if (name != null) request.fields['name'] = name;
       if (email != null) request.fields['email'] = email;
       if (phone != null) request.fields['phone'] = phone;
       if (password != null) request.fields['password'] = password;
-      if (confirmPassword != null) request.fields['password_confirmation'] = confirmPassword;
-      if (storeLocation != null) request.fields['store_location'] = storeLocation;
+      if (confirmPassword != null)
+        request.fields['password_confirmation'] = confirmPassword;
+      if (storeLocation != null)
+        request.fields['store_location'] = storeLocation;
 
       if (photoProfile != null) {
         request.files.add(
@@ -202,9 +236,9 @@ class AuthService {
           Uri.parse('$baseUrl/logout'),
           headers: headers,
         );
-        
+
         await storage.delete(key: 'token');
-        
+
         if (response.statusCode != 200) {
           throw Exception('Logout failed: ${response.statusCode}');
         }
@@ -224,13 +258,13 @@ class AuthService {
     try {
       final token = await storage.read(key: 'token');
       if (token == null) return null;
-      
+
       final headers = await ApiConfig.getHeadersWithAuth();
       final response = await client.get(
         Uri.parse('$baseUrl/profile'),
         headers: headers,
       );
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return data['data'] ?? data; // Sesuaikan dengan response Laravel

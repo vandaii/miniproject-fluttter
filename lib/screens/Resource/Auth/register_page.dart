@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/widgets/customPageRegister.dart';
 
@@ -8,6 +9,7 @@ class RegisterPage extends StatefulWidget {
   @override
   State<RegisterPage> createState() => _RegisterPageState();
 }
+
 class _RegisterPageState extends State<RegisterPage> {
   final _employeeIdController = TextEditingController();
   final _nameController = TextEditingController();
@@ -295,6 +297,44 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ),
           FooterImage(),
+          if (_isLoading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.3),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Bisa pakai CircularProgressIndicator atau Lottie
+                        SizedBox(
+                          width: 60,
+                          height: 60,
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.pinkAccent),
+                            strokeWidth: 4,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Memproses...',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

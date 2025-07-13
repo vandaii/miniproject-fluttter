@@ -43,115 +43,157 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 24),
-            const LogoSection(),
-            const SizedBox(height: 60),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 24),
+                const LogoSection(),
+                const SizedBox(height: 60),
 
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: LoginForm(
-                  idController: _idController,
-                  passwordController: _passwordController,
-                  isPasswordVisible: _isPasswordVisible,
-                  onPasswordToggle: () {
-                    setState(() {
-                      _isPasswordVisible = !_isPasswordVisible;
-                    });
-                  },
-                  rememberMe: _rememberMe,
-                  onRememberMeChanged: (val) =>
-                      setState(() => _rememberMe = val!),
-                  isLoading: _isLoading,
-                  onLoginPressed: () async {
-                    final id = _idController.text.trim();
-                    final password = _passwordController.text;
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: LoginForm(
+                      idController: _idController,
+                      passwordController: _passwordController,
+                      isPasswordVisible: _isPasswordVisible,
+                      onPasswordToggle: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                      rememberMe: _rememberMe,
+                      onRememberMeChanged: (val) =>
+                          setState(() => _rememberMe = val!),
+                      isLoading: _isLoading,
+                      onLoginPressed: () async {
+                        final id = _idController.text.trim();
+                        final password = _passwordController.text;
 
-                    if (id.isEmpty || password.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Silakan isi ID dan Password.'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
+                        if (id.isEmpty || password.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Silakan isi ID dan Password.'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
 
-                    setState(() {
-                      _isLoading = true;
-                    });
+                        setState(() {
+                          _isLoading = true;
+                        });
 
-                    try {
-                      final isLoggedIn = await AuthService().login(
-                        id,
-                        password,
-                      );
-                      if (isLoggedIn) {
-                        Navigator.pushReplacement(
+                        try {
+                          final isLoggedIn = await AuthService().login(
+                            id,
+                            password,
+                          );
+                          if (isLoggedIn) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) {
+                                  var selectedIndex = 0;
+                                  return DashboardPage(
+                                    selectedIndex: selectedIndex,
+                                  );
+                                },
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                e.toString().replaceFirst("Exception: ", ""),
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        } finally {
+                          if (mounted) {
+                            setState(() {
+                              _isLoading = false;
+                            });
+                          }
+                        }
+                      },
+                      onForgetPasswordPressed: () {
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) {
-                              var selectedIndex = 0;
-                              return DashboardPage(
-                                selectedIndex: selectedIndex,
-                              );
-                            },
+                            builder: (context) => const ForgotPasswordPage(),
                           ),
                         );
-                      }
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            e.toString().replaceFirst("Exception: ", ""),
+                      },
+                      onSignUpPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterPage(),
                           ),
-                          backgroundColor: Colors.red,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+
+                if (!keyboardVisible)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 0),
+                    child: Image.asset(
+                      'assets/images/icons-logoDekoration.png',
+                      width: double.infinity,
+                      height: 140,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.bottomCenter,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if (_isLoading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.3),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Bisa pakai CircularProgressIndicator atau Lottie
+                        SizedBox(
+                          width: 60,
+                          height: 60,
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.pinkAccent),
+                            strokeWidth: 4,
+                          ),
                         ),
-                      );
-                    } finally {
-                      if (mounted) {
-                        setState(() {
-                          _isLoading = false;
-                        });
-                      }
-                    }
-                  },
-                  onForgetPasswordPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ForgotPasswordPage(),
-                      ),
-                    );
-                  },
-                  onSignUpPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const RegisterPage(),
-                      ),
-                    );
-                  },
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Memproses...',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
-
-            if (!keyboardVisible)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 0),
-                child: Image.asset(
-                  'assets/images/icons-logoDekoration.png',
-                  width: double.infinity,
-                  height: 140,
-                  fit: BoxFit.cover,
-                  alignment: Alignment.bottomCenter,
-                ),
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }
