@@ -68,12 +68,16 @@ class AuthService {
     }
   }
 
-  Future<bool> login(String login, String password) async {
+  Future<bool> login(String login, String password, bool rememberMe) async {
     try {
       final response = await client.post(
         Uri.parse('$baseUrl/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'login': login, 'password': password}),
+        body: jsonEncode({
+          'login': login,
+          'password': password,
+          'remember': rememberMe,
+        }),
       );
 
       final resData = jsonDecode(response.body);
@@ -81,6 +85,15 @@ class AuthService {
 
       if (response.statusCode == 200 && resData['status'] == 'success') {
         await storage.write(key: 'token', value: resData['token']);
+
+        if (rememberMe) {
+          await storage.write(key: 'saved_login_id', value: login);
+          await storage.write(key: 'saved_password', value: password);
+        } else {
+          await storage.delete(key: 'saved_login_id');
+          await storage.delete(key: 'saved_password');
+        }
+
         return true;
       } else {
         print('Login failed: ${resData['message']}');
@@ -181,6 +194,36 @@ class AuthService {
     }
   }
 
+  /// Resend OTP
+  Future<Map<String, dynamic>> resendOtp(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/resend-token'),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'email': email}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['status'] == 'success') {
+        return {'status': true, 'message': data['message']};
+      } else {
+        return {
+          'status': false,
+          'message': data['message'] ?? 'Failed to resend OTP',
+        };
+      }
+    } catch (e) {
+      return {
+        'status': false,
+        'message': "Failed to resend OTP. Please try again.",
+      };
+    }
+  }
+
   /// Update user profile with optional parameters
   Future<bool> updateProfile({
     String? name,
@@ -276,5 +319,11 @@ class AuthService {
       print('Get User Error: $e');
       return null;
     }
+  }
+
+  Future<Map<String, String?>> getRememberedCredentials() async {
+    final loginId = await storage.read(key: 'saved_login_id');
+    final password = await storage.read(key: 'saved_password');
+    return {'loginId': loginId, 'password': password};
   }
 }

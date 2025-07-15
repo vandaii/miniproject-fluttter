@@ -83,6 +83,7 @@ flutter:
     - assets/lottie/error404.json
     - assets/lottie/PasswordAuthentication.json
     - assets/lottie/failedinput.json
+    - assets/lottie/MessageSent.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
