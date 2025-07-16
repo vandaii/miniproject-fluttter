@@ -667,114 +667,41 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage>
           if (_isLoading)
             Positioned.fill(
               child: Container(
+                color: Colors.black.withOpacity(0.78),
                 alignment: Alignment.center,
-                color: Colors.black.withOpacity(0.48), // overlay lebih gelap
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 56,
-                  ), // padding lebih proporsional
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(
-                      38,
-                    ), // border radius lebih besar
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: 22,
-                        sigmaY: 22,
-                      ), // blur lebih nyata
-                      child: Container(
-                        width: double.infinity,
-                        constraints: const BoxConstraints(
-                          maxWidth: 370,
-                          minHeight: 260,
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 36,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.white.withOpacity(0.22),
-                              Colors.white.withOpacity(0.10),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(38),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.28),
-                            width: 1.6,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.13),
-                              blurRadius: 48,
-                              offset: Offset(0, 18),
-                            ),
-                          ],
-                        ),
-                        child: Stack(
-                          children: [
-                            // Inner shadow effect (simulasi)
-                            Positioned.fill(
-                              child: IgnorePointer(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(38),
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Colors.white.withOpacity(0.08),
-                                        Colors.transparent,
-                                        Colors.black.withOpacity(0.04),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Lottie.asset(
-                                  'assets/lottie/loader.json',
-                                  width: 150,
-                                  height: 150,
-                                  repeat: true,
-                                  animate: true,
-                                  fit: BoxFit.contain,
-                                ),
-                                const SizedBox(height: 24),
-                                Text(
-                                  'Processing...',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 21,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                    letterSpacing: 0.7,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  'Please wait while we complete your request.',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
-                                    color: Colors.white70,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Lottie.asset(
+                      'assets/lottie/loader.json',
+                      width: 220,
+                      height: 220,
+                      repeat: true,
+                      animate: true,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 0),
+                    Text(
+                      'Processing...',
+                      style: GoogleFonts.poppins(
+                        fontSize: 21,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 0.7,
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Please wait while we complete your request.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white70,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
             ),

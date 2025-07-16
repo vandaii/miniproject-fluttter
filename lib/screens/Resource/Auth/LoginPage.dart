@@ -13,7 +13,6 @@ class LoginPage extends StatefulWidget {
   final String? initialId;
   final String? initialPassword;
   final bool autoFocusId;
-  
 
   const LoginPage({
     super.key,
@@ -96,13 +95,43 @@ class _LoginPageState extends State<LoginPage> {
     String desc,
     DialogType type, {
     VoidCallback? onOk,
+    String? lottieAsset, // Tambahan parameter untuk Lottie
   }) {
     AwesomeDialog(
       context: context,
-      dialogType: type,
+      dialogType: lottieAsset != null ? DialogType.noHeader : type,
       animType: AnimType.rightSlide,
       title: title,
       desc: desc,
+      body: lottieAsset != null
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Lottie.asset(
+                  lottieAsset,
+                  width: 120,
+                  height: 120,
+                  repeat: true,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  desc,
+                  style: const TextStyle(fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            )
+          : null,
       btnOkOnPress: () {
         FocusScope.of(context).unfocus();
         if (onOk != null) onOk();
@@ -198,6 +227,7 @@ class _LoginPageState extends State<LoginPage> {
                               "Login Gagal",
                               "ID atau Password salah.",
                               DialogType.error,
+                              lottieAsset: 'assets/lottie/failedinput.json',
                             );
                           }
                         } catch (e) {
@@ -212,6 +242,7 @@ class _LoginPageState extends State<LoginPage> {
                               "Gagal Terhubung",
                               "Tidak dapat terhubung ke server.",
                               DialogType.warning,
+                              lottieAsset: 'assets/lottie/error404.json',
                             );
                           } else {
                             showSweetAlert(
@@ -274,13 +305,13 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     Lottie.asset(
                       'assets/lottie/loader.json',
-                      width: 150,
-                      height: 150,
+                      width: 220,
+                      height: 220,
                       repeat: true,
                       animate: true,
                       fit: BoxFit.contain,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 0),
                     Text(
                       'Processing...',
                       style: GoogleFonts.poppins(

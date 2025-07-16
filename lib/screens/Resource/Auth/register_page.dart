@@ -46,6 +46,100 @@ class _RegisterPageState extends State<RegisterPage> {
     ).show();
   }
 
+  // Fungsi reusable untuk dialog input
+  Future<void> _showInputDialog({
+    required String label,
+    required TextEditingController controller,
+    bool isPassword = false,
+    TextInputType keyboardType = TextInputType.text,
+  }) async {
+    final tempController = TextEditingController(text: controller.text);
+    await showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (context, anim1, anim2) {
+        final viewInsets = MediaQuery.of(context).viewInsets;
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => Navigator.of(context).pop(),
+          child: Stack(
+            children: [
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOut,
+                left: 0,
+                right: 0,
+                bottom: viewInsets.bottom,
+                child: Center(
+                  child: GestureDetector(
+                    onTap: () {},
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Container(
+                        width: MediaQuery.of(context).size.width,
+                        constraints: const BoxConstraints(minHeight: 180, maxHeight: 320),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Masukkan $label',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 16),
+                            TextField(
+                              controller: tempController,
+                              autofocus: true,
+                              obscureText: isPassword,
+                              keyboardType: keyboardType,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                                hintText: 'Enter $label',
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.pink,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  controller.text = tempController.text;
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text(
+                                  'Simpan',
+                                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,94 +162,131 @@ class _RegisterPageState extends State<RegisterPage> {
                           Row(
                             children: [
                               Expanded(
-                                child: buildTextField(
-                                  label: 'Employee ID',
-                                  icon: Icons.badge,
-                                  controller: _employeeIdController,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: buildTextField(
-                                  label: 'Full Name',
-                                  icon: Icons.person,
-                                  controller: _nameController,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: buildTextField(
-                                  label: 'Email',
-                                  icon: Icons.email,
-                                  controller: _emailController,
-                                  keyboardType: TextInputType.emailAddress,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: buildTextField(
-                                  label: 'Phone Number',
-                                  icon: Icons.phone,
-                                  controller: _phoneController,
-                                  keyboardType: TextInputType.phone,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: buildTextField(
-                                  label: 'Password',
-                                  icon: Icons.lock,
-                                  controller: _passwordController,
-                                  obscureText: !_showPassword,
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      color: const Color.fromARGB(
-                                        255,
-                                        19,
-                                        25,
-                                        90,
-                                      ),
-                                      _showPassword
-                                          ? Icons.visibility
-                                          : Icons.visibility_off,
+                                child: GestureDetector(
+                                  onTap: () => _showInputDialog(
+                                    label: 'Employee ID',
+                                    controller: _employeeIdController,
+                                  ),
+                                  child: AbsorbPointer(
+                                    child: buildTextField(
+                                      label: 'Employee ID',
+                                      icon: Icons.badge,
+                                      controller: _employeeIdController,
                                     ),
-                                    onPressed: () => setState(() {
-                                      _showPassword = !_showPassword;
-                                    }),
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: buildTextField(
-                                  label: 'Confirm Password',
-                                  icon: Icons.lock,
-                                  controller: _confirmPasswordController,
-                                  obscureText: !_showConfirmPassword,
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      color: const Color.fromARGB(
-                                        255,
-                                        19,
-                                        25,
-                                        90,
-                                      ),
-                                      _showConfirmPassword
-                                          ? Icons.visibility
-                                          : Icons.visibility_off,
+                                child: GestureDetector(
+                                  onTap: () => _showInputDialog(
+                                    label: 'Full Name',
+                                    controller: _nameController,
+                                  ),
+                                  child: AbsorbPointer(
+                                    child: buildTextField(
+                                      label: 'Full Name',
+                                      icon: Icons.person,
+                                      controller: _nameController,
                                     ),
-                                    onPressed: () => setState(() {
-                                      _showConfirmPassword =
-                                          !_showConfirmPassword;
-                                    }),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => _showInputDialog(
+                                    label: 'Email',
+                                    controller: _emailController,
+                                    keyboardType: TextInputType.emailAddress,
+                                  ),
+                                  child: AbsorbPointer(
+                                    child: buildTextField(
+                                      label: 'Email',
+                                      icon: Icons.email,
+                                      controller: _emailController,
+                                      keyboardType: TextInputType.emailAddress,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => _showInputDialog(
+                                    label: 'Phone Number',
+                                    controller: _phoneController,
+                                    keyboardType: TextInputType.phone,
+                                  ),
+                                  child: AbsorbPointer(
+                                    child: buildTextField(
+                                      label: 'Phone Number',
+                                      icon: Icons.phone,
+                                      controller: _phoneController,
+                                      keyboardType: TextInputType.phone,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => _showInputDialog(
+                                    label: 'Password',
+                                    controller: _passwordController,
+                                    isPassword: true,
+                                  ),
+                                  child: AbsorbPointer(
+                                    child: buildTextField(
+                                      label: 'Password',
+                                      icon: Icons.lock,
+                                      controller: _passwordController,
+                                      obscureText: !_showPassword,
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          color: const Color.fromARGB(255, 19, 25, 90),
+                                          _showPassword ? Icons.visibility : Icons.visibility_off,
+                                        ),
+                                        onPressed: () => setState(() {
+                                          _showPassword = !_showPassword;
+                                        }),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => _showInputDialog(
+                                    label: 'Confirm Password',
+                                    controller: _confirmPasswordController,
+                                    isPassword: true,
+                                  ),
+                                  child: AbsorbPointer(
+                                    child: buildTextField(
+                                      label: 'Confirm Password',
+                                      icon: Icons.lock,
+                                      controller: _confirmPasswordController,
+                                      obscureText: !_showConfirmPassword,
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          color: const Color.fromARGB(255, 19, 25, 90),
+                                          _showConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                                        ),
+                                        onPressed: () => setState(() {
+                                          _showConfirmPassword = !_showConfirmPassword;
+                                        }),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -351,114 +482,41 @@ class _RegisterPageState extends State<RegisterPage> {
           if (_isLoading)
             Positioned.fill(
               child: Container(
+                color: Colors.black.withOpacity(0.78),
                 alignment: Alignment.center,
-                color: Colors.black.withOpacity(0.48), // overlay lebih gelap
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 56,
-                  ), // padding lebih proporsional
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(
-                      38,
-                    ), // border radius lebih besar
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: 22,
-                        sigmaY: 22,
-                      ), // blur lebih nyata
-                      child: Container(
-                        width: double.infinity,
-                        constraints: const BoxConstraints(
-                          maxWidth: 370,
-                          minHeight: 260,
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 36,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.white.withOpacity(0.22),
-                              Colors.white.withOpacity(0.10),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(38),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.28),
-                            width: 1.6,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.13),
-                              blurRadius: 48,
-                              offset: Offset(0, 18),
-                            ),
-                          ],
-                        ),
-                        child: Stack(
-                          children: [
-                            // Inner shadow effect (simulasi)
-                            Positioned.fill(
-                              child: IgnorePointer(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(38),
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Colors.white.withOpacity(0.08),
-                                        Colors.transparent,
-                                        Colors.black.withOpacity(0.04),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Lottie.asset(
-                                  'assets/lottie/loader.json',
-                                  width: 150,
-                                  height: 150,
-                                  repeat: true,
-                                  animate: true,
-                                  fit: BoxFit.contain,
-                                ),
-                                const SizedBox(height: 24),
-                                Text(
-                                  'Processing...',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 21,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                    letterSpacing: 0.7,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  'Please wait while we complete your request.',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
-                                    color: Colors.white70,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Lottie.asset(
+                      'assets/lottie/loader.json',
+                      width: 220,
+                      height: 220,
+                      repeat: true,
+                      animate: true,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 0),
+                    Text(
+                      'Processing...',
+                      style: GoogleFonts.poppins(
+                        fontSize: 21,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 0.7,
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Please wait while we complete your request.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white70,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
             ),
