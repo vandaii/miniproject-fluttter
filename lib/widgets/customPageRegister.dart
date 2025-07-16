@@ -82,15 +82,12 @@ Widget buildTextField({
 class FooterImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      flex: 2,
-      child: Align(
-        alignment: Alignment.bottomCenter,
-        child: Image.asset(
-          'assets/images/icons-logoDekoration.png',
-          fit: BoxFit.cover,
-          height: 140,
-        ),
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Image.asset(
+        'assets/images/icons-logoDekoration.png',
+        fit: BoxFit.cover,
+        height: 140,
       ),
     );
   }

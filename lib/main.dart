@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/Resource/Auth/LoginPage.dart';
+import 'screens/Resource/Auth/OneTimePasswordPage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,7 +14,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'HAUS Inventory',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.teal),
-      home: const LoginPage());
+      theme: ThemeData(primarySwatch: Colors.red),
+      home: const LoginPage(),
+    );
   }
 }
