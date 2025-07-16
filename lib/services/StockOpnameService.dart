@@ -5,7 +5,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:miniproject_flutter/config/APi.dart';
 import 'package:http/http.dart' as http;
 import 'package:miniproject_flutter/models/StockOpnameModel.dart';
-import '../config/Api.dart';
 
 class StockOpnameService {
   final storage = const FlutterSecureStorage();
