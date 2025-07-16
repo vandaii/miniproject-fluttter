@@ -80,8 +80,15 @@ class DirectService {
       ..fields['supplier'] = supplier
       ..fields['expense_type'] = expenseType
       ..fields['total_amount'] = totalAmount.toString()
-      ..fields['note'] = note ?? ''
-      ..fields['items'] = json.encode(items);
+      ..fields['note'] = note ?? '';
+    for (int i = 0; i < items.length; i++) {
+      final item = items[i];
+      request.fields['items[$i][item_name]'] = item['item_name'];
+      request.fields['items[$i][item_description]'] = item['item_description'];
+      request.fields['items[$i][quantity]'] = item['quantity'].toString();
+      request.fields['items[$i][price]'] = item['price'].toString();
+      request.fields['items[$i][unit]'] = item['unit'];
+    }
 
     if (purchaseProofs != null) {
       for (var file in purchaseProofs) {
