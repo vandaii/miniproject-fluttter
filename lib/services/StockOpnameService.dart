@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:miniproject_flutter/models/StockOpnameModel.dart';
 import '../config/Api.dart';
 
 class StockOpnameService {
@@ -11,7 +12,7 @@ class StockOpnameService {
   final String baseUrl = ApiConfig.baseUrl;
 
   // GET all with filter/search/pagination
-  Future<dynamic> getStockOpnames({
+  Future<StockOpnameModel> getStockOpnames({
     String? search,
     String? status,
     String? startDate,
@@ -50,7 +51,7 @@ class StockOpnameService {
   }
 
   // GET Detail by ID
-  Future<dynamic> getStockOpnameDetail(int id) async {
+  Future<StockOpnameModel> getStockOpnameDetail(int id) async {
     try {
       String? token = await storage.read(key: 'token');
 
@@ -69,7 +70,7 @@ class StockOpnameService {
   }
 
   // POST Create Stock Opname
-  Future<dynamic> createStockOpname(Map<String, dynamic> data) async {
+  Future<StockOpnameModel> createStockOpname(Map<String, dynamic> data) async {
     try {
       String? token = await storage.read(key: 'token');
 

@@ -212,7 +212,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
 
   // color palate
   final Color pastelPink = const Color(0xFFF8BBD0);
-  final Color deepPink = const Color.fromARGB(255, 233, 30, 99);
+  final Color deepPink = const Color.fromARGB(255, 255, 0, 85);
   final Color lightPink = const Color(0xFFFCE4EC);
   final Color accentPurple = const Color(0xFF7B1FA2);
 

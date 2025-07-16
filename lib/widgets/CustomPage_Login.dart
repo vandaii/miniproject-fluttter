@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Widget Logo dan Judul HAUS
 class LogoSection extends StatelessWidget {
-  const LogoSection({super.key});
+  final Color primaryColor = Color.fromARGB(255, 255, 0, 85);
+
+  LogoSection({super.key
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +29,7 @@ class LogoSection extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.pink.shade700,
+                    color: primaryColor,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -49,6 +51,8 @@ class LogoSection extends StatelessWidget {
 class LoginForm extends StatelessWidget {
   final TextEditingController idController;
   final TextEditingController passwordController;
+  final FocusNode idFocusNode;
+  final FocusNode passwordFocusNode;
   final bool isPasswordVisible;
   final VoidCallback onPasswordToggle;
   final bool rememberMe;
@@ -57,11 +61,14 @@ class LoginForm extends StatelessWidget {
   final VoidCallback onForgetPasswordPressed;
   final VoidCallback onSignUpPressed;
   final bool isLoading;
+  final bool autoFocusId;
 
   const LoginForm({
     super.key,
     required this.idController,
     required this.passwordController,
+    required this.idFocusNode,
+    required this.passwordFocusNode,
     required this.isPasswordVisible,
     required this.onPasswordToggle,
     required this.rememberMe,
@@ -70,10 +77,12 @@ class LoginForm extends StatelessWidget {
     required this.onForgetPasswordPressed,
     required this.onSignUpPressed,
     this.isLoading = false,
+    this.autoFocusId = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final Color primaryColor = Color.fromARGB(255, 255, 0, 85);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Column(
@@ -81,6 +90,8 @@ class LoginForm extends StatelessWidget {
         children: [
           TextField(
             controller: idController,
+            focusNode: idFocusNode,
+            autofocus: autoFocusId,
             decoration: InputDecoration(
               labelText: 'EmployeeID / Email / Phone',
               border: OutlineInputBorder(
@@ -89,13 +100,14 @@ class LoginForm extends StatelessWidget {
               prefixIcon: const Icon(Icons.person),
               hintText: 'Enter your ID, Email, or Phone',
               hintStyle: const TextStyle(color: Colors.grey),
-              prefixIconColor: Colors.pink,
+              prefixIconColor: primaryColor,
             ),
           ),
           const SizedBox(height: 16),
 
           TextField(
             controller: passwordController,
+            focusNode: passwordFocusNode,
             obscureText: !isPasswordVisible,
             decoration: InputDecoration(
               labelText: 'Password',
@@ -105,7 +117,7 @@ class LoginForm extends StatelessWidget {
               prefixIcon: const Icon(Icons.lock),
               hintText: 'Enter your password',
               hintStyle: const TextStyle(color: Colors.grey),
-              prefixIconColor: Colors.pink,
+              prefixIconColor: primaryColor,
               suffixIcon: IconButton(
                 icon: Icon(
                   isPasswordVisible ? Icons.visibility : Icons.visibility_off,
@@ -139,25 +151,16 @@ class LoginForm extends StatelessWidget {
             height: 50,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.pink,
+                backgroundColor:primaryColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
               onPressed: isLoading ? null : onLoginPressed,
-              child: isLoading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text(
-                      'Sign In',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
+              child: const Text(
+                'Sign In',
+                style: TextStyle(fontSize: 16, color: Colors.white),
+              ),
             ),
           ),
           const SizedBox(height: 16),
