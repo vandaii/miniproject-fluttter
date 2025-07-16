@@ -6,6 +6,7 @@ import 'package:miniproject_flutter/services/authService.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
 import 'package:lottie/lottie.dart';
+import 'package:miniproject_flutter/screens/cobacobi/cobaregister.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/ForgetPasswordPage.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 
