@@ -49,7 +49,7 @@ class MaterialRequestService {
     }
   }
 
-  // ✅ Show Material Request Detail
+  // Show Material Request Detail
   Future<dynamic> getMaterialRequestDetail(int id) async {
     try {
       String? token = await storage.read(key: 'token');
@@ -74,7 +74,7 @@ class MaterialRequestService {
       String? token = await storage.read(key: 'token');
 
       final response = await client.post(
-        Uri.parse('$baseUrl/material-request'),
+        Uri.parse('$baseUrl/material-request/add'),
         headers: {
           HttpHeaders.authorizationHeader: 'Bearer $token',
           HttpHeaders.contentTypeHeader: 'application/json',

@@ -49,15 +49,6 @@ class _SidebarWidgetState extends State<SidebarWidget> {
   bool _isProfileMenuOpen = false;
   String _selectedStore = 'HAUS Jakarta';
 
-  // HAPUS fungsi _routeToPage
-  // Pada _buildMenuItem dan _buildSubMenuItem, ganti onTap menjadi:
-  // onTap: () {
-  //   widget.onMenuTap(index);
-  //   if (widget.isMobile && widget.closeDrawer != null) {
-  //     widget.closeDrawer!();
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Container(

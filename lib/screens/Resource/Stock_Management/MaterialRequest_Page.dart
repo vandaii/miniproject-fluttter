@@ -13,6 +13,7 @@ import 'package:miniproject_flutter/screens/Resource/Auth/UserProfile_Page.dart'
 import 'package:miniproject_flutter/screens/DashboardPage.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
+import 'package:miniproject_flutter/widgets/Sidebar.dart';
 
 class MaterialRequestPage extends StatefulWidget {
   final int selectedIndex;
@@ -1514,7 +1515,8 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> {
 
 class _AddMaterialRequestModal extends StatefulWidget {
   @override
-  State<_AddMaterialRequestModal> createState() => _AddMaterialRequestModalState();
+  State<_AddMaterialRequestModal> createState() =>
+      _AddMaterialRequestModalState();
 }
 
 class _AddMaterialRequestModalState extends State<_AddMaterialRequestModal> {
@@ -1776,10 +1778,16 @@ class _AddMaterialRequestModalState extends State<_AddMaterialRequestModal> {
                   value: item['itemCode'],
                   isExpanded: true,
                   items: itemCodes
-                      .map((e) => DropdownMenuItem(
-                            value: e,
-                            child: Text(e, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          ))
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: (val) => setState(() => item['itemCode'] = val),
                   decoration: InputDecoration(
@@ -1796,10 +1804,16 @@ class _AddMaterialRequestModalState extends State<_AddMaterialRequestModal> {
                   value: item['itemName'],
                   isExpanded: true,
                   items: itemNames
-                      .map((e) => DropdownMenuItem(
-                            value: e,
-                            child: Text(e, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          ))
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: (val) => setState(() => item['itemName'] = val),
                   decoration: InputDecoration(
@@ -1834,10 +1848,16 @@ class _AddMaterialRequestModalState extends State<_AddMaterialRequestModal> {
                   value: item['unit'],
                   isExpanded: true,
                   items: units
-                      .map((e) => DropdownMenuItem(
-                            value: e,
-                            child: Text(e, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          ))
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: (val) => setState(() => item['unit'] = val),
                   decoration: InputDecoration(
