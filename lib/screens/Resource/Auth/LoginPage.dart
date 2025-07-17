@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/register_page.dart';
 import 'package:miniproject_flutter/screens/DashboardPage.dart';
-import 'package:miniproject_flutter/widgets/CustomPage_Login.dart';
+import 'package:miniproject_flutter/widgets/Login/HeaderForLogin.dart';
+import 'package:miniproject_flutter/widgets/Login/FormLogin.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
 import 'package:lottie/lottie.dart';
-import 'package:miniproject_flutter/screens/cobacobi/cobaregister.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/ForgetPasswordPage.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 
@@ -96,7 +96,7 @@ class _LoginPageState extends State<LoginPage> {
     String desc,
     DialogType type, {
     VoidCallback? onOk,
-    String? lottieAsset, // Tambahan parameter untuk Lottie
+    String? lottieAsset, 
   }) {
     AwesomeDialog(
       context: context,
@@ -153,13 +153,13 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               children: [
                 const SizedBox(height: 24),
-                LogoSection(),
+                HeaderForLogin(),
                 const SizedBox(height: 60),
 
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: LoginForm(
+                    child: FormLogin(
                       idController: _idController,
                       idFocusNode: _idFocusNode,
                       passwordController: _passwordController,
