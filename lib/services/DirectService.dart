@@ -80,16 +80,8 @@ class DirectService {
       ..fields['supplier'] = supplier
       ..fields['expense_type'] = expenseType
       ..fields['total_amount'] = totalAmount.toString()
-      ..fields['note'] = note ?? '';
-
-    for (int i = 0; i < items.length; i++) {
-      request.fields['items[$i][item_name]'] = items[i]['item_name'];
-      request.fields['items[$i][item_description]'] =
-          items[i]['item_description'];
-      request.fields['items[$i][quantity]'] = items[i]['quantity'].toString();
-      request.fields['items[$i][price]'] = items[i]['price'].toString();
-      request.fields['items[$i][unit]'] = items[i]['unit'];
-    }
+      ..fields['note'] = note ?? ''
+      ..fields['items'] = json.encode(items);
 
     if (purchaseProofs != null) {
       for (var file in purchaseProofs) {
@@ -115,6 +107,11 @@ class DirectService {
         final err = json.decode(response.body);
         if (err is Map && err['message'] != null) {
           msg = err['message'];
+        } else if (err is Map && err['errors'] != null) {
+          final errors = err['errors'] as Map;
+          msg = errors.entries
+              .map((e) => '${e.key}: ${e.value.join(', ')}')
+              .join('\n');
         } else if (err is Map && err['error'] != null) {
           msg = err['error'];
         } else if (err is String) {
