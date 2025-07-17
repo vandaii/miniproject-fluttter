@@ -6,6 +6,7 @@ import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart
 import 'package:miniproject_flutter/screens/Resource/Purchasing/DirectPurchase_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialCalculate_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/StockOpname_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Purchasing/DiretPurchasePage.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/TransferStock_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialRequest_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/UserProfile_Page.dart';

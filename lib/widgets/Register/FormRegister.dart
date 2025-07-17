@@ -327,7 +327,6 @@ class Step1Form extends StatelessWidget {
                           ? LinearGradient(
                               colors: [
                                 primaryColor,
-                                primaryColor.withOpacity(0.8),
                               ],
                             )
                           : LinearGradient(
