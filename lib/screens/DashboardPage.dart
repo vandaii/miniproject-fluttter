@@ -18,6 +18,7 @@ import 'package:miniproject_flutter/widgets/Dashboard/TaskCard.dart';
 import 'package:miniproject_flutter/screens/TaskDetailPage.dart';
 import 'package:flutter/physics.dart';
 import 'package:miniproject_flutter/widgets/Dashboard/AnimatedSidebar.dart';
+import 'package:miniproject_flutter/widgets/Sidebar.dart';
 
 
 class DashboardPage extends StatefulWidget {
@@ -631,6 +632,87 @@ class _DashboardPageState extends State<DashboardPage>
     }
   }
 
+  void _onSidebarMenuTap(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    Future.microtask(() {
+      _navigateToPage(index);
+    });
+  }
+
+  void _navigateToPage(int index) {
+    switch (index) {
+      case 11:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => DirectPurchasePage()),
+        );
+        break;
+      case 12:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => GRPO_Page()),
+        );
+        break;
+      case 21:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => MaterialRequestPage()),
+        );
+        break;
+      case 22:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => StockOpnamePage()),
+        );
+        break;
+      case 23:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => TransferStockPage()),
+        );
+        break;
+      case 24:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => WastePage()),
+        );
+        break;
+      case 25:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => MaterialCalculatePage()),
+        );
+        break;
+      case 4:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => UserprofilePage()),
+        );
+        break;
+      case 5:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => HelpPage()),
+        );
+        break;
+      default:
+        // Dashboard, Inventory Report, dll: tidak navigasi
+        break;
+    }
+  }
+
+  void _onSidebarToggleMenu(int menuIndex) {
+    setState(() {
+      if (_expandedMenuIndex == menuIndex) {
+        _expandedMenuIndex = null;
+      } else {
+        _expandedMenuIndex = menuIndex;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -716,9 +798,17 @@ class _DashboardPageState extends State<DashboardPage>
       ),
       drawer: isMobile
           ? Drawer(
-              child: _buildSidebarContent(
+              child: SidebarWidget(
+                selectedIndex: _selectedIndex,
+                onMenuTap: _onSidebarMenuTap,
+                isSidebarExpanded: true,
+                expandedMenuIndex: _expandedMenuIndex,
+                onToggleMenu: _onSidebarToggleMenu,
+                deepPink: deepPink,
+                lightPink: lightPink,
                 isMobile: true,
                 closeDrawer: () => Navigator.pop(context),
+                onLogout: _handleLogout,
               ),
             )
           : null,
@@ -736,7 +826,16 @@ class _DashboardPageState extends State<DashboardPage>
                 AnimatedSidebar(
                   controller: _sidebarController!,
                   isSidebarExpanded: _isSidebarExpanded,
-                  child: _buildSidebarContent(isMobile: false),
+                  child: SidebarWidget(
+                    selectedIndex: _selectedIndex,
+                    onMenuTap: _onSidebarMenuTap,
+                    isSidebarExpanded: _isSidebarExpanded,
+                    expandedMenuIndex: _expandedMenuIndex,
+                    onToggleMenu: _onSidebarToggleMenu,
+                    deepPink: deepPink,
+                    lightPink: lightPink,
+                    onLogout: _handleLogout,
+                  ),
                 ),
               // Main Content Area
               AnimatedContainer(
@@ -1160,27 +1259,6 @@ class _DashboardPageState extends State<DashboardPage>
       ),
     );
   }
-
-  //todo : styling taks jika di perlukan
-  // Widget _build3DTaskCard(Widget child, bool isMobile) {
-  //   return Padding(
-  //     padding: const EdgeInsets.only(right: 24),
-  //     child: Card(
-  //       elevation: 28,
-  //       shadowColor: Colors.black.withOpacity(0.22),
-  //       shape: RoundedRectangleBorder(
-  //         borderRadius: BorderRadius.circular(36),
-  //         side: BorderSide(color: Colors.grey.withOpacity(0.07), width: 1.2),
-  //       ),
-  //       color: Colors.white,
-  //       child: Container(
-  //         width: isMobile ? 320 : 400,
-  //         padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 22),
-  //         child: child,
-  //       ),
-  //     ),
-  //   );
-  // }
 
   Widget _buildOutstandingCards() {
     final List<Map<String, dynamic>> items = [
@@ -1817,595 +1895,6 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
-  Widget _buildStoreDropdown() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: lightPink,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: deepPink.withOpacity(0.1), width: 1),
-      ),
-      child: Column(
-        children: [
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _isStoreMenuOpen = !_isStoreMenuOpen;
-                _isProfileMenuOpen = false;
-              });
-            },
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: deepPink.withOpacity(0.1),
-                  child: Icon(Icons.store, color: deepPink),
-                  radius: 18,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Toko',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.black54,
-                        ),
-                      ),
-                      Text(
-                        'HAUS Jakarta',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  _isStoreMenuOpen ? Icons.expand_less : Icons.expand_more,
-                  color: Colors.white,
-                ),
-              ],
-            ),
-          ),
-          if (_isStoreMenuOpen)
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.withOpacity(0.2)),
-              ),
-              child: Column(
-                children: [
-                  _buildStoreMenuItem('HAUS Jakarta', true),
-                  _buildStoreMenuItem('HAUS Bandung', false),
-                  _buildStoreMenuItem('HAUS Surabaya', false),
-                  _buildStoreMenuItem('HAUS Medan', false),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStoreMenuItem(String storeName, bool isSelected) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isSelected ? lightPink.withOpacity(0.3) : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ListTile(
-        dense: true,
-        title: Text(
-          storeName,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? deepPink : Colors.black87,
-          ),
-        ),
-        trailing: isSelected
-            ? Icon(Icons.check_circle, color: deepPink, size: 18)
-            : null,
-        onTap: () {
-          setState(() {
-            _isStoreMenuOpen = false;
-          });
-        },
-      ),
-    );
-  }
-
-  Widget _buildProfileDropdown() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: lightPink,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: deepPink.withOpacity(0.1), width: 1),
-      ),
-      child: Column(
-        children: [
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _isProfileMenuOpen = !_isProfileMenuOpen;
-                _isStoreMenuOpen = false;
-              });
-            },
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: deepPink,
-                  child: Text('J', style: TextStyle(color: Colors.white)),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'John Doe',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      Text(
-                        'Admin',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  _isProfileMenuOpen ? Icons.expand_less : Icons.expand_more,
-                  color: Colors.white,
-                ),
-              ],
-            ),
-          ),
-          if (_isProfileMenuOpen)
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.withOpacity(0.2)),
-              ),
-              child: Column(
-                children: [
-                  _buildProfileMenuItem(
-                    Icons.person_outline,
-                    'Profile',
-                    onTap: () {
-                      setState(() => _isProfileMenuOpen = false);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const UserprofilePage(),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildProfileMenuItem(
-                    Icons.settings_outlined,
-                    'Settings',
-                    onTap: () {
-                      setState(() => _isProfileMenuOpen = false);
-                      // Handle settings
-                    },
-                  ),
-                  _buildProfileMenuItem(
-                    Icons.help_outline,
-                    'Help & Support',
-                    onTap: () {
-                      setState(() => _isProfileMenuOpen = false);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => HelpPage()),
-                      );
-                    },
-                  ),
-                  _buildProfileMenuItem(
-                    Icons.logout,
-                    'Logout',
-                    isLogout: true,
-                    onTap: () async {
-                      setState(() => _isProfileMenuOpen = false);
-                      await _handleLogout();
-                    },
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileMenuItem(
-    IconData icon,
-    String title, {
-    bool isLogout = false,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ListTile(
-        dense: true,
-        leading: Icon(
-          icon,
-          size: 20,
-          color: isLogout ? Colors.red : Colors.black87,
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            color: isLogout ? Colors.red : Colors.black87,
-          ),
-        ),
-        onTap: onTap,
-      ),
-    );
-  }
-
-  void _showProfileMenu(BuildContext context) {
-    final RenderBox button = context.findRenderObject() as RenderBox;
-    final RenderBox overlay =
-        Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
-    final RelativeRect position = RelativeRect.fromRect(
-      Rect.fromPoints(
-        button.localToGlobal(Offset.zero, ancestor: overlay),
-        button.localToGlobal(
-          button.size.bottomRight(Offset.zero),
-          ancestor: overlay,
-        ),
-      ),
-      Offset.zero & overlay.size,
-    );
-
-    showMenu(
-      context: context,
-      position: position,
-      color: Colors.white,
-      elevation: 8,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      items: [
-        PopupMenuItem(
-          height: 40,
-          child: _buildProfileMenuItem(
-            Icons.person_outline,
-            'Profile',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const UserprofilePage(),
-                ),
-              );
-            },
-          ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const UserprofilePage()),
-            );
-          },
-        ),
-        PopupMenuItem(
-          height: 40,
-          child: _buildProfileMenuItem(
-            Icons.settings_outlined,
-            'Settings',
-            onTap: () {
-              // Handle settings
-            },
-          ),
-          onTap: () {
-            // Handle settings
-          },
-        ),
-        PopupMenuItem(
-          height: 40,
-          child: _buildProfileMenuItem(
-            Icons.help_outline,
-            'Help & Support',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => HelpPage()),
-              );
-            },
-          ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => HelpPage()),
-            );
-          },
-        ),
-        PopupMenuItem(
-          height: 40,
-          child: _buildProfileMenuItem(
-            Icons.logout,
-            'Logout',
-            isLogout: true,
-            onTap: () async {
-              await _handleLogout();
-            },
-          ),
-          onTap: () async {
-            await _handleLogout();
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMenuItem({
-    required IconData icon,
-    required String title,
-    required int index,
-    required VoidCallback onTap,
-  }) {
-    final isActive = _isMenuActive(index);
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hoveredIndex = index),
-      onExit: (_) => setState(() => _hoveredIndex = null),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: ListTile(
-          horizontalTitleGap: 12,
-          leading: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? Colors.white.withOpacity(0.35)
-                  : Colors.white.withOpacity(0.13),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isActive
-                    ? Colors.white.withOpacity(0.32)
-                    : Colors.white.withOpacity(0.22),
-                width: 1.1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(
-              icon,
-              color: isActive ? deepPink : Colors.grey,
-              size: 20,
-            ),
-          ),
-          title: Text(
-            title,
-            style: GoogleFonts.poppins(
-              color: isActive ? deepPink : Colors.black87,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              fontSize: 14,
-            ),
-          ),
-          selected: isActive,
-          onTap: () {
-            if (_selectedIndex != index) {
-              setState(() => _selectedIndex = index);
-              _navigateToPage(index);
-            }
-          },
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
-          dense: true,
-        ),
-      ),
-    );
-  }
-
-  // Sidebar Content
-  Widget _buildSidebarContent({
-    bool isMobile = false,
-    VoidCallback? closeDrawer,
-  }) {
-    return Container(
-      color: Colors.white,
-      child: Column(
-        children: [
-          // Logo dan nama aplikasi
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 16 : 20,
-              vertical: 24,
-            ),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.grey.withOpacity(0.1),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Image.asset(
-                  'assets/images/icons-haus.png',
-                  height: 36,
-                  width: 36,
-                ),
-                if (_isSidebarExpanded || isMobile) const SizedBox(width: 12),
-                if (_isSidebarExpanded || isMobile)
-                  Text(
-                    'haus! Inventory',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: deepPink,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          if (_isSidebarExpanded || isMobile) _buildStoreDropdown(),
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: [
-                  // Section GENERAL
-                  if (_isSidebarExpanded || isMobile)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                      child: Row(
-                        children: [
-                          Text(
-                            'GENERAL',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: Colors.black54,
-                              letterSpacing: 1,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            height: 1,
-                            width: 100,
-                            color: Colors.grey.withOpacity(0.2),
-                          ),
-                        ],
-                      ),
-                    ),
-                  _buildMenuItem(
-                    icon: Icons.dashboard_customize_rounded,
-                    title: 'Dashboard',
-                    index: 0,
-                    onTap: () {
-                      if (_selectedIndex != 0) {
-                        setState(() => _selectedIndex = 0);
-                        _navigateToPage(0);
-                        if (isMobile && closeDrawer != null) closeDrawer();
-                      }
-                    },
-                  ),
-                  _buildExpandableMenu(
-                    icon: Icons.shopping_bag_rounded,
-                    title: 'Purchasing',
-                    isExpanded: _selectedIndex == PURCHASING_MENU,
-                    menuIndex: PURCHASING_MENU,
-                    children: [
-                      _buildSubMenuItem('Direct Purchase', 11),
-                      _buildSubMenuItem('GRPO', 12),
-                    ],
-                    onTap: () {
-                      setState(() => _selectedIndex = PURCHASING_MENU);
-                    },
-                    isMobile: isMobile,
-                  ),
-                  _buildExpandableMenu(
-                    icon: Icons.inventory_rounded,
-                    title: 'Stock Management',
-                    isExpanded: _selectedIndex == STOCK_MANAGEMENT_MENU,
-                    menuIndex: STOCK_MANAGEMENT_MENU,
-                    children: [
-                      _buildSubMenuItem('Material Request', 21),
-                      _buildSubMenuItem('Material Calculate', 25),
-                      _buildSubMenuItem('Stock Opname', 22),
-                      _buildSubMenuItem('Transfer Stock', 23),
-                      _buildSubMenuItem('Waste', 24),
-                    ],
-                    onTap: () {
-                      setState(() => _selectedIndex = STOCK_MANAGEMENT_MENU);
-                    },
-                    isMobile: isMobile,
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.bar_chart_rounded,
-                    title: 'Inventory Report',
-                    index: 3,
-                    onTap: () {
-                      setState(() => _selectedIndex = 3);
-                      if (isMobile && closeDrawer != null) closeDrawer();
-                    },
-                  ),
-                  // Section TOOLS
-                  if (_isSidebarExpanded || isMobile)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                      child: Row(
-                        children: [
-                          Text(
-                            'TOOLS',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: Colors.black54,
-                              letterSpacing: 1,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            height: 1,
-                            width: 100,
-                            color: Colors.grey.withOpacity(0.2),
-                          ),
-                        ],
-                      ),
-                    ),
-                  _buildMenuItem(
-                    icon: Icons.settings_suggest_rounded,
-                    title: 'Account & Settings',
-                    index: 4,
-                    onTap: () {
-                      setState(() => _selectedIndex = 4);
-                      _navigateToPage(4);
-                      if (isMobile && closeDrawer != null) closeDrawer();
-                    },
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.help_center_rounded,
-                    title: 'Help',
-                    index: 5,
-                    onTap: () {
-                      setState(() => _selectedIndex = 5);
-                      _navigateToPage(5);
-                      if (isMobile && closeDrawer != null) closeDrawer();
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (_isSidebarExpanded || isMobile) _buildProfileDropdown(),
-        ],
-      ),
-    );
-  }
-
   // Modern Header Icon
   Widget _modernHeaderIcon({
     required IconData icon,
@@ -2516,246 +2005,6 @@ class _DashboardPageState extends State<DashboardPage>
         ),
       ),
     );
-  }
-
-  // Expandable Menu (Sidebar)
-  Widget _buildExpandableMenu({
-    required IconData icon,
-    required String title,
-    required bool isExpanded,
-    required List<Widget> children,
-    required VoidCallback onTap,
-    required int menuIndex,
-    bool isMobile = false,
-  }) {
-    final isMenuExpanded = _expandedMenuIndex == menuIndex;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: isExpanded ? lightPink.withOpacity(0.3) : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: ListTile(
-            horizontalTitleGap: 12,
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isExpanded
-                    ? Colors.white.withOpacity(0.35)
-                    : Colors.white.withOpacity(0.13),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isExpanded
-                      ? Colors.white.withOpacity(0.32)
-                      : Colors.white.withOpacity(0.22),
-                  width: 1.1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Icon(
-                icon,
-                color: isExpanded ? deepPink : Colors.grey,
-                size: 20,
-              ),
-            ),
-            title: Text(
-              title,
-              style: GoogleFonts.poppins(
-                color: isExpanded ? deepPink : Colors.black87,
-                fontWeight: isExpanded ? FontWeight.bold : FontWeight.normal,
-                fontSize: 14,
-              ),
-            ),
-            trailing: AnimatedRotation(
-              turns: isMenuExpanded ? 0.5 : 0.0,
-              duration: Duration(milliseconds: 220),
-              curve: Curves.easeInOut,
-              child: Icon(
-                Icons.expand_more,
-                color: isExpanded ? deepPink : Colors.grey,
-              ),
-            ),
-            onTap: () {
-              _toggleMenu(menuIndex);
-              onTap();
-            },
-            dense: true,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
-          ),
-        ),
-        if (isMenuExpanded && (_isSidebarExpanded || isMobile))
-          Container(
-            margin: const EdgeInsets.only(left: 16),
-            decoration: BoxDecoration(
-              border: Border(
-                left: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: children,
-            ),
-          ),
-      ],
-    );
-  }
-
-  // Sub Menu Item (Sidebar)
-  Widget _buildSubMenuItem(String title, int index) {
-    return Container(
-      margin: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
-      decoration: BoxDecoration(
-        color: _selectedIndex == index
-            ? lightPink.withOpacity(0.3)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ListTile(
-        horizontalTitleGap: 12,
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: _selectedIndex == index
-                ? Colors.white.withOpacity(0.35)
-                : Colors.white.withOpacity(0.13),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: _selectedIndex == index
-                  ? Colors.white.withOpacity(0.32)
-                  : Colors.white.withOpacity(0.22),
-              width: 1.1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Icon(
-            _getSubMenuIcon(index),
-            color: _selectedIndex == index ? deepPink : Colors.grey,
-            size: 20,
-          ),
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            color: _selectedIndex == index ? deepPink : Colors.black87,
-            fontWeight: _selectedIndex == index
-                ? FontWeight.bold
-                : FontWeight.normal,
-          ),
-        ),
-        selected: _selectedIndex == index,
-        onTap: () {
-          setState(() => _selectedIndex = index);
-          _navigateToPage(index);
-        },
-        dense: true,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      ),
-    );
-  }
-
-  // Icon untuk sub menu sidebar
-  IconData _getSubMenuIcon(int index) {
-    switch (index) {
-      case 11: // Direct Purchase
-        return Icons.shopping_bag_rounded;
-      case 12: // GRPO
-        return Icons.receipt_long_outlined;
-      case 21: // Material Request
-        return Icons.inventory_rounded;
-      case 22: // Stock Opname
-        return Icons.checklist_rtl_outlined;
-      case 23: // Transfer Stock
-        return Icons.swap_horiz_outlined;
-      case 24: // Waste
-        return Icons.delete_outline;
-      case 25: // Material Calculate
-        return Icons.inventory_rounded;
-      default:
-        return Icons.circle_outlined;
-    }
-  }
-
-  // Navigasi ke halaman lain
-  void _navigateToPage(int index) {
-    switch (index) {
-      case 11: // Direct Purchase
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => DirectPurchasePage()),
-        );
-        break;
-      case 12: // GRPO
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => GRPO_Page()),
-        );
-        break;
-      case 21: // Material Request
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MaterialRequestPage()),
-        );
-        break;
-      case 22: // Stock Opname
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => StockOpnamePage()),
-        );
-        break;
-      case 23: // Transfer Stock
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => TransferStockPage()),
-        );
-        break;
-      case 24: // Waste
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => WastePage()),
-        );
-        break;
-      case 25: // Material Calculate
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MaterialCalculatePage()),
-        );
-        break;
-      case 4: // Account & Settings
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const UserprofilePage()),
-        );
-        break;
-      case 5: // Help
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => HelpPage()),
-        );
-        break;
-    }
   }
 
   // --- Email Overlay Logic ---
