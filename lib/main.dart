@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
       title: 'HAUS Inventory',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.red),
-      home: const LoginPage(),
+      home: LoginPage(),
     );
   }
 }

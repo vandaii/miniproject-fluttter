@@ -22,6 +22,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:miniproject_flutter/widgets/Dashboard/AnimatedSidebar.dart';
+import 'package:miniproject_flutter/widgets/Sidebar.dart';
 
 class DirectPurchasePage extends StatefulWidget {
   final int selectedIndex;
