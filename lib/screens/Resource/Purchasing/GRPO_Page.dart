@@ -14,12 +14,11 @@ import 'package:miniproject_flutter/screens/Resource/Auth/Help_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/Waste_Page.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/services/GrpoService.dart';
-import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/screens/DashboardPage.dart';
-import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
-import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'package:dropdown_search/dropdown_search.dart';
+import 'package:miniproject_flutter/services/itemService.dart';
 
 class GRPO_Page extends StatefulWidget {
   final int selectedIndex;
@@ -54,6 +53,9 @@ class GrpoPageState extends State<GRPO_Page> {
   static const int STOCK_MANAGEMENT_MENU = 2;
 
   final AuthService _authService = AuthService();
+
+  String? _selectedPONumber;
+  dynamic _selectedPO;
 
   @override
   void initState() {
@@ -1256,12 +1258,63 @@ class GrpoPageState extends State<GRPO_Page> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Text(
-                            item['packingSlip'].toString(),
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: Colors.blue,
-                            ),
+                          const SizedBox(height: 8),
+                          Builder(
+                            builder: (context) {
+                              final slip = item['packingSlip'].toString();
+                              final isImage =
+                                  slip.endsWith('.jpg') ||
+                                  slip.endsWith('.jpeg') ||
+                                  slip.endsWith('.png') ||
+                                  slip.endsWith('.gif') ||
+                                  slip.endsWith('.svg');
+                              final url = slip.startsWith('http')
+                                  ? slip
+                                  : 'https://192.168.134.30:8000/uploads/$slip';
+                              if (isImage) {
+                                return ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    url,
+                                    height: 120,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) => Text(
+                                          'Gagal memuat gambar',
+                                          style: TextStyle(color: Colors.red),
+                                        ),
+                                  ),
+                                );
+                              } else {
+                                return InkWell(
+                                  onTap: () {
+                                    // Bisa pakai url_launcher untuk buka file
+                                    // launch(url);
+                                  },
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.insert_drive_file,
+                                        color: Colors.blue,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Flexible(
+                                        child: Text(
+                                          slip,
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 12,
+                                            color: Colors.blue,
+                                            decoration:
+                                                TextDecoration.underline,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                            },
                           ),
                         ],
                       ),
@@ -1990,14 +2043,34 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
   final List<Map<String, dynamic>> _items = [];
   List<File> _files = [];
   bool _isSubmitting = false;
+  List<dynamic> shippingPOs = [];
+  dynamic selectedPO;
+  bool isLoading = true;
+  List<Map<String, dynamic>> _masterItems = [];
 
   final GrpoService _grpoService = GrpoService();
 
   @override
   void initState() {
     super.initState();
+    loadShippingPOs();
     _addItem();
-    _supplierController.text = 'MTP';
+    ItemService().getItems().then((items) {
+      setState(() {
+        _masterItems = items;
+        print('Loaded master items:');
+        for (var itm in _masterItems) {
+          print(itm);
+        }
+      });
+    });
+  }
+
+  void loadShippingPOs() async {
+    shippingPOs = await _grpoService.fetchShippingPOs();
+    setState(() {
+      isLoading = false;
+    });
   }
 
   void _addItem() {
@@ -2013,11 +2086,9 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
 
   void _removeItem(int index) {
     if (_items.length > 1) {
-      final item = _items.removeAt(index);
-      item['code'].dispose();
-      item['name'].dispose();
-      item['qty'].dispose();
-      setState(() {});
+      setState(() {
+        _items.removeAt(index);
+      });
     }
   }
 
@@ -2126,7 +2197,7 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
           '${_receiveDate!.year}-${_receiveDate!.month.toString().padLeft(2, '0')}-${_receiveDate!.day.toString().padLeft(2, '0')}';
 
       print('Submitting GRPO with data:');
-      print('no_po: ${_poController.text.trim()}');
+      print('purchase_order_number: ${_poController.text.trim()}');
       print('receive_date: $dateStr');
       print('expense_type: ${_expenseType ?? 'Inventory'}');
       print('shipper_name: ${_shipperController.text.trim()}');
@@ -2135,7 +2206,7 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
       print('files count: ${_files.length}');
 
       await _grpoService.createGrpo(
-        noPo: _poController.text.trim(),
+        purchaseOrderNumber: _poController.text.trim(),
         receiveDate: dateStr,
         expenseType: _expenseType ?? 'Inventory',
         shipperName: _shipperController.text.trim(),
@@ -2211,11 +2282,170 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
                         Row(
                           children: [
                             Expanded(
-                              child: _buildModernTextField(
-                                label: 'NO. PO',
-                                controller: _poController,
-                                hint: 'PO-123',
-                              ),
+                              child: isLoading
+                                  ? _buildModernTextField(
+                                      label: 'NO. GRPO',
+                                      controller: _grpoController,
+                                      hint: 'GR-123',
+                                    )
+                                  : Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'No. PO',
+                                          style: GoogleFonts.poppins(
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 14,
+                                            color: Colors.grey[700],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        DropdownSearch<Map<String, dynamic>>(
+                                          items: shippingPOs
+                                              .cast<Map<String, dynamic>>(),
+                                          itemAsString: (po) =>
+                                              po['purchaseOrderNumber'] ?? '',
+                                          dropdownDecoratorProps: DropDownDecoratorProps(
+                                            dropdownSearchDecoration: InputDecoration(
+                                              // hintText: 'Masukkan No. PO',
+                                              filled: true,
+                                              fillColor: Colors.white,
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                borderSide: BorderSide(
+                                                  color: Colors.grey[300]!,
+                                                ),
+                                              ),
+                                              enabledBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                borderSide: BorderSide(
+                                                  color: Colors.grey[300]!,
+                                                ),
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                borderSide: BorderSide(
+                                                  color: Color(0xFFE91E63),
+                                                ),
+                                              ),
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 12,
+                                                  ),
+                                            ),
+                                          ),
+                                          // dropdownButtonProps:
+                                          //     DropdownButtonProps(
+                                          //       icon: SizedBox.shrink(),
+                                          //     ),
+                                          onChanged: (po) async {
+                                            if (po != null) {
+                                              final detail = await _grpoService
+                                                  .getShippingPODetail(
+                                                    po['id'],
+                                                  );
+                                              setState(() {
+                                                selectedPO = po;
+                                                _poController.text =
+                                                    po['purchaseOrderNumber'] ??
+                                                    '';
+                                                _shipperController.text =
+                                                    detail['shipperBy'] ?? '';
+                                                _supplierController.text =
+                                                    detail['supplier'] ?? 'MTP';
+                                                _receiveDate = DateTime.now();
+                                                _expenseType =
+                                                    detail['expenseType'] ??
+                                                    'Inventory';
+                                                if (_receiveBy == null ||
+                                                    _receiveBy == 'John Doe') {
+                                                  _receiveBy =
+                                                      'John Doe'; // atau variabel user login
+                                                }
+                                                _items.clear();
+                                                if (detail['items'] != null) {
+                                                  for (var item
+                                                      in detail['items']) {
+                                                    _items.add({
+                                                      'code': TextEditingController(
+                                                        text:
+                                                            item['item_code'] ??
+                                                            item['itemCode'] ??
+                                                            '',
+                                                      ),
+                                                      'name': TextEditingController(
+                                                        text:
+                                                            item['item_name'] ??
+                                                            item['itemName'] ??
+                                                            '',
+                                                      ),
+                                                      'qty': TextEditingController(
+                                                        text:
+                                                            item['quantity']
+                                                                ?.toString() ??
+                                                            '1',
+                                                      ),
+                                                      'unit':
+                                                          item['unit'] ?? 'PCS',
+                                                    });
+                                                  }
+                                                }
+                                              });
+                                            }
+                                          },
+                                          popupProps: PopupProps.menu(
+                                            showSearchBox: true,
+                                            searchFieldProps: TextFieldProps(
+                                              decoration: InputDecoration(
+                                                hintText: 'Cari PO',
+                                                filled: true,
+                                                fillColor: Colors.white,
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  borderSide: BorderSide(
+                                                    color: Colors.grey[300]!,
+                                                  ),
+                                                ),
+                                                enabledBorder:
+                                                    OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                      borderSide: BorderSide(
+                                                        color:
+                                                            Colors.grey[300]!,
+                                                      ),
+                                                    ),
+                                                focusedBorder:
+                                                    OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                      borderSide: BorderSide(
+                                                        color: Color(
+                                                          0xFFE91E63,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                contentPadding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 16,
+                                                      vertical: 12,
+                                                    ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
@@ -2362,10 +2592,100 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildModernTextField(
-                        label: 'Item Code',
-                        controller: item['code'],
-                        hint: 'Kode',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Item Code',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 13,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          DropdownSearch<Map<String, dynamic>>(
+                            items: _masterItems,
+                            itemAsString: (itm) => itm['itemCode'] ?? '',
+                            dropdownDecoratorProps: DropDownDecoratorProps(
+                              dropdownSearchDecoration: InputDecoration(
+                                hintText: 'Kode',
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey[300]!,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey[300]!,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(
+                                    color: Color(0xFFE91E63),
+                                  ),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                            // dropdownButtonProps: DropdownButtonProps(
+                            //   icon: SizedBox.shrink(),
+                            // ),
+                            selectedItem: _masterItems.firstWhere(
+                              (itm) => itm['itemCode'] == item['code'].text,
+                              orElse: () => {},
+                            ),
+                            onChanged: (itm) {
+                              if (itm != null) {
+                                setState(() {
+                                  item['code'].text = itm['itemCode'] ?? '';
+                                  item['name'].text = itm['itemName'] ?? '';
+                                  item['unit'] = itm['UoM'] ?? 'PCS';
+                                });
+                              }
+                            },
+                            popupProps: PopupProps.menu(
+                              showSearchBox: true,
+                              searchFieldProps: TextFieldProps(
+                                decoration: InputDecoration(
+                                  hintText: 'Cari Item Code',
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey[300]!,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey[300]!,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Color(0xFFE91E63),
+                                    ),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -2396,7 +2716,7 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
                       child: _buildModernDropdown(
                         label: 'Unit',
                         value: item['unit'],
-                        items: ['PCS', 'BOX', 'KG', 'L'],
+                        items: ['PCS', 'Box', 'KG', 'Liter'],
                         onChanged: (val) {
                           if (val != null) {
                             setState(() {
@@ -2436,7 +2756,7 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
             ),
             const Spacer(),
             FilledButton.icon(
-              onPressed: _isSubmitting ? null : _submit,
+              onPressed: _addItem,
               icon: const Icon(Icons.add),
               label: const Text('Add'),
               style: FilledButton.styleFrom(
@@ -2553,6 +2873,7 @@ class _AddGRPOFormContentState extends State<_AddGRPOFormContent> {
     VoidCallback? onTap,
     int maxLines = 1,
     TextInputType? keyboardType,
+    ValueChanged<String>? onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
