@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:miniproject_flutter/screens/Resource/Purchasing/DiretPurchasePage.dart';
+import 'package:miniproject_flutter/screens/Resource/Purchasing/DirectPurchasePage.dart';
 import 'package:miniproject_flutter/screens/Resource/Purchasing/GRPO_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialCalculate_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/StockOpname_Page.dart';
@@ -19,7 +19,6 @@ import 'package:miniproject_flutter/screens/TaskDetailPage.dart';
 import 'package:flutter/physics.dart';
 import 'package:miniproject_flutter/widgets/Dashboard/AnimatedSidebar.dart';
 import 'package:miniproject_flutter/widgets/Sidebar.dart';
-
 
 class DashboardPage extends StatefulWidget {
   final int selectedIndex;

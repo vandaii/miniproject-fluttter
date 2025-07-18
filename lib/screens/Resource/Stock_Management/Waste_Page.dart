@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Help_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
-import 'package:miniproject_flutter/screens/Resource/Purchasing/DiretPurchasePage.dart';
+import 'package:miniproject_flutter/screens/Resource/Purchasing/DirectPurchasePage.dart';
 import 'package:miniproject_flutter/screens/Resource/Purchasing/GRPO_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialCalculate_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialRequest_Page.dart';
@@ -207,88 +207,88 @@ class _WastePageState extends State<WastePage> {
             Padding(
               padding: const EdgeInsets.only(top: 24.0, bottom: 16.0),
               child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
+                children: [
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [Color(0xFFF8BBD0), Color(0xFFE91E63)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
+                        boxShadow: [
+                          BoxShadow(
                             color: Color(0xFFE91E63).withOpacity(0.10),
                             blurRadius: 10,
                             offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(
-                          Icons.search,
-                          color: Color(0xFFE91E63),
+                          ),
+                        ],
+                      ),
+                      child: TextField(
+                        decoration: InputDecoration(
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: Color(0xFFE91E63),
                             size: 22,
-                        ),
-                        hintText: 'Cari waste',
-                        hintStyle: GoogleFonts.poppins(
+                          ),
+                          hintText: 'Cari waste',
+                          hintStyle: GoogleFonts.poppins(
                             color: Colors.grey[400],
                             fontSize: 14,
-                        ),
-                        border: OutlineInputBorder(
+                          ),
+                          border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
                             vertical: 16,
                             horizontal: 18,
-                        ),
+                          ),
                           filled: true,
                           fillColor: Colors.white.withOpacity(0.85),
+                        ),
                       ),
                     ),
                   ),
-                ),
                   SizedBox(width: 14),
-                Container(
-                  decoration: BoxDecoration(
+                  Container(
+                    decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [Color(0xFFF8BBD0), Color(0xFFE91E63)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
+                      boxShadow: [
+                        BoxShadow(
                           color: Color(0xFFE91E63).withOpacity(0.10),
                           blurRadius: 10,
                           offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: IconButton(
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
                       icon: Icon(Icons.filter_alt, color: Colors.white),
                       onPressed: () {},
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
             ),
             // Taskbar for Pending/Approved
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+              children: [
                 GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          isOutstandingSelected = true;
-                        });
-                      },
-                      child: Container(
+                  onTap: () {
+                    setState(() {
+                      isOutstandingSelected = true;
+                    });
+                  },
+                  child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                        decoration: BoxDecoration(
+                    decoration: BoxDecoration(
                       gradient: isOutstandingSelected
                           ? LinearGradient(
                               colors: [Color(0xFFE91E63), Color(0xFFF8BBD0)],
@@ -306,34 +306,34 @@ class _WastePageState extends State<WastePage> {
                         ),
                       ],
                       border: Border.all(
-                          color: isOutstandingSelected
+                        color: isOutstandingSelected
                             ? Colors.transparent
                             : Color(0xFFE91E63),
                         width: 2,
                       ),
-                        ),
-                        child: Text(
-                          'Pending',
-                          style: GoogleFonts.poppins(
+                    ),
+                    child: Text(
+                      'Pending',
+                      style: GoogleFonts.poppins(
                         fontWeight: FontWeight.bold,
-                            color: isOutstandingSelected
-                                ? Colors.white
+                        color: isOutstandingSelected
+                            ? Colors.white
                             : Color(0xFFE91E63),
                         fontSize: 15,
-                          ),
-                        ),
                       ),
                     ),
+                  ),
+                ),
                 const SizedBox(width: 18),
                 GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          isOutstandingSelected = false;
-                        });
-                      },
-                      child: Container(
+                  onTap: () {
+                    setState(() {
+                      isOutstandingSelected = false;
+                    });
+                  },
+                  child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                        decoration: BoxDecoration(
+                    decoration: BoxDecoration(
                       gradient: !isOutstandingSelected
                           ? LinearGradient(
                               colors: [Color(0xFFE91E63), Color(0xFFF8BBD0)],
@@ -351,25 +351,25 @@ class _WastePageState extends State<WastePage> {
                         ),
                       ],
                       border: Border.all(
-                          color: !isOutstandingSelected
+                        color: !isOutstandingSelected
                             ? Colors.transparent
                             : Color(0xFFE91E63),
                         width: 2,
                       ),
-                        ),
-                        child: Text(
-                          'Approved',
-                          style: GoogleFonts.poppins(
+                    ),
+                    child: Text(
+                      'Approved',
+                      style: GoogleFonts.poppins(
                         fontWeight: FontWeight.bold,
-                            color: !isOutstandingSelected
-                                ? Colors.white
+                        color: !isOutstandingSelected
+                            ? Colors.white
                             : Color(0xFFE91E63),
                         fontSize: 15,
-                        ),
                       ),
                     ),
                   ),
-                ],
+                ),
+              ],
             ),
             const SizedBox(height: 20),
             // Card List
@@ -435,7 +435,9 @@ class _WastePageState extends State<WastePage> {
                 height: MediaQuery.of(context).size.height * 0.9,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
@@ -1213,7 +1215,7 @@ class _WastePageState extends State<WastePage> {
       elevation: 8,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: const EdgeInsets.only(bottom: 16),
-        color: Colors.white,
+      color: Colors.white,
       child: SizedBox(
         height: 180,
         child: Stack(
@@ -1228,14 +1230,14 @@ class _WastePageState extends State<WastePage> {
                 decoration: BoxDecoration(
                   color: badgeColor,
                   borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
+                  boxShadow: [
+                    BoxShadow(
                       color: badgeColor.withOpacity(0.18),
                       blurRadius: 6,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -1514,7 +1516,9 @@ class _AddWasteModalState extends State<_AddWasteModal> {
                       Row(
                         children: [
                           OutlinedButton.icon(
-                            onPressed: _items.length > 1 ? () => setState(() => _items.removeLast()) : null,
+                            onPressed: _items.length > 1
+                                ? () => setState(() => _items.removeLast())
+                                : null,
                             icon: const Icon(Icons.delete, color: Colors.red),
                             label: const Text(
                               'Remove Item',
@@ -1628,10 +1632,16 @@ class _AddWasteModalState extends State<_AddWasteModal> {
                   value: item['code'],
                   isExpanded: true,
                   items: _itemCodes
-                      .map((e) => DropdownMenuItem(
-                            value: e,
-                            child: Text(e, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          ))
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: (val) => setState(() => item['code'] = val),
                   decoration: InputDecoration(
@@ -1648,10 +1658,16 @@ class _AddWasteModalState extends State<_AddWasteModal> {
                   value: item['name'],
                   isExpanded: true,
                   items: _itemNames
-                      .map((e) => DropdownMenuItem(
-                            value: e,
-                            child: Text(e, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          ))
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: (val) => setState(() => item['name'] = val),
                   decoration: InputDecoration(
@@ -1677,7 +1693,8 @@ class _AddWasteModalState extends State<_AddWasteModal> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  onChanged: (val) => setState(() => item['qty'] = int.tryParse(val) ?? 1),
+                  onChanged: (val) =>
+                      setState(() => item['qty'] = int.tryParse(val) ?? 1),
                 ),
               ),
               const SizedBox(width: 16),
@@ -1686,10 +1703,16 @@ class _AddWasteModalState extends State<_AddWasteModal> {
                   value: item['uom'],
                   isExpanded: true,
                   items: _uoms
-                      .map((e) => DropdownMenuItem(
-                            value: e,
-                            child: Text(e, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          ))
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: (val) => setState(() => item['uom'] = val),
                   decoration: InputDecoration(
@@ -1706,10 +1729,16 @@ class _AddWasteModalState extends State<_AddWasteModal> {
                   value: item['notes'],
                   isExpanded: true,
                   items: _notes
-                      .map((e) => DropdownMenuItem(
-                            value: e,
-                            child: Text(e, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          ))
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: (val) => setState(() => item['notes'] = val),
                   decoration: InputDecoration(
@@ -1824,10 +1853,7 @@ class _AddWasteModalState extends State<_AddWasteModal> {
         const SizedBox(height: 6),
         Text(
           'Supported formats: JPG, PNG, PDF (Max. 5MB)',
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
+          style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
         ),
       ],
     );

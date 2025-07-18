@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Help_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
-import 'package:miniproject_flutter/screens/Resource/Purchasing/DiretPurchasePage.dart';
+import 'package:miniproject_flutter/screens/Resource/Purchasing/DirectPurchasePage.dart';
 
 import 'package:miniproject_flutter/screens/Resource/Purchasing/GRPO_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialCalculate_Page.dart';
