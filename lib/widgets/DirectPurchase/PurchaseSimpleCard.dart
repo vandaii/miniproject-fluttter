@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:awesome_dialog/awesome_dialog.dart';
+import 'dart:io';
 
 class PurchaseSimpleCard extends StatelessWidget {
   final String noDirect;
@@ -9,6 +11,7 @@ class PurchaseSimpleCard extends StatelessWidget {
   final String items;
   final String total;
   final VoidCallback? onViewDetails;
+  final Map<String, dynamic>? data;
   const PurchaseSimpleCard({
     Key? key,
     required this.noDirect,
@@ -18,6 +21,7 @@ class PurchaseSimpleCard extends StatelessWidget {
     required this.items,
     required this.total,
     this.onViewDetails,
+    this.data,
   }) : super(key: key);
 
   Color _statusColor(String status) {
@@ -81,6 +85,7 @@ class PurchaseSimpleCard extends StatelessWidget {
                       // No DP dan status sejajar
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Expanded(
                             child: Text(
@@ -97,6 +102,7 @@ class PurchaseSimpleCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 10),
                           Container(
+                            constraints: BoxConstraints(maxWidth: 100), // atur max lebar badge
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                             decoration: BoxDecoration(
                               color: statusColor.withOpacity(0.10),
@@ -110,8 +116,10 @@ class PurchaseSimpleCard extends StatelessWidget {
                                 color: statusColor,
                                 fontWeight: FontWeight.w600,
                               ),
-                              maxLines: 1,
+                              maxLines: 2,
+                              softWrap: true,
                               overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
                             ),
                           ),
                         ],
@@ -156,7 +164,96 @@ class PurchaseSimpleCard extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: onViewDetails,
+                  onPressed: () {
+                    if (data == null) return;
+                    final proof = data!['purchase_proof'] ?? data!['purchaseProof'];
+                    List<String> images = [];
+                    if (proof is List) {
+                      images = proof.cast<String>();
+                    } else if (proof is String && proof.isNotEmpty && proof != '-') {
+                      images = [proof];
+                    }
+                    AwesomeDialog(
+                      context: context,
+                      dialogType: DialogType.noHeader,
+                      animType: AnimType.bottomSlide,
+                      title: 'Detail Direct Purchase',
+                      body: Center(
+                        child: Material(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(maxWidth: 600), // dari sebelumnya 420
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Detail Direct Purchase',
+                                        style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: deeppink,
+                                        ),
+                                      ),
+                                      Icon(Icons.shopping_cart_checkout_rounded, color: deeppink, size: 28),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Divider(thickness: 1, color: Colors.grey[200]),
+                                  const SizedBox(height: 10),
+                                  _DetailRow(label: 'No DP', value: noDirect),
+                                  _DetailRow(label: 'Status', value: status),
+                                  _DetailRow(label: 'Tanggal', value: date),
+                                  _DetailRow(label: 'Supplier', value: supplier),
+                                  _DetailRow(label: 'Items', value: items),
+                                  _DetailRow(label: 'Total', value: total),
+                                  if (data!['note'] != null && data!['note'].toString().isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    _DetailRow(label: 'Catatan', value: data!['note'].toString()),
+                                  ],
+                                  if (images.isNotEmpty) ...[
+                                    const SizedBox(height: 18),
+                                    Text('Bukti Pembelian:', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15)),
+                                    const SizedBox(height: 8),
+                                    ...images.map((img) {
+                                      String url = img.startsWith('http') ? img : 'http://192.168.1.5:8000/storage/purchase_proofs/' + img;
+                                      return Padding(
+                                        padding: const EdgeInsets.only(bottom: 8.0),
+                                        child: Material(
+                                          elevation: 3,
+                                          borderRadius: BorderRadius.circular(14),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(14),
+                                            child: Image.network(
+                                              url,
+                                              height: 160,
+                                              width: double.infinity,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (c, e, s) => Container(
+                                                color: Colors.grey[200],
+                                                height: 160,
+                                                child: Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      btnOkOnPress: () {},
+                      useRootNavigator: true,
+                    ).show();
+                  },
                   icon: const Icon(Icons.visibility, size: 18, color: Colors.white),
                   label: Text('View Details', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
@@ -217,6 +314,40 @@ class _InfoRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+} 
+
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _DetailRow({required this.label, required this.value, Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 90,
+            child: Text(
+              label,
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w500, color: Colors.black87, fontSize: 13),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.black87, fontSize: 14),
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 } 
