@@ -1,11 +1,15 @@
 import "dart:ui";
 import "package:flutter/material.dart";
+import 'package:miniproject_flutter/screens/Resource/Auth/Help_Page.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/UserProfile_Page.dart';
 import 'package:miniproject_flutter/widgets/DirectPurchase/HeaderFloatingCard.dart';
 import 'package:miniproject_flutter/widgets/DirectPurchase/TitleCardDirectPurchase.dart';
 import 'package:miniproject_flutter/widgets/DirectPurchase/PurchaseSimpleCard.dart';
 import 'package:miniproject_flutter/widgets/DirectPurchase/SearchAndFilterBar.dart';
 import 'package:miniproject_flutter/screens/Resource/Purchasing/AddDirectPurchaseForm.dart';
 import 'package:miniproject_flutter/services/DirectService.dart';
+import 'package:miniproject_flutter/widgets/DirectPurchase/SidebarDrawer.dart';
+
 
 class DirectPurchasePage extends StatefulWidget {
   final int selectedIndex;
@@ -24,10 +28,21 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
   List<dynamic> _directPurchases = [];
   bool _isLoading = false;
   String? _errorMessage;
+  int? _expandedMenuIndex;
+  int? _hoveredIndex;
+  bool _isSidebarExpanded = true;
+  int _selectedIndex = 11;
+
+  // Tambahkan variabel state untuk store dan user
+  List<String> _storeList = ['HAUS Jakarta', 'HAUS Bandung', 'HAUS Surabaya', 'HAUS Medan'];
+  String _selectedStore = 'HAUS Jakarta';
+  String _userName = 'John Doe';
+  String _userRole = 'Admin';
 
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.selectedIndex;
     _fetchDirectPurchases();
   }
 
@@ -180,6 +195,81 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
     );
   }
 
+  // Tambahkan helper untuk menutup semua dropdown
+  void _closeAllDropdowns() {
+    setState(() {
+      _expandedMenuIndex = null;
+    });
+  }
+
+  void _showSidebarDrawer() {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Sidebar',
+      barrierColor: Colors.black.withOpacity(0.3),
+      transitionDuration: Duration(milliseconds: 400),
+      pageBuilder: (context, anim1, anim2) {
+        return Align(
+          alignment: Alignment.centerLeft,
+          child: SidebarDrawer(
+            selectedIndex: _selectedIndex,
+            onNavigate: (int idx) {
+              Navigator.of(context).pop();
+              _navigateToPage(idx);
+              _closeAllDropdowns();
+            },
+            isSidebarExpanded: _isSidebarExpanded,
+            onClose: () => Navigator.of(context).pop(),
+            storeList: _storeList,
+            selectedStore: _selectedStore,
+            onSelectStore: (String store) {
+              setState(() {
+                _selectedStore = store;
+              });
+            },
+            userName: _userName,
+            userRole: _userRole,
+            onProfile: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UserprofilePage(),
+                ),
+              );
+            },
+            onSettings: () {},
+            onHelp: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => HelpPage()),
+              );
+            },
+            onLogout: () async {
+              // await _handleLogout();
+            },
+          ),
+        );
+      },
+      transitionBuilder: (context, anim1, anim2, child) {
+        final offset = Tween<Offset>(
+          begin: Offset(-1, 0),
+          end: Offset(0, 0),
+        ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOutBack));
+        return SlideTransition(
+          position: offset,
+          child: child,
+        );
+      },
+    );
+  }
+
+  void _navigateToPage(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 700;
@@ -196,7 +286,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: HeaderFloatingCard(
                     isMobile: isMobile,
-                    onMenuTap: () {},
+                    onMenuTap: _showSidebarDrawer,
                     onEmailTap: () {},
                     onNotifTap: () {},
                     onAvatarTap: () {},

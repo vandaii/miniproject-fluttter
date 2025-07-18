@@ -8,6 +8,7 @@ class Step1Form extends StatelessWidget {
   final VoidCallback? onNext;
   final bool isValid;
   final Color? buttonColor;
+  final VoidCallback? onFieldChanged; // Tambahan
   static const Color primaryColor = Color.fromARGB(255, 255, 0, 85);
 
   const Step1Form({
@@ -19,6 +20,7 @@ class Step1Form extends StatelessWidget {
     required this.onNext,
     required this.isValid,
     this.buttonColor,
+    this.onFieldChanged, // Tambahan
   }) : super(key: key);
 
   // Ganti dialog input menjadi custom bottom sheet ala ForgetPasswordPage
@@ -176,7 +178,11 @@ class Step1Form extends StatelessWidget {
                       context: context,
                       title: 'Enter Employee ID',
                       initialValue: employeeIdController.text,
-                      onSubmitted: (value) => employeeIdController.text = value,
+                      onSubmitted: (value) {
+                        employeeIdController.text = value;
+                        employeeIdController.notifyListeners();
+                        if (onFieldChanged != null) onFieldChanged!();
+                      },
                       keyboardType: TextInputType.text,
                       unfocusAfterSubmit: false,
                     );
@@ -213,7 +219,11 @@ class Step1Form extends StatelessWidget {
                       context: context,
                       title: 'Enter Full Name',
                       initialValue: nameController.text,
-                      onSubmitted: (value) => nameController.text = value,
+                      onSubmitted: (value) {
+                        nameController.text = value;
+                        nameController.notifyListeners();
+                        if (onFieldChanged != null) onFieldChanged!();
+                      },
                       keyboardType: TextInputType.text,
                       unfocusAfterSubmit: false,
                     );
@@ -250,7 +260,11 @@ class Step1Form extends StatelessWidget {
                       context: context,
                       title: 'Enter Email',
                       initialValue: emailController.text,
-                      onSubmitted: (value) => emailController.text = value,
+                      onSubmitted: (value) {
+                        emailController.text = value;
+                        emailController.notifyListeners();
+                        if (onFieldChanged != null) onFieldChanged!();
+                      },
                       keyboardType: TextInputType.emailAddress,
                       unfocusAfterSubmit: false,
                     );
@@ -288,7 +302,11 @@ class Step1Form extends StatelessWidget {
                       context: context,
                       title: 'Enter Phone Number',
                       initialValue: phoneController.text,
-                      onSubmitted: (value) => phoneController.text = value,
+                      onSubmitted: (value) {
+                        phoneController.text = value;
+                        phoneController.notifyListeners();
+                        if (onFieldChanged != null) onFieldChanged!();
+                      },
                       keyboardType: TextInputType.phone,
                       unfocusAfterSubmit: true,
                     );
@@ -327,12 +345,13 @@ class Step1Form extends StatelessWidget {
                           ? LinearGradient(
                               colors: [
                                 primaryColor,
+                                primaryColor.withOpacity(0.8),
                               ],
                             )
                           : LinearGradient(
                               colors: [
                                 Colors.grey.shade200,
-                                Colors.grey.shade200,
+                                Colors.grey.shade300,
                               ],
                             ),
                       borderRadius: BorderRadius.circular(10),

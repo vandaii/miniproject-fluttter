@@ -202,6 +202,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   : null,
                               buttonColor:
                                   primaryColor, // tombol menyala jika valid
+                              onFieldChanged: () => setState(() {}), // Tambahan
                             ),
                           if (_currentStep == 2)
                             Step2Form(
