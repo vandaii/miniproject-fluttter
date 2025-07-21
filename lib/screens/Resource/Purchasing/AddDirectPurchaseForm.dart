@@ -139,23 +139,36 @@ class _AddDirectPurchaseFormState extends State<AddDirectPurchaseForm>
       return;
     }
     setState(() => _isSubmitting = true);
+    final items = _items
+        .where((item) => item['name'].text.trim().isNotEmpty)
+        .map(
+          (item) => {
+            'item_name': item['name'].text.trim(),
+            'item_description': item['desc'].text.trim(),
+            'quantity': int.tryParse(item['qty'].text) ?? 0,
+            'price': double.tryParse(item['price'].text) ?? 0.0,
+            'unit': item['unit'],
+          },
+        )
+        .toList();
+    if (items.isEmpty) {
+      setState(() => _isSubmitting = false);
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.error,
+        animType: AnimType.bottomSlide,
+        title: 'Gagal',
+        desc: 'Minimal 1 item barang dengan nama harus diisi!',
+        btnOkOnPress: () {},
+      ).show();
+      return;
+    }
     try {
-      final items = _items
-          .map(
-            (item) => {
-              'item_name': item['name'].text.trim(),
-              'item_description': item['desc'].text.trim(),
-              'quantity': int.tryParse(item['qty'].text) ?? 0,
-              'price': double.tryParse(item['price'].text) ?? 0.0,
-              'unit': item['unit'],
-            },
-          )
-          .toList();
       await DirectService().createDirectPurchase(
         date: _dateController.text,
         supplier: _supplierController.text,
         expenseType: _expenseTypeController.text,
-        items: items,
+        items: items, // selalu array dan minimal 1 item
         totalAmount: _totalAmount,
         note: _noteController.text,
         purchaseProofs: _files,

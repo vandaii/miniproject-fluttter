@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:miniproject_flutter/screens/Resource/Purchasing/DiretPurchasePage.dart';
+import 'package:miniproject_flutter/screens/Resource/Purchasing/DirectPurchasePage.dart';
 import 'package:miniproject_flutter/screens/Resource/Purchasing/GRPO_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialCalculate_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/StockOpname_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/Waste_Page.dart';
-import 'Resource/Purchasing/DirectPurchase_Page.dart';
 import 'Resource/Stock_Management/TransferStock_Page.dart';
 import 'Resource/Stock_Management/MaterialRequest_Page.dart';
 import 'Resource/Auth/UserProfile_Page.dart';
@@ -237,6 +236,16 @@ class _DashboardPageState extends State<DashboardPage>
       _sidebarController?.value = 1.0;
     } else {
       _sidebarController?.value = 0.0;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant DashboardPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedIndex != _selectedIndex) {
+      setState(() {
+        _selectedIndex = widget.selectedIndex;
+      });
     }
   }
 
@@ -2700,56 +2709,79 @@ class _DashboardPageState extends State<DashboardPage>
 
   // Navigasi ke halaman lain
   void _navigateToPage(int index) {
+    // Dihapus pengecekan agar setiap klik menu selalu navigasi
     switch (index) {
-      case 11: // Direct Purchase
-        Navigator.push(
+      case 0:
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => DirectPurchasePage()),
+          MaterialPageRoute(
+            builder: (context) => DashboardPage(selectedIndex: 0),
+          ),
         );
         break;
-      case 12: // GRPO
-        Navigator.push(
+      case 11:
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => GRPO_Page()),
+          MaterialPageRoute(
+            builder: (context) => DirectPurchasePage(selectedIndex: 11),
+          ),
         );
         break;
-      case 21: // Material Request
-        Navigator.push(
+      case 12:
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => MaterialRequestPage()),
+          MaterialPageRoute(
+            builder: (context) => GRPO_Page(selectedIndex: 12),
+          ),
         );
         break;
-      case 22: // Stock Opname
-        Navigator.push(
+      case 21:
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => StockOpnamePage()),
+          MaterialPageRoute(
+            builder: (context) => MaterialRequestPage(selectedIndex: 21),
+          ),
         );
         break;
-      case 23: // Transfer Stock
-        Navigator.push(
+      case 22:
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => TransferStockPage()),
+          MaterialPageRoute(
+            builder: (context) => StockOpnamePage(selectedIndex: 22),
+          ),
         );
         break;
-      case 24: // Waste
-        Navigator.push(
+      case 23:
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => WastePage()),
+          MaterialPageRoute(
+            builder: (context) => TransferStockPage(selectedIndex: 23),
+          ),
         );
         break;
-      case 25: // Material Calculate
-        Navigator.push(
+      case 24:
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => MaterialCalculatePage()),
+          MaterialPageRoute(
+            builder: (context) => WastePage(selectedIndex: 24),
+          ),
         );
         break;
-      case 4: // Account & Settings
+      case 25:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MaterialCalculatePage(selectedIndex: 25),
+          ),
+        );
+        break;
+      case 4:
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const UserprofilePage()),
         );
         break;
-      case 5: // Help
+      case 5:
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => HelpPage()),
