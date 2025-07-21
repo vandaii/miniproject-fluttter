@@ -1,11 +1,49 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
-class SearchAndFilterBar extends StatelessWidget {
+class SearchAndFilterBar extends StatefulWidget {
   static const Color primary = Color.fromARGB(255, 255, 0, 85);
-  final TextEditingController? controller;
-  final ValueChanged<String>? onChanged;
+  final ValueChanged<String> onChanged;
   final VoidCallback? onFilterTap;
-  const SearchAndFilterBar({Key? key, this.controller, this.onChanged, this.onFilterTap}) : super(key: key);
+  final String hintText;
+
+  const SearchAndFilterBar({
+    Key? key,
+    required this.onChanged,
+    this.onFilterTap,
+    this.hintText = 'Cari transaksi…',
+  }) : super(key: key);
+
+  @override
+  _SearchAndFilterBarState createState() => _SearchAndFilterBarState();
+}
+
+class _SearchAndFilterBarState extends State<SearchAndFilterBar> {
+  final TextEditingController _controller = TextEditingController();
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _controller.removeListener(_onSearchChanged);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        widget.onChanged(_controller.text);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,10 +51,9 @@ class SearchAndFilterBar extends StatelessWidget {
       children: [
         Expanded(
           child: TextField(
-            controller: controller,
-            onChanged: onChanged,
+            controller: _controller,
             decoration: InputDecoration(
-              hintText: 'Cari transaksi…',
+              hintText: widget.hintText,
               prefixIcon: const Icon(Icons.search),
               filled: true,
               fillColor: Colors.white,
@@ -29,21 +66,13 @@ class SearchAndFilterBar extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 4,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
+        Material(
+          elevation: 1,
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
           child: IconButton(
-            icon: const Icon(Icons.filter_list, color: primary),
-            onPressed: onFilterTap,
+            icon: const Icon(Icons.filter_list, color: SearchAndFilterBar.primary),
+            onPressed: widget.onFilterTap,
           ),
         ),
       ],

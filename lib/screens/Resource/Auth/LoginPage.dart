@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:miniproject_flutter/screens/Resource/Auth/register_page.dart';
+import 'package:miniproject_flutter/screens/Resource/Auth/RegisterPage.dart';
 import 'package:miniproject_flutter/screens/DashboardPage.dart';
 import 'package:miniproject_flutter/widgets/Login/HeaderForLogin.dart';
 import 'package:miniproject_flutter/widgets/Login/FormLogin.dart';

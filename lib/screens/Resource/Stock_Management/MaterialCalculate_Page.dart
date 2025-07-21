@@ -107,7 +107,7 @@ class _MaterialCalculatePageState extends State<MaterialCalculatePage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal logout: [${e.toString()}'),
+            content: Text('Gagal logout:  [${e.toString()}'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 2),
           ),

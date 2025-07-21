@@ -5,7 +5,6 @@ import 'package:miniproject_flutter/screens/Resource/Purchasing/GRPO_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialCalculate_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/StockOpname_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/Waste_Page.dart';
-import 'Resource/Purchasing/DirectPurchase_Page.dart';
 import 'Resource/Stock_Management/TransferStock_Page.dart';
 import 'Resource/Stock_Management/MaterialRequest_Page.dart';
 import 'Resource/Auth/UserProfile_Page.dart';
@@ -237,6 +236,16 @@ class _DashboardPageState extends State<DashboardPage>
       _sidebarController?.value = 1.0;
     } else {
       _sidebarController?.value = 0.0;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant DashboardPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedIndex != _selectedIndex) {
+      setState(() {
+        _selectedIndex = widget.selectedIndex;
+      });
     }
   }
 
@@ -2004,6 +2013,270 @@ class _DashboardPageState extends State<DashboardPage>
         ),
       ),
     );
+  }
+
+
+  // Expandable Menu (Sidebar)
+  Widget _buildExpandableMenu({
+    required IconData icon,
+    required String title,
+    required bool isExpanded,
+    required List<Widget> children,
+    required VoidCallback onTap,
+    required int menuIndex,
+    bool isMobile = false,
+  }) {
+    final isMenuExpanded = _expandedMenuIndex == menuIndex;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: isExpanded ? lightPink.withOpacity(0.3) : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ListTile(
+            horizontalTitleGap: 12,
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isExpanded
+                    ? Colors.white.withOpacity(0.35)
+                    : Colors.white.withOpacity(0.13),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isExpanded
+                      ? Colors.white.withOpacity(0.32)
+                      : Colors.white.withOpacity(0.22),
+                  width: 1.1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                icon,
+                color: isExpanded ? deepPink : Colors.grey,
+                size: 20,
+              ),
+            ),
+            title: Text(
+              title,
+              style: GoogleFonts.poppins(
+                color: isExpanded ? deepPink : Colors.black87,
+                fontWeight: isExpanded ? FontWeight.bold : FontWeight.normal,
+                fontSize: 14,
+              ),
+            ),
+            trailing: AnimatedRotation(
+              turns: isMenuExpanded ? 0.5 : 0.0,
+              duration: Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+              child: Icon(
+                Icons.expand_more,
+                color: isExpanded ? deepPink : Colors.grey,
+              ),
+            ),
+            onTap: () {
+              _toggleMenu(menuIndex);
+              onTap();
+            },
+            dense: true,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+          ),
+        ),
+        if (isMenuExpanded && (_isSidebarExpanded || isMobile))
+          Container(
+            margin: const EdgeInsets.only(left: 16),
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: children,
+            ),
+          ),
+      ],
+    );
+  }
+
+  // Sub Menu Item (Sidebar)
+  Widget _buildSubMenuItem(String title, int index) {
+    return Container(
+      margin: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
+      decoration: BoxDecoration(
+        color: _selectedIndex == index
+            ? lightPink.withOpacity(0.3)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        horizontalTitleGap: 12,
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: _selectedIndex == index
+                ? Colors.white.withOpacity(0.35)
+                : Colors.white.withOpacity(0.13),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _selectedIndex == index
+                  ? Colors.white.withOpacity(0.32)
+                  : Colors.white.withOpacity(0.22),
+              width: 1.1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(
+            _getSubMenuIcon(index),
+            color: _selectedIndex == index ? deepPink : Colors.grey,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            color: _selectedIndex == index ? deepPink : Colors.black87,
+            fontWeight: _selectedIndex == index
+                ? FontWeight.bold
+                : FontWeight.normal,
+          ),
+        ),
+        selected: _selectedIndex == index,
+        onTap: () {
+          setState(() => _selectedIndex = index);
+          _navigateToPage(index);
+        },
+        dense: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      ),
+    );
+  }
+
+  // Icon untuk sub menu sidebar
+  IconData _getSubMenuIcon(int index) {
+    switch (index) {
+      case 11: // Direct Purchase
+        return Icons.shopping_bag_rounded;
+      case 12: // GRPO
+        return Icons.receipt_long_outlined;
+      case 21: // Material Request
+        return Icons.inventory_rounded;
+      case 22: // Stock Opname
+        return Icons.checklist_rtl_outlined;
+      case 23: // Transfer Stock
+        return Icons.swap_horiz_outlined;
+      case 24: // Waste
+        return Icons.delete_outline;
+      case 25: // Material Calculate
+        return Icons.inventory_rounded;
+      default:
+        return Icons.circle_outlined;
+    }
+  }
+
+  // Navigasi ke halaman lain
+  void _navigateToPage(int index) {
+    // Dihapus pengecekan agar setiap klik menu selalu navigasi
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DashboardPage(selectedIndex: 0),
+          ),
+        );
+        break;
+      case 11:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DirectPurchasePage(selectedIndex: 11),
+          ),
+        );
+        break;
+      case 12:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => GRPO_Page(selectedIndex: 12),
+          ),
+        );
+        break;
+      case 21:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MaterialRequestPage(selectedIndex: 21),
+          ),
+        );
+        break;
+      case 22:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => StockOpnamePage(selectedIndex: 22),
+          ),
+        );
+        break;
+      case 23:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TransferStockPage(selectedIndex: 23),
+          ),
+        );
+        break;
+      case 24:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WastePage(selectedIndex: 24),
+          ),
+        );
+        break;
+      case 25:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MaterialCalculatePage(selectedIndex: 25),
+          ),
+        );
+        break;
+      case 4:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const UserprofilePage()),
+        );
+        break;
+      case 5:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => HelpPage()),
+        );
+        break;
+    }
   }
 
   // --- Email Overlay Logic ---
