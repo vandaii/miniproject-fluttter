@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class ApiConfig {
   static const String baseUrl = 'http://192.168.1.6:8000/api';
 
+
   // HTTP client with bad certificate callback
   static http.Client client = IOClient(
     // Create an HttpClient with a bad certificate callback
