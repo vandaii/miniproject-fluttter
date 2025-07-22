@@ -9,6 +9,7 @@ class HeaderFloatingCard extends StatelessWidget {
   final TextEditingController? searchController;
   final ValueChanged<String>? onSearchChanged;
   final String? avatarInitial;
+  final FocusNode? searchFocusNode;
 
   const HeaderFloatingCard({
     Key? key,
@@ -20,6 +21,7 @@ class HeaderFloatingCard extends StatelessWidget {
     this.searchController,
     this.onSearchChanged,
     this.avatarInitial = 'J',
+    this.searchFocusNode,
   }) : super(key: key);
 
   @override
@@ -77,6 +79,7 @@ class HeaderFloatingCard extends StatelessWidget {
                 child: TextField(
                   controller: searchController,
                   onChanged: onSearchChanged,
+                  focusNode: searchFocusNode,
                   style: TextStyle(fontSize: 16, color: Colors.grey[800]),
                   decoration: InputDecoration(
                     prefixIcon: Icon(
