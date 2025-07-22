@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 class SearchAndFilterBar extends StatefulWidget {
   static const Color primary = Color.fromARGB(255, 255, 0, 85);
   final ValueChanged<String> onChanged;
+  final VoidCallback? onSearchPressed;
   final VoidCallback? onFilterTap;
   final String hintText;
 
   const SearchAndFilterBar({
     Key? key,
     required this.onChanged,
+    this.onSearchPressed,
     this.onFilterTap,
     this.hintText = 'Cari transaksi…',
   }) : super(key: key);
@@ -45,6 +47,10 @@ class _SearchAndFilterBarState extends State<SearchAndFilterBar> {
     });
   }
 
+  void _onSubmitted(String value) {
+    if (widget.onSearchPressed != null) widget.onSearchPressed!();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -63,6 +69,7 @@ class _SearchAndFilterBarState extends State<SearchAndFilterBar> {
                 borderSide: BorderSide.none,
               ),
             ),
+            onSubmitted: _onSubmitted,
           ),
         ),
         const SizedBox(width: 12),
@@ -73,6 +80,17 @@ class _SearchAndFilterBarState extends State<SearchAndFilterBar> {
           child: IconButton(
             icon: const Icon(Icons.filter_list, color: SearchAndFilterBar.primary),
             onPressed: widget.onFilterTap,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Material(
+          elevation: 1,
+          color: SearchAndFilterBar.primary,
+          borderRadius: BorderRadius.circular(16),
+          child: IconButton(
+            icon: const Icon(Icons.search, color: Colors.white),
+            onPressed: widget.onSearchPressed,
+            tooltip: 'Cari',
           ),
         ),
       ],

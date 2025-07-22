@@ -9,6 +9,8 @@ import 'package:miniproject_flutter/widgets/DirectPurchase/PurchaseCard.dart';
 import 'package:miniproject_flutter/widgets/DirectPurchase/SearchAndFilterBar.dart';
 import 'package:miniproject_flutter/screens/Resource/Purchasing/AddDirectPurchaseForm.dart';
 import 'package:miniproject_flutter/services/DirectService.dart';
+import 'package:miniproject_flutter/widgets/DirectPurchase/FilterBottomSheet.dart';
+import 'package:intl/intl.dart';
 
 
 class DirectPurchasePage extends StatefulWidget {
@@ -34,6 +36,10 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
   bool _isSidebarExpanded = true;
   int _selectedIndex = 11;
   TabController? _tabController;
+  String _searchQuery = '';
+  String? _selectedStatus;
+  DateTime? _startDate;
+  DateTime? _endDate;
 
   // Tambahkan variabel state untuk store dan user
   List<String> _storeList = ['HAUS Jakarta', 'HAUS Bandung', 'HAUS Surabaya', 'HAUS Medan'];
@@ -55,6 +61,8 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
     'Revision',
   ];
 
+  final FocusNode _searchFocusNode = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -70,17 +78,29 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
 
   @override
   void dispose() {
+    _searchFocusNode.dispose();
     _tabController?.dispose();
     super.dispose();
   }
 
-  Future<void> _fetchDirectPurchases() async {
+  Future<void> _fetchDirectPurchases({String? search, bool resetSearch = false}) async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
     try {
-      final data = await DirectService().getDirectPurchases();
+      if (resetSearch) {
+        _searchQuery = '';
+        _selectedStatus = null;
+        _startDate = null;
+        _endDate = null;
+      }
+      final data = await DirectService().getDirectPurchases(
+        search: resetSearch ? null : (search ?? _searchQuery),
+        status: _selectedStatus,
+        startDate: _startDate != null ? DateFormat('yyyy-MM-dd').format(_startDate!) : null,
+        endDate: _endDate != null ? DateFormat('yyyy-MM-dd').format(_endDate!) : null,
+      );
       setState(() {
         _directPurchases = data['data'] ?? [];
         _isLoading = false;
@@ -102,92 +122,42 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
       barrierLabel: 'Search',
       barrierColor: Colors.transparent,
       pageBuilder: (context, anim1, anim2) {
-        return Stack(
-          children: [
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 90),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 16,
-                          offset: Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(18),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Cari Transaksi',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Color.fromARGB(255, 255, 0, 85),
-                              ),
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.close, color: Colors.grey[600]),
-                              onPressed: () => Navigator.of(context).pop(),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 8),
-                        SearchAndFilterBar(
-                          onChanged: (val) {},
-                          onFilterTap: () {},
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // Icon petunjuk di bawah pop-up, sejajar dengan tombol search
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 40, // sedikit di atas navigation bar
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 40), // sesuaikan agar sejajar dengan tombol search
-                    child: Icon(
-                    
-                      Icons.arrow_drop_down_rounded , // panah ke atas
-                      size: 80,
-                      color: Color.fromARGB(255, 29, 21, 116),
-                    ),
-                    
-                  ),
-                ],
-              ),
-            ),
-          ],
+        return _SearchDialogContent(
+          onSearch: (keyword) {
+            setState(() {
+              _searchQuery = keyword;
+            });
+            _fetchDirectPurchases(search: keyword);
+          },
+          onFilterApplied: (status, startDate, endDate) {
+            final statusTabIndex = {
+              'Pending Area Manager': 0,
+              'Approved': 1,
+              'Rejected': 2,
+              'Revision': 3,
+            };
+            setState(() {
+              _selectedStatus = status;
+              _startDate = startDate;
+              _endDate = endDate;
+            });
+            if (status != null && statusTabIndex.containsKey(status)) {
+              _tabController?.animateTo(statusTabIndex[status]!);
+            }
+            _fetchDirectPurchases();
+          },
         );
       },
       transitionBuilder: (context, anim1, anim2, child) {
         return SlideTransition(
           position: Tween(
-            begin: Offset(0, 1),
-            end: Offset(0, 0),
+            begin: const Offset(0, 1),
+            end: Offset.zero,
           ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOut)),
           child: child,
         );
       },
-      transitionDuration: Duration(milliseconds: 350),
+      transitionDuration: const Duration(milliseconds: 350),
     );
   }
 
@@ -545,7 +515,16 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
 
   @override
   Widget build(BuildContext context) {
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final bool keyboardVisible = keyboardHeight > 0;
+    final double dialogLeftRightPadding = keyboardVisible ? 0 : 16;
     final bool isMobile = MediaQuery.of(context).size.width < 700;
+    // Unfocus search bar jika keyboard ditutup
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (MediaQuery.of(context).viewInsets.bottom == 0) {
+        _searchFocusNode.unfocus();
+      }
+    });
     if (_tabController == null) {
       return const SizedBox.shrink();
     }
@@ -788,7 +767,24 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
   }
 
   Widget _buildPurchaseList(String status) {
-    final filtered = _directPurchases.where((e) => (e['status'] ?? '').toString().toLowerCase() == status.toLowerCase()).toList();
+    var filtered = _directPurchases.where((e) => (e['status'] ?? '').toString().toLowerCase() == status.toLowerCase()).toList();
+
+    // Tambahkan filter tanggal di sisi frontend sebagai pengaman
+    if (_startDate != null && _endDate != null) {
+      filtered = filtered.where((item) {
+        final itemDateStr = item['date'] ?? item['directPurchaseDate'];
+        if (itemDateStr == null || itemDateStr.toString().isEmpty) return false;
+
+        try {
+          final itemDate = DateTime.parse(itemDateStr.toString().split(' ').first);
+          final inclusiveEndDate = _endDate!.add(const Duration(days: 1));
+          return (itemDate.isAtSameMomentAs(_startDate!) || itemDate.isAfter(_startDate!)) &&
+                 itemDate.isBefore(inclusiveEndDate);
+        } catch (e) {
+          return false;
+        }
+      }).toList();
+    }
 
     if (_isLoading) {
       return Center(
@@ -811,21 +807,32 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
 
     return RefreshIndicator(
       color: Color.fromARGB(255, 255, 0, 85),
-      onRefresh: _fetchDirectPurchases,
-      child: filtered.isEmpty
-          ? _EmptyStatusWidget(status: status)
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
-              children: filtered.map((item) => PurchaseSimpleCard(
-                noDirect: item['noDirectPurchase'] ?? item['no_direct'] ?? '-',
-                status: item['status'] ?? '-',
-                date: item['date'] ?? item['directPurchaseDate'] ?? '-',
-                supplier: item['supplier'] ?? '-',
-                items: item['items'] ?? [],
-                total: item['total_amount']?.toString() ?? item['totalAmount']?.toString() ?? '-',
-                data: item,
-              )).toList(),
-            ),
+      onRefresh: () => _fetchDirectPurchases(resetSearch: true),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (filtered.isEmpty) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: _EmptyStatusWidget(status: status),
+              ),
+            );
+          }
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
+            children: filtered.map((item) => PurchaseSimpleCard(
+              noDirect: item['noDirectPurchase'] ?? item['no_direct'] ?? '-',
+              status: item['status'] ?? '-',
+              date: item['date'] ?? item['directPurchaseDate'] ?? '-',
+              supplier: item['supplier'] ?? '-',
+              items: item['items'] ?? [],
+              total: item['total_amount']?.toString() ?? item['totalAmount']?.toString() ?? '-',
+              data: item,
+            )).toList(),
+          );
+        },
+      ),
     );
   }
 }
@@ -873,6 +880,119 @@ class _EmptyStatusWidget extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// Tambahkan widget baru untuk konten dialog search
+class _SearchDialogContent extends StatefulWidget {
+  final ValueChanged<String> onSearch;
+  final Function(String?, DateTime?, DateTime?) onFilterApplied;
+  const _SearchDialogContent({Key? key, required this.onSearch, required this.onFilterApplied}) : super(key: key);
+  @override
+  State<_SearchDialogContent> createState() => _SearchDialogContentState();
+}
+
+class _SearchDialogContentState extends State<_SearchDialogContent> {
+  String _keyword = '';
+
+  void _doSearch() {
+    if (_keyword.trim().isNotEmpty) {
+      widget.onSearch(_keyword.trim());
+    }
+  }
+
+  void _showFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (bsContext) {
+        return FilterBottomSheet(
+          onFilterApplied: (status, startDate, endDate) {
+            widget.onFilterApplied(status, startDate, endDate);
+            Navigator.of(bsContext).pop(); // Tutup hanya bottom sheet
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final bool keyboardVisible = keyboardHeight > 0;
+    final double dialogLeftRightPadding = keyboardVisible ? 0 : 16;
+    return Stack(
+      children: [
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: dialogLeftRightPadding,
+              right: dialogLeftRightPadding,
+              bottom: keyboardVisible ? keyboardHeight : 90,
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(22),
+                    topRight: const Radius.circular(22),
+                    bottomLeft: keyboardVisible ? Radius.zero : const Radius.circular(22),
+                    bottomRight: keyboardVisible ? Radius.zero : const Radius.circular(22),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 16,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Cari & Filter Transaksi',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Color.fromARGB(255, 255, 0, 85),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.close, color: Colors.grey[600]),
+                          onPressed: () {
+                            FocusScope.of(context).unfocus();
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    SearchAndFilterBar(
+                      onChanged: (val) {
+                        setState(() {
+                          _keyword = val;
+                        });
+                      },
+                      onSearchPressed: _doSearch,
+                      onFilterTap: _showFilterSheet,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
