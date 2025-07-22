@@ -177,168 +177,246 @@ class PurchaseSimpleCard extends StatelessWidget {
                     }
                     final screenWidth = MediaQuery.of(context).size.width;
                     final screenHeight = MediaQuery.of(context).size.height;
-                    AwesomeDialog(
+                    showGeneralDialog(
                       context: context,
-                      dialogType: DialogType.noHeader,
-                      animType: AnimType.bottomSlide,
-                      width: screenWidth * 0.99 , // Membuat dialog lebar menempel ke tepi
-                      title: 'Detail Direct Purchase',
-                      body: Material( 
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0), // Menyamakan padding dengan card utama
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxHeight: screenHeight * 0.50 , // Batas scroll maksimal
-                            ),
-                            child: ListView( // Menggunakan ListView agar tinggi adaptif
-                              shrinkWrap: true,
-                              children: [
-                                Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                      barrierDismissible: true,
+                      barrierLabel: "Dismiss",
+                      barrierColor: Colors.black.withOpacity(0.3),
+                      transitionDuration: const Duration(milliseconds: 350),
+                      pageBuilder: (context, anim1, anim2) {
+                        return Align(
+                          alignment: Alignment.center,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: Container(
+                              margin: const EdgeInsets.all(20),
+                              width: screenWidth,
+                              constraints: BoxConstraints(
+                                maxHeight: screenHeight * 0.60,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: Stack(
                                   children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'Detail Direct Purchase',
-                                          style: GoogleFonts.poppins(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18,
-                                            color: deeppink,
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                                      child: ListView(
+                                        shrinkWrap: true,
+                                        padding: EdgeInsets.only(bottom: 80),
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                'Detail Direct Purchase',
+                                                style: GoogleFonts.poppins(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 22,
+                                                  color: Color.fromARGB(255, 255, 0, 85),
+                                                ),
+                                              ),
+                                              Icon(Icons.shopping_cart_checkout_rounded, color: Color.fromARGB(255, 255, 0, 85), size: 28),
+                                            ],
                                           ),
-                                        ),
-                                        Icon(Icons.shopping_cart_checkout_rounded, color: deeppink, size: 28),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Divider(thickness: 1, color: const Color.fromARGB(255, 62, 56, 56)),
-                                    const SizedBox(height: 10),
-                                    _DetailRow(label: 'No DP', value: noDirect),
-                                    _DetailRow(label: 'Status', value: status),
-                                    _DetailRow(label: 'Tanggal', value: date),
-                                    _DetailRow(label: 'Supplier', value: supplier),
-                                    _DetailRow(label: 'Items', value: items is String ? items : (items is List ? items.length.toString() : '')),
-                                    _DetailRow(label: 'Total', value: total),
-                                     if (data!['note'] != null && data!['note'].toString().isNotEmpty) ...[
-                                      const SizedBox(height: 8),
-                                      _DetailRow(label: 'Catatan', value: data!['note'].toString()),
-                                    ],
-                                    // Tampilkan item barang selalu
-                                    if (items is List && items.isNotEmpty)
-                                      PaginatedItemDetails(items: items as List, deeppink: deeppink)
-                                    else
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 10),
-                                        child: Text(
-                                          'Tidak ada item barang.',
-                                          style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[700]),
-                                        ),
-                                      ),
-                                    if (images.isNotEmpty) ...[
-                                      const SizedBox(height: 18),
-                                      Text('Bukti Pembelian:', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15)),
-                                      const SizedBox(height: 8),
-                                      ...images.map((img) {
-                                        String url = img.startsWith('http') ? img : 'http://192.168.1.3:8000/storage/' + img;
-                                        return GestureDetector(
-                                          onTap: () {
-                                            showDialog(
-                                              context: context,
-                                              barrierColor: Colors.black.withOpacity(0.75),
-                                              builder: (context) => ImagePreviewDialog(imageUrl: url, heroTag: url),
-                                            );
-                                          },
-                                          child: Padding(
-                                            padding: const EdgeInsets.only(bottom: 8.0),
-                                            child: Hero(
-                                              tag: url,
-                                              child: Material(
-                                                elevation: 3,
-                                                borderRadius: BorderRadius.circular(14),
-                                                child: ClipRRect(
-                                                  borderRadius: BorderRadius.circular(14),
-                                                  child: Image.network(
-                                                    url,
-                                                    height: 160,
-                                                    width: double.infinity,
-                                                    fit: BoxFit.cover,
-                                                    errorBuilder: (c, e, s) => Container(
-                                                      color: Colors.grey[200],
-                                                      height: 160,
-                                                      child: Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                                          const SizedBox(height: 16),
+                                          Divider(thickness: 1, color: const Color.fromARGB(255, 62, 56, 56)),
+                                          const SizedBox(height: 10),
+                                          _DetailRow(label: 'No DP', value: noDirect),
+                                          _DetailRow(label: 'Status', value: status),
+                                          _DetailRow(label: 'Tanggal', value: date),
+                                          _DetailRow(label: 'Supplier', value: supplier),
+                                          _DetailRow(label: 'Items', value: items is String ? items : (items is List ? items.length.toString() : '')),
+                                          _DetailRow(label: 'Total', value: total),
+                                          if (data!['note'] != null && data!['note'].toString().isNotEmpty) ...[
+                                            const SizedBox(height: 8),
+                                            _DetailRow(label: 'Catatan', value: data!['note'].toString()),
+                                          ],
+                                          if (items is List && items.isNotEmpty)
+                                            PaginatedItemDetails(items: items as List, deeppink: Color.fromARGB(255, 255, 0, 85))
+                                          else
+                                            Padding(
+                                              padding: const EdgeInsets.symmetric(vertical: 10),
+                                              child: Text(
+                                                'Tidak ada item barang.',
+                                                style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[700]),
+                                              ),
+                                            ),
+                                          const SizedBox(height: 18),
+                                          Text('Bukti Pembelian:', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15)),
+                                          const SizedBox(height: 8),
+                                          if (images.isNotEmpty) ...[
+                                            ...images.map((img) {
+                                              String url = img.startsWith('http') ? img : 'http://192.168.1.3:8000/storage/' + img;
+                                              return GestureDetector(
+                                                onTap: () {
+                                                  showDialog(
+                                                    context: context,
+                                                    barrierColor: Colors.black.withOpacity(0.75),
+                                                    builder: (context) => ImagePreviewDialog(imageUrl: url, heroTag: url),
+                                                  );
+                                                },
+                                                child: Padding(
+                                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                                  child: Hero(
+                                                    tag: url,
+                                                    child: Material(
+                                                      elevation: 1,
+                                                      borderRadius: BorderRadius.circular(14),
+                                                      child: ClipRRect(
+                                                        borderRadius: BorderRadius.circular(14),
+                                                        child: Image.network(
+                                                          url,
+                                                          height: 160,
+                                                          width: double.infinity,
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder: (c, e, s) => Container(
+                                                            color: Colors.grey[200],
+                                                            height: 160,
+                                                            child: Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                                                          ),
+                                                        ),
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
+                                              );
+                                            }).toList(),
+                                          ]
+                                          else ...[
+                                            Card(
+                                              color: Colors.grey[50],
+                                              elevation: 1,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                              child: Padding(
+                                                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 18),
+                                                child: Column(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(Icons.image_not_supported_outlined, color: Colors.grey[400], size: 48),
+                                                    const SizedBox(height: 10),
+                                                    Text(
+                                                      'Tidak ada bukti pembelian',
+                                                      style: GoogleFonts.poppins(fontSize: 15, color: Colors.grey[700], fontWeight: FontWeight.w600),
+                                                      textAlign: TextAlign.center,
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      'Belum diunggah atau tidak tersedia.',
+                                                      style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[500]),
+                                                      textAlign: TextAlign.center,
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    // Sticky button bar
+                                    Positioned(
+                                      left: 0,
+                                      right: 0,
+                                      bottom: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.95),
+                                          borderRadius: const BorderRadius.only(
+                                            bottomLeft: Radius.circular(24),
+                                            bottomRight: Radius.circular(24),
                                           ),
-                                        );
-                                      }).toList(),
-                                    ],
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.04),
+                                              blurRadius: 8,
+                                              offset: Offset(0, -2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: ElevatedButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.green,
+                                                  foregroundColor: Colors.white,
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                                ),
+                                                child: Text('Approve', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: ElevatedButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.red,
+                                                  foregroundColor: Colors.white,
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                                ),
+                                                child: Text('Reject', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: ElevatedButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.orangeAccent,
+                                                  foregroundColor: Colors.white,
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                                ),
+                                                child: Text('Revision', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      btnOk: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 1.0, vertical: 8.0),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  // TODO: Add approve logic
-                                  Navigator.of(context).pop();
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                ),
-                                child: Text('Approve', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-                              ),
+                        );
+                      },
+                      transitionBuilder: (context, anim1, anim2, child) {
+                        final slide = Tween<Offset>(
+                          begin: const Offset(1, 0), // dari kanan
+                          end: Offset.zero,
+                        ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeInOutQuart));
+                        final fade = CurvedAnimation(parent: anim1, curve: Curves.easeInOut);
+                        final scale = Tween<double>(
+                          begin: 0.96,
+                          end: 1.0,
+                        ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeInOutQuart));
+                        return FadeTransition(
+                          opacity: fade,
+                          child: SlideTransition(
+                            position: slide,
+                            child: ScaleTransition(
+                              scale: scale,
+                              child: child,
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  // TODO: Add reject logic
-                                  Navigator.of(context).pop();
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                ),
-                                child: Text('Reject', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  // TODO: Add revision logic
-                                  Navigator.of(context).pop();
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.orangeAccent,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                ),
-                                child: Text('Revision', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      useRootNavigator: true,
-                    ).show();
+                          ),
+                        );
+                      },
+                    );
                   },
                   icon: const Icon(Icons.visibility, size: 18, color: Colors.white),
                   label: Text('View Details', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -624,12 +702,16 @@ class _PaginatedItemDetailsState extends State<PaginatedItemDetails> {
               children: [
                 Icon(Icons.inventory_2, color: widget.deeppink, size: 22),
                 const SizedBox(width: 8),
-                Text(
-                  nama,
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    color: widget.deeppink,
+                Expanded(
+                  child: Text(
+                    nama,
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: widget.deeppink,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -669,7 +751,7 @@ class _PaginatedItemDetailsState extends State<PaginatedItemDetails> {
                 Icon(Icons.straighten, size: 18, color: Colors.grey.shade600),
                 const SizedBox(width: 8),
                 Text(
-                  "Satuan:",
+                  "Uom:",
                   style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(width: 4),
@@ -685,7 +767,7 @@ class _PaginatedItemDetailsState extends State<PaginatedItemDetails> {
                 Icon(Icons.monetization_on_outlined, size: 18, color: Colors.grey.shade600),
                 const SizedBox(width: 8),
                 Text(
-                  "Harga:",
+                  "Price:",
                   style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(width: 4),
@@ -700,4 +782,4 @@ class _PaginatedItemDetailsState extends State<PaginatedItemDetails> {
       ),
     );
   }
-} 
+}

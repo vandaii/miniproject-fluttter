@@ -1,5 +1,6 @@
 import "dart:ui";
 import "package:flutter/material.dart";
+import 'package:google_fonts/google_fonts.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Help_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/UserProfile_Page.dart';
 import 'package:miniproject_flutter/widgets/DirectPurchase/HeaderAppbar.dart';
@@ -32,6 +33,7 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
   int? _hoveredIndex;
   bool _isSidebarExpanded = true;
   int _selectedIndex = 11;
+  TabController? _tabController;
 
   // Tambahkan variabel state untuk store dan user
   List<String> _storeList = ['HAUS Jakarta', 'HAUS Bandung', 'HAUS Surabaya', 'HAUS Medan'];
@@ -40,12 +42,36 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
   String _userRole = 'Admin';
 
   final Color primary = Color.fromARGB(255,255,0,85);
+  final double navBarHeight = 104.0; // Tinggi navigation bar + margin bawah
+
+  // Tambahkan GlobalKey untuk mengakses TabController
+  final GlobalKey<_DirectPurchasePageState> _pageKey = GlobalKey<_DirectPurchasePageState>();
+
+  // Mapping tab ke status database
+  final List<String> tabStatus = [
+    'Pending Area Manager',
+    'Approved',
+    'Rejected',
+    'Revision',
+  ];
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.selectedIndex;
+    _tabController = TabController(length: 4, vsync: this);
+    _tabController?.addListener(() {
+      if (_tabController!.indexIsChanging || _tabController!.index != _tabController!.previousIndex) {
+        _fetchDirectPurchases();
+      }
+    });
     _fetchDirectPurchases();
+  }
+
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchDirectPurchases() async {
@@ -58,6 +84,8 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
       setState(() {
         _directPurchases = data['data'] ?? [];
         _isLoading = false;
+        // DEBUG PRINT DATA
+        print('DEBUG _directPurchases: ' + _directPurchases.toString());
       });
     } catch (e) {
       setState(() {
@@ -518,6 +546,9 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 700;
+    if (_tabController == null) {
+      return const SizedBox.shrink();
+    }
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.grey[100],
@@ -626,158 +657,31 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
       body: SafeArea(
         child: Stack(
           children: [
-            Row(
+            Column(
               children: [
-                if (!isMobile)
-                  Container(
-                    width: 260,
-                    color: Colors.white,
-                    child: Column(
-                      children: [
-                        // Logo dan nama aplikasi
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-                          decoration: BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(
-                                color: Colors.grey.withOpacity(0.1),
-                                width: 1,
-                              ),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Image.asset(
-                                'assets/images/icons-haus.png',
-                                height: 36,
-                                width: 36,
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'haus! Inventory',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                  color: primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Menu Items
-                        Expanded(
-                          child: ListView(
-                            children: [
-                              _buildSectionLabel('GENERAL'),
-                              _buildExpandableMenu(
-                                icon: Icons.shopping_cart_outlined,
-                                title: 'Purchasing',
-                                menuIndex: 1,
-                                isExpanded: _expandedMenuIndex == 1,
-                                onTap: () {
-                                  setState(() {
-                                    _expandedMenuIndex = _expandedMenuIndex == 1 ? null : 1;
-                                  });
-                                },
-                                children: [
-                                  _buildSubMenuItem('Direct Purchase', 11),
-                                  _buildSubMenuItem('GRPO', 12),
-                                ],
-                              ),
-                              _buildExpandableMenu(
-                                icon: Icons.inventory_2_outlined,
-                                title: 'Stock Management',
-                                menuIndex: 2,
-                                isExpanded: _expandedMenuIndex == 2,
-                                onTap: () {
-                                  setState(() {
-                                    _expandedMenuIndex = _expandedMenuIndex == 2 ? null : 2;
-                                  });
-                                },
-                                children: [
-                                  _buildSubMenuItem('Material Request', 21),
-                                  _buildSubMenuItem('Material Calculate', 25),
-                                  _buildSubMenuItem('Stock Opname', 22),
-                                  _buildSubMenuItem('Transfer Stock', 23),
-                                  _buildSubMenuItem('Waste', 24),
-                                ],
-                              ),
-                              _buildSectionLabel('TOOLS'),
-                              _buildMenuItem(
-                                icon: Icons.settings_outlined,
-                                title: 'Account & Settings',
-                                index: 4,
-                                onTap: () {
-                                  if (_selectedIndex != 4) {
-                                    _navigateToPage(4);
-                                  }
-                                },
-                              ),
-                              _buildMenuItem(
-                                icon: Icons.help_outline,
-                                title: 'Help',
-                                index: 5,
-                                onTap: () {
-                                  if (_selectedIndex != 5) {
-                                    _navigateToPage(5);
-                                  }
-                                },
-                              ),
-                              _buildProfileDropdown(),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: HeaderFloatingCard(
+                    isMobile: isMobile,
+                    onMenuTap: () {
+                      if (isMobile) {
+                        Scaffold.of(context).openDrawer();
+                      }
+                    },
+                    onEmailTap: () {},
+                    onNotifTap: () {},
+                    onAvatarTap: () {},
                   ),
-                // Konten utama tetap
+                ),
+                const SizedBox(height: 14),
+                Padding(
+                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 6),
+                  child: TitleCardDirectPurchase(isMobile: isMobile, tabController: _tabController!),
+                ),
                 Expanded(
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                        child: HeaderFloatingCard(
-                          isMobile: isMobile,
-                          onMenuTap: () {
-                            if (isMobile) {
-                              Scaffold.of(context).openDrawer();
-                            }
-                          },
-                          onEmailTap: () {},
-                          onNotifTap: () {},
-                          onAvatarTap: () {},
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 16, right: 16, bottom: 18),
-                        child: TitleCardDirectPurchase(isMobile: isMobile),
-                      ),
-                      // Konten utama
-                      Expanded(
-                        child: _isLoading
-                            ? Center(child: CircularProgressIndicator())
-                            : _errorMessage != null
-                                ? Center(child: Text(_errorMessage!))
-                                : ListView(
-                                    padding: EdgeInsets.only(
-                                      left: 16,
-                                      right: 16,
-                                      top: 8,
-                                      bottom: isMobile ? 100 : 16,
-                                    ),
-                                    children: _directPurchases.map<Widget>((item) => PurchaseSimpleCard(
-                                      noDirect: item['no_direct'] ?? item['noDirect'] ?? item['no_direct_purchase'] ?? item['noDirectPurchase'] ?? item['direct_number'] ?? '-',
-                                      status: item['status'] ?? '-',
-                                      date: item['directPurchaseDate'] ?? item['date'] ?? '-',
-                                      supplier: item['supplier'] ?? '-',
-                                      items: item['items'] ?? [], // Kirim List asli, bukan String
-                                      total: item['totalAmount']?.toString() ?? '-',
-                                      data: item,
-                                    )).toList(),
-                                  ),
-                      ),
-                    ],
+                  child: TabBarView(
+                    controller: _tabController!,
+                    children: List.generate(4, (i) => _buildPurchaseList(tabStatus[i])),
                   ),
                 ),
               ],
@@ -799,7 +703,6 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(22),
-                       
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -822,7 +725,9 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
                               ),
                               child: IconButton(
                                icon: Icon(Icons.add, color: Colors.white, size: 28),
-                                onPressed: _showAddDirectPurchaseDialog,
+                              onPressed: () async {
+                                await _showAddDirectPurchaseDialogWithTabSwitch(context);
+                              },
                                 tooltip: 'Tambah Pembelian',
                               ),
                             ),
@@ -838,10 +743,136 @@ class _DirectPurchasePageState extends State<DirectPurchasePage>
                 ),
               ),
           ],
-        
         ),
+        ),
+    );
+  }
+
+  // Fungsi untuk menampilkan dialog tambah dan pindah ke tab Outstanding setelah sukses
+  Future<void> _showAddDirectPurchaseDialogWithTabSwitch(BuildContext context) async {
+    await showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Add',
+      barrierColor: Colors.transparent,
+      pageBuilder: (context, anim1, anim2) {
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 90),
+            child: AddDirectPurchaseForm(
+              onSuccess: () {
+                Navigator.of(context).pop();
+                _fetchDirectPurchases(); // refresh data setelah tambah
+                // Pindah ke tab Outstanding
+                final TabController? tabController = DefaultTabController.of(context);
+                if (tabController != null) {
+                  tabController.animateTo(0);
+                }
+              },
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, anim1, anim2, child) {
+        return SlideTransition(
+          position: Tween(
+            begin: Offset(0, 1),
+            end: Offset(0, 0),
+          ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOut)),
+          child: child,
+        );
+      },
+      transitionDuration: Duration(milliseconds: 350),
+    );
+  }
+
+  Widget _buildPurchaseList(String status) {
+    final filtered = _directPurchases.where((e) => (e['status'] ?? '').toString().toLowerCase() == status.toLowerCase()).toList();
+
+    if (_isLoading) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              color: Color.fromARGB(255, 255, 0, 85),
+              strokeWidth: 4,
+            ),
+            const SizedBox(height: 18),
+            Text(
+              'Memuat data...',
+              style: GoogleFonts.poppins(fontSize: 15, color: Colors.grey[700], fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      color: Color.fromARGB(255, 255, 0, 85),
+      onRefresh: _fetchDirectPurchases,
+      child: filtered.isEmpty
+          ? _EmptyStatusWidget(status: status)
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
+              children: filtered.map((item) => PurchaseSimpleCard(
+                noDirect: item['noDirectPurchase'] ?? item['no_direct'] ?? '-',
+                status: item['status'] ?? '-',
+                date: item['date'] ?? item['directPurchaseDate'] ?? '-',
+                supplier: item['supplier'] ?? '-',
+                items: item['items'] ?? [],
+                total: item['total_amount']?.toString() ?? item['totalAmount']?.toString() ?? '-',
+                data: item,
+              )).toList(),
+            ),
+    );
+  }
+}
+
+class _EmptyStatusWidget extends StatelessWidget {
+  final String status;
+  const _EmptyStatusWidget({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    IconData icon;
+    Color color;
+    String msg;
+    switch (status.toLowerCase()) {
+      case 'approved':
+        icon = Icons.verified_rounded;
+        color = Colors.green;
+        msg = 'Belum ada data yang disetujui.';
+        break;
+      case 'rejected':
+        icon = Icons.cancel_rounded;
+        color = Colors.red;
+        msg = 'Tidak ada data yang ditolak.';
+        break;
+      case 'revision':
+        icon = Icons.edit_rounded;
+        color = Colors.orange;
+        msg = 'Tidak ada data revisi.';
+        break;
+      default:
+        icon = Icons.hourglass_empty_rounded;
+        color = Colors.blueGrey;
+        msg = 'Belum ada data outstanding.';
+    }
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 64),
+          const SizedBox(height: 18),
+          Text(
+            msg,
+            style: GoogleFonts.poppins(fontSize: 16, color: color, fontWeight: FontWeight.w600),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
-    
     );
   }
 }

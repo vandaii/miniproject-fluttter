@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/src/foundation/change_notifier.dart';
 
 class Step1Form extends StatelessWidget {
   final TextEditingController employeeIdController;
@@ -221,6 +222,7 @@ class Step1Form extends StatelessWidget {
                       initialValue: nameController.text,
                       onSubmitted: (value) {
                         nameController.text = value;
+                      
                         nameController.notifyListeners();
                         if (onFieldChanged != null) onFieldChanged!();
                       },

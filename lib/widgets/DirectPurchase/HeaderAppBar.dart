@@ -26,7 +26,7 @@ class HeaderFloatingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      elevation: 3,
+      elevation: 1,
       borderRadius: BorderRadius.circular(22),
       child: Container(
         padding: EdgeInsets.symmetric(
