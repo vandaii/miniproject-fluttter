@@ -645,11 +645,11 @@ class _DashboardPageState extends State<DashboardPage>
       _selectedIndex = index;
     });
     Future.microtask(() {
-      _navigateToPage(index);
+      _navigateToPageSimple(index);
     });
   }
 
-  void _navigateToPage(int index) {
+  void _navigateToPageSimple(int index) {
     switch (index) {
       case 11:
         Navigator.push(
