@@ -19,6 +19,9 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:miniproject_flutter/services/itemService.dart';
+import 'package:miniproject_flutter/widgets/DirectPurchase/HeaderAppBar.dart';
+import 'package:miniproject_flutter/widgets/Grpo/TitleCardGrpo.dart';
+import 'package:miniproject_flutter/widgets/Sidebar.dart';
 
 class GRPO_Page extends StatefulWidget {
   final int selectedIndex;
@@ -28,7 +31,7 @@ class GRPO_Page extends StatefulWidget {
   GrpoPageState createState() => GrpoPageState();
 }
 
-class GrpoPageState extends State<GRPO_Page> {
+class GrpoPageState extends State<GRPO_Page> with TickerProviderStateMixin {
   bool isOutstandingSelected = true;
   bool _isSidebarExpanded = true;
   bool _isProfileMenuOpen = false;
@@ -36,6 +39,10 @@ class GrpoPageState extends State<GRPO_Page> {
   int? _expandedMenuIndex;
   int? _hoveredIndex;
   int get _selectedIndex => widget.selectedIndex;
+  
+  // Definisi warna untuk sidebar
+  final Color deepPink = Color(0xFFE91E63);
+  final Color lightPinkSidebar = Color(0xFFFCE4EC);
 
   // Tambahan untuk integrasi API
   final GrpoService _grpoService = GrpoService();
@@ -46,7 +53,7 @@ class GrpoPageState extends State<GRPO_Page> {
   String _searchQuery = '';
 
   final Color primaryColor = const Color(0xFFF8BBD0);
-  final Color deepPink = const Color.fromARGB(255, 233, 30, 99);
+  final Color deepPinkAlt = const Color.fromARGB(255, 233, 0 ,85 );
   final Color lightPink = const Color(0xFFFCE4EC);
 
   static const int PURCHASING_MENU = 1;
@@ -56,6 +63,7 @@ class GrpoPageState extends State<GRPO_Page> {
 
   String? _selectedPONumber;
   dynamic _selectedPO;
+  TabController? _tabController;
 
   @override
   void initState() {
@@ -63,7 +71,19 @@ class GrpoPageState extends State<GRPO_Page> {
     if (_selectedIndex == 11 || _selectedIndex == 12) {
       _expandedMenuIndex = PURCHASING_MENU;
     }
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController!.addListener(() {
+      if (_tabController!.indexIsChanging || _tabController!.index != _tabController!.previousIndex) {
+        _onTabChanged(_tabController!.index == 0);
+      }
+    });
     _fetchData();
+  }
+
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchData() async {
@@ -222,6 +242,7 @@ class GrpoPageState extends State<GRPO_Page> {
                 blurRadius: 20,
                 offset: Offset(0, -5),
               ),
+              
             ],
           ),
           child: _AddGRPOFormContent(
@@ -254,453 +275,145 @@ class GrpoPageState extends State<GRPO_Page> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: AppBar(
-          backgroundColor: const Color(0xFFE91E63),
-          elevation: 0,
-          leading: Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.menu, color: Colors.white),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
-          ),
-          title: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Text(
-              'GRPO',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 20,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.notifications, color: Colors.white),
-              onPressed: () {
-                Navigator.push(
+      // Menggunakan SidebarWidget dari Sidebar.dart
+      drawer: Drawer(
+        child: SidebarWidget(
+        selectedIndex: _selectedIndex,
+        onMenuTap: (index) {
+          Navigator.pop(context); // Tutup drawer terlebih dahulu
+          // Navigasi langsung ke halaman yang dipilih
+          switch (index) {
+            case 0: // Dashboard
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DashboardPage(selectedIndex: 0),
+                ),
+              );
+              break;
+            case 11: // Direct Purchase
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DirectPurchasePage(selectedIndex: 11),
+                ),
+              );
+              break;
+            case 12: // GRPO
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => GRPO_Page(selectedIndex: 12)),
+              );
+              break;
+            case 21: // Material Request
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MaterialRequestPage(selectedIndex: 21),
+                ),
+              );
+              break;
+            case 22: // Stock Opname
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => StockOpnamePage(selectedIndex: 22),
+                ),
+              );
+              break;
+            case 23: // Transfer Stock
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TransferStockPage(selectedIndex: 23),
+                ),
+              );
+              break;
+            case 24: // Waste
+              Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => NotificationPage()),
-                );
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.mail_outline, color: Colors.white),
-              onPressed: () {
-                Navigator.push(
+                MaterialPageRoute(builder: (context) => WastePage(selectedIndex: 24)),
+              );
+              break;
+            case 25: // Material Calculate
+              Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => EmailPage()),
-                );
-              },
-            ),
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: GestureDetector(
-                onTap: () {
+                MaterialPageRoute(
+                  builder: (context) => MaterialCalculatePage(selectedIndex: 25),
+                ),
+              );
+              break;
+          }
+        },
+        isSidebarExpanded: _isSidebarExpanded,
+        expandedMenuIndex: _expandedMenuIndex,
+        deepPink: deepPink,
+        lightPink: lightPinkSidebar,
+        onToggleMenu: (index) {
                   setState(() {
-                    _isProfileMenuOpen = !_isProfileMenuOpen;
-                    _isStoreMenuOpen = false;
+            if (_expandedMenuIndex == index) {
+              _expandedMenuIndex = null;
+            } else {
+              _expandedMenuIndex = index;
+            }
                   });
                 },
-                child: const CircleAvatar(
-                  backgroundColor: Colors.white,
-                  radius: 16,
-                  child: Text(
-                    'J',
-                    style: TextStyle(
-                      color: Color(0xFFE91E63),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+        isMobile: MediaQuery.of(context).size.width < 700,
+        closeDrawer: () => Navigator.of(context).pop(),
       ),
-      drawer: Drawer(
-        child: Container(
-          color: Colors.white,
-          child: Column(
-            children: [
-              // Logo dan nama aplikasi
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Colors.grey.withOpacity(0.1),
-                      width: 1,
-                    ),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Image.asset(
-                      'assets/images/icons-haus.png',
-                      height: 36,
-                      width: 36,
-                    ),
-                    if (_isSidebarExpanded) const SizedBox(width: 12),
-                    if (_isSidebarExpanded)
-                      Text(
-                        'haus! Inventory',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: deepPink,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              // Info toko dengan dropdown
-              if (_isSidebarExpanded) _buildStoreDropdown(),
-
-              // Menu Items dengan Expanded
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    children: [
-                      // Section GENERAL
-                      if (_isSidebarExpanded)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                          child: Row(
-                            children: [
-                              Text(
-                                'GENERAL',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: Colors.black54,
-                                  letterSpacing: 1,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const Spacer(),
-                              Container(
-                                height: 1,
-                                width: 100,
-                                color: Colors.grey.withOpacity(0.2),
-                              ),
-                            ],
-                          ),
-                        ),
-                      _buildMenuItem(
-                        icon: Icons.dashboard_outlined,
-                        title: 'Dashboard',
-                        index: 0,
-                        onTap: () {
-                          if (_selectedIndex != 0) {
-                            _navigateToPage(0);
-                          }
-                        },
-                      ),
-                      _buildExpandableMenu(
-                        icon: Icons.shopping_cart_outlined,
-                        title: 'Purchasing',
-                        isExpanded: _selectedIndex == PURCHASING_MENU,
-                        menuIndex: PURCHASING_MENU,
-                        children: [
-                          _buildSubMenuItem('Direct Purchase', 11),
-                          _buildSubMenuItem('GRPO', 12),
-                        ],
-                        onTap: () {
-                          if (_selectedIndex != PURCHASING_MENU) {
-                            _navigateToPage(PURCHASING_MENU);
-                          }
-                        },
-                      ),
-                      _buildExpandableMenu(
-                        icon: Icons.inventory_2_outlined,
-                        title: 'Stock Management',
-                        isExpanded: _selectedIndex == STOCK_MANAGEMENT_MENU,
-                        menuIndex: STOCK_MANAGEMENT_MENU,
-                        children: [
-                          _buildSubMenuItem('Material Request', 21),
-                          _buildSubMenuItem('Material Calculate', 25),
-                          _buildSubMenuItem('Stock Opname', 22),
-                          _buildSubMenuItem('Transfer Stock', 23),
-                          _buildSubMenuItem('Waste', 24),
-                        ],
-                        onTap: () {
-                          if (_selectedIndex != STOCK_MANAGEMENT_MENU) {
-                            _navigateToPage(STOCK_MANAGEMENT_MENU);
-                          }
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.assessment_outlined,
-                        title: 'Inventory Report',
-                        index: 3,
-                        onTap: () {
-                          if (_selectedIndex != 3) {
-                            _navigateToPage(3);
-                          }
-                        },
-                      ),
-                      // Section TOOLS
-                      if (_isSidebarExpanded)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                          child: Row(
-                            children: [
-                              Text(
-                                'TOOLS',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: Colors.black54,
-                                  letterSpacing: 1,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const Spacer(),
-                              Container(
-                                height: 1,
-                                width: 100,
-                                color: Colors.grey.withOpacity(0.2),
-                              ),
-                            ],
-                          ),
-                        ),
-                      _buildMenuItem(
-                        icon: Icons.settings_outlined,
-                        title: 'Account & Settings',
-                        index: 4,
-                        onTap: () {
-                          if (_selectedIndex != 4) {
-                            _navigateToPage(4);
-                          }
-                        },
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.help_outline,
-                        title: 'Help',
-                        index: 5,
-                        onTap: () {
-                          if (_selectedIndex != 5) {
-                            _navigateToPage(5);
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // User profile dengan dropdown (selalu di bawah)
-              if (_isSidebarExpanded) _buildProfileDropdown(),
-            ],
-          ),
-        ),
       ),
       backgroundColor: Color(0xFFF8F9FA),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Column(
+      body: SafeArea(
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Search Bar Section
+            children: [
+                        Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Builder(
+                builder: (context) => HeaderFloatingCard(
+                  isMobile: MediaQuery.of(context).size.width < 700,
+                  onMenuTap: () {
+                    Scaffold.of(context).openDrawer();
+                  },
+                  onEmailTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => EmailPage()),
+                    );
+                  },
+                  onNotifTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => NotificationPage()),
+                    );
+                  },
+                  onAvatarTap: () {},
+                  searchController: null,
+                  onSearchChanged: null,
+                  avatarInitial: 'J',
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            if (_tabController != null)
             Padding(
-              padding: const EdgeInsets.only(top: 24.0, bottom: 16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFFF8BBD0), Color(0xFFE91E63)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0xFFE91E63).withOpacity(0.10),
-                            blurRadius: 10,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: TextField(
-                        onChanged: _onSearchChanged,
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: Color(0xFFE91E63),
-                            size: 22,
-                          ),
-                          hintText: 'Cari GRPO',
-                          hintStyle: GoogleFonts.poppins(
-                            color: Colors.grey[400],
-                            fontSize: 14,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                            vertical: 16,
-                            horizontal: 18,
-                          ),
-                          filled: true,
-                          fillColor: Colors.white.withOpacity(0.85),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 14),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFFF8BBD0), Color(0xFFE91E63)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0xFFE91E63).withOpacity(0.10),
-                          blurRadius: 10,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: Icon(Icons.filter_alt, color: Colors.white),
-                      onPressed: _fetchData,
-                    ),
-                  ),
-                ],
+                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 6),
+                child: TitleCardGrpo(
+                  isMobile: MediaQuery.of(context).size.width < 700,
+                  tabController: _tabController!,
+                ),
               ),
-            ),
-            // Taskbar Outstanding/Received
-            Container(
-              padding: EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.08),
-                    blurRadius: 6,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
+            if (_tabController != null)
                   Expanded(
-                    child: GestureDetector(
-                      onTap: () => _onTabChanged(true),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          gradient: isOutstandingSelected
-                              ? LinearGradient(
-                                  colors: [
-                                    Color(0xFFE91E63),
-                                    Color(0xFFF8BBD0),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                )
-                              : null,
-                          color: isOutstandingSelected ? null : Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0xFFE91E63).withOpacity(0.08),
-                              blurRadius: 8,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                          border: Border.all(
-                            color: isOutstandingSelected
-                                ? Colors.transparent
-                                : Color(0xFFE91E63),
-                            width: 2,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Shipping',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold,
-                              color: isOutstandingSelected
-                                  ? Colors.white
-                                  : Color(0xFFE91E63),
-                              fontSize: 15,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 18),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => _onTabChanged(false),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          gradient: !isOutstandingSelected
-                              ? LinearGradient(
-                                  colors: [
-                                    Color(0xFFE91E63),
-                                    Color(0xFFF8BBD0),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                )
-                              : null,
-                          color: !isOutstandingSelected ? null : Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0xFFE91E63).withOpacity(0.08),
-                              blurRadius: 8,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                          border: Border.all(
-                            color: !isOutstandingSelected
-                                ? Colors.transparent
-                                : Color(0xFFE91E63),
-                            width: 2,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Received',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold,
-                              color: !isOutstandingSelected
-                                  ? Colors.white
-                                  : Color(0xFFE91E63),
-                              fontSize: 15,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Card List
-            Expanded(
-              child: _isLoading
+                child: TabBarView(
+                  controller: _tabController!,
+                  children: [
+                    // Shipping
+                    _isLoading
                   ? Center(child: CircularProgressIndicator())
                   : _errorMessage != null
                   ? Center(child: Text(_errorMessage!))
-                  : isOutstandingSelected
-                  ? (_shippingPOs.isEmpty
+                        : (_shippingPOs.isEmpty
                         ? Center(child: Text('Tidak ada data shipping'))
                         : RefreshIndicator(
                             onRefresh: _fetchData,
@@ -711,7 +424,12 @@ class GrpoPageState extends State<GRPO_Page> {
                                 return _buildShippingCardFromApi(item);
                               },
                             ),
-                          ))
+                              )),
+                    // Received
+                    _isLoading
+                      ? Center(child: CircularProgressIndicator())
+                      : _errorMessage != null
+                        ? Center(child: Text(_errorMessage!))
                   : (_receivedGrpos.isEmpty
                         ? Center(child: Text('Tidak ada data received'))
                         : RefreshIndicator(
@@ -724,6 +442,8 @@ class GrpoPageState extends State<GRPO_Page> {
                               },
                             ),
                           )),
+                  ],
+                ),
             ),
           ],
         ),
@@ -1393,570 +1113,7 @@ class GrpoPageState extends State<GRPO_Page> {
     );
   }
 
-  Widget _buildMenuItem({
-    required IconData icon,
-    required String title,
-    required int index,
-    required VoidCallback onTap,
-  }) {
-    final isActive = _isMainMenuActive(index);
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: isActive
-                ? deepPink.withOpacity(0.1)
-                : Colors.grey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: isActive ? deepPink : Colors.grey, size: 20),
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.poppins(
-            color: isActive ? deepPink : Colors.grey,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            fontSize: 14,
-          ),
-        ),
-        selected: isActive,
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        dense: true,
-      ),
-    );
-  }
-
-  Widget _buildExpandableMenu({
-    required IconData icon,
-    required String title,
-    required bool isExpanded,
-    required List<Widget> children,
-    required VoidCallback onTap,
-    required int menuIndex,
-  }) {
-    final isMenuExpanded = _expandedMenuIndex == menuIndex;
-    // Cek jika ada submenu yang sedang aktif pada menu ini
-    bool isAnySubMenuActive = false;
-    if (menuIndex == PURCHASING_MENU) {
-      isAnySubMenuActive = [11, 12].contains(_selectedIndex);
-    } else if (menuIndex == STOCK_MANAGEMENT_MENU) {
-      isAnySubMenuActive = [21, 22, 23, 24, 25].contains(_selectedIndex);
-    }
-    // Jika ada submenu aktif, nonaktifkan hover/active background pada parent
-    final bool highlightParent = isExpanded && !isAnySubMenuActive;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: highlightParent
-                ? lightPink.withOpacity(0.3)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: ListTile(
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: highlightParent
-                    ? deepPink.withOpacity(0.1)
-                    : Colors.grey.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                color: highlightParent ? deepPink : Colors.grey,
-                size: 20,
-              ),
-            ),
-            title: Text(
-              title,
-              style: GoogleFonts.poppins(
-                color: highlightParent ? deepPink : Colors.grey,
-                fontWeight: highlightParent
-                    ? FontWeight.bold
-                    : FontWeight.normal,
-                fontSize: 14,
-              ),
-            ),
-            trailing: Icon(
-              isMenuExpanded ? Icons.expand_less : Icons.expand_more,
-              color: highlightParent ? deepPink : Colors.grey,
-            ),
-            onTap: () {
-              setState(() {
-                if (_expandedMenuIndex == menuIndex) {
-                  _expandedMenuIndex = null;
-                } else {
-                  _expandedMenuIndex = menuIndex;
-                }
-              });
-            },
-            dense: true,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
-          ),
-        ),
-        if (isMenuExpanded && _isSidebarExpanded)
-          Container(
-            margin: const EdgeInsets.only(left: 16),
-            decoration: BoxDecoration(
-              border: Border(
-                left: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: children,
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildSubMenuItem(
-    String title,
-    int index, {
-    bool isMobile = false,
-    VoidCallback? closeDrawer,
-  }) {
-    final isActive = _isSubMenuActive(index);
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hoveredIndex = index),
-      onExit: (_) => setState(() => _hoveredIndex = null),
-      child: Container(
-        margin: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
-        decoration: BoxDecoration(
-          color: isActive ? lightPink.withOpacity(0.3) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: ListTile(
-          leading: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? deepPink.withOpacity(0.1)
-                  : Colors.grey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              _getSubMenuIcon(index),
-              color: isActive ? deepPink : Colors.grey,
-              size: 20,
-            ),
-          ),
-          title: Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: isActive ? deepPink : Colors.black87,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-          selected: isActive,
-          onTap: () {
-            if (_selectedIndex != index) {
-              Navigator.pushReplacement(context, _getPageRouteByIndex(index));
-              if (isMobile && closeDrawer != null) closeDrawer();
-            }
-          },
-          dense: true,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 4,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Route _getPageRouteByIndex(int index) {
-    switch (index) {
-      case 0:
-        return MaterialPageRoute(
-          builder: (context) => DashboardPage(selectedIndex: 0),
-        );
-      case 11:
-        return MaterialPageRoute(
-          builder: (context) => DirectPurchasePage(selectedIndex: 11),
-        );
-      case 12:
-        return MaterialPageRoute(
-          builder: (context) => GRPO_Page(selectedIndex: 12),
-        );
-      case 21:
-        return MaterialPageRoute(
-          builder: (context) => MaterialRequestPage(selectedIndex: 21),
-        );
-      case 22:
-        return MaterialPageRoute(
-          builder: (context) => StockOpnamePage(selectedIndex: 22),
-        );
-      case 23:
-        return MaterialPageRoute(
-          builder: (context) => TransferStockPage(selectedIndex: 23),
-        );
-      case 24:
-        return MaterialPageRoute(
-          builder: (context) => WastePage(selectedIndex: 24),
-        );
-      case 25:
-        return MaterialPageRoute(
-          builder: (context) => MaterialCalculatePage(selectedIndex: 25),
-        );
-      default:
-        return MaterialPageRoute(
-          builder: (context) => DirectPurchasePage(selectedIndex: 11),
-        );
-    }
-  }
-
-  void _navigateToPage(int index) {
-    switch (index) {
-      case 0: // Dashboard
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DashboardPage(selectedIndex: 0),
-          ),
-        );
-        break;
-      case 11: // Direct Purchase
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DirectPurchasePage(selectedIndex: 11),
-          ),
-        );
-        break;
-      case 12: // GRPO
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => GRPO_Page(selectedIndex: 12)),
-        );
-        break;
-      case 21: // Material Request
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MaterialRequestPage(selectedIndex: 21),
-          ),
-        );
-        break;
-      case 22: // Stock Opname
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => StockOpnamePage(selectedIndex: 22),
-          ),
-        );
-        break;
-      case 23: // Transfer Stock
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => TransferStockPage(selectedIndex: 23),
-          ),
-        );
-        break;
-      case 24: // Waste
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => WastePage(selectedIndex: 24)),
-        );
-        break;
-      case 25: // Material Calculate
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MaterialCalculatePage(selectedIndex: 25),
-          ),
-        );
-        break;
-    }
-  }
-
-  IconData _getSubMenuIcon(int index) {
-    switch (index) {
-      case 11: // Direct Purchase
-        return Icons.shopping_cart_outlined;
-      case 12: // GRPO
-        return Icons.receipt_long_outlined;
-      case 21: // Material Request
-        return Icons.inventory_2_outlined;
-      case 22: // Stock Opname
-        return Icons.checklist_rtl_outlined;
-      case 23: // Transfer Stock
-        return Icons.swap_horiz_outlined;
-      case 24: // Waste
-        return Icons.delete_outline;
-      case 25: //material calculate
-        return Icons.inventory_2_outlined;
-      default:
-        return Icons.circle_outlined;
-    }
-  }
-
-  Widget _buildStoreDropdown() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: lightPink,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: deepPink.withOpacity(0.1), width: 1),
-      ),
-      child: Column(
-        children: [
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _isStoreMenuOpen = !_isStoreMenuOpen;
-                _isProfileMenuOpen = false;
-              });
-            },
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: deepPink.withOpacity(0.1),
-                  child: Icon(Icons.store, color: deepPink),
-                  radius: 18,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Toko',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.black54,
-                        ),
-                      ),
-                      Text(
-                        'HAUS Jakarta',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  _isStoreMenuOpen ? Icons.expand_less : Icons.expand_more,
-                  color: deepPink,
-                ),
-              ],
-            ),
-          ),
-          if (_isStoreMenuOpen)
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.withOpacity(0.2)),
-              ),
-              child: Column(
-                children: [
-                  _buildStoreMenuItem('HAUS Jakarta', true),
-                  _buildStoreMenuItem('HAUS Bandung', false),
-                  _buildStoreMenuItem('HAUS Surabaya', false),
-                  _buildStoreMenuItem('HAUS Medan', false),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStoreMenuItem(String storeName, bool isSelected) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isSelected ? lightPink.withOpacity(0.3) : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ListTile(
-        dense: true,
-        title: Text(
-          storeName,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? deepPink : Colors.black87,
-          ),
-        ),
-        trailing: isSelected
-            ? Icon(Icons.check_circle, color: deepPink, size: 18)
-            : null,
-        onTap: () {
-          setState(() {
-            _isStoreMenuOpen = false;
-          });
-        },
-      ),
-    );
-  }
-
-  Widget _buildProfileDropdown() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: lightPink,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: deepPink.withOpacity(0.1), width: 1),
-      ),
-      child: Column(
-        children: [
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _isProfileMenuOpen = !_isProfileMenuOpen;
-                _isStoreMenuOpen = false;
-              });
-            },
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: deepPink,
-                  child: Text('J', style: TextStyle(color: Colors.white)),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'John Doe',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      Text(
-                        'Admin',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  _isProfileMenuOpen ? Icons.expand_less : Icons.expand_more,
-                  color: deepPink,
-                ),
-              ],
-            ),
-          ),
-          if (_isProfileMenuOpen)
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.withOpacity(0.2)),
-              ),
-              child: Column(
-                children: [
-                  _buildProfileMenuItem(
-                    Icons.person_outline,
-                    'Profile',
-                    onTap: () {
-                      setState(() => _isProfileMenuOpen = false);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const UserprofilePage(),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildProfileMenuItem(
-                    Icons.settings_outlined,
-                    'Settings',
-                    onTap: () {
-                      setState(() => _isProfileMenuOpen = false);
-                    },
-                  ),
-                  _buildProfileMenuItem(
-                    Icons.help_outline,
-                    'Help & Support',
-                    onTap: () {
-                      setState(() => _isProfileMenuOpen = false);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => HelpPage()),
-                      );
-                    },
-                  ),
-                  _buildProfileMenuItem(
-                    Icons.logout,
-                    'Logout',
-                    isLogout: true,
-                    onTap: () async {
-                      setState(() => _isProfileMenuOpen = false);
-                      await _handleLogout();
-                    },
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileMenuItem(
-    IconData icon,
-    String title, {
-    bool isLogout = false,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ListTile(
-        dense: true,
-        leading: Icon(
-          icon,
-          size: 20,
-          color: isLogout ? Colors.red : Colors.black87,
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            color: isLogout ? Colors.red : Colors.black87,
-          ),
-        ),
-        onTap: onTap,
-      ),
-    );
-  }
+  
 
   Future<void> _handleLogout() async {
     try {
@@ -2010,14 +1167,6 @@ class GrpoPageState extends State<GRPO_Page> {
         );
       }
     }
-  }
-
-  bool _isMainMenuActive(int index) {
-    return _selectedIndex == index;
-  }
-
-  bool _isSubMenuActive(int index) {
-    return _selectedIndex == index || _hoveredIndex == index;
   }
 }
 

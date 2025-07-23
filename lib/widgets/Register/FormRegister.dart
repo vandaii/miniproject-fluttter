@@ -180,6 +180,7 @@ class Step1Form extends StatelessWidget {
                       initialValue: employeeIdController.text,
                       onSubmitted: (value) {
                         employeeIdController.text = value;
+                        // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
                         employeeIdController.notifyListeners();
                         if (onFieldChanged != null) onFieldChanged!();
                       },
@@ -222,6 +223,7 @@ class Step1Form extends StatelessWidget {
                       onSubmitted: (value) {
                         nameController.text = value;
                       
+                        // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
                         nameController.notifyListeners();
                         if (onFieldChanged != null) onFieldChanged!();
                       },
@@ -263,6 +265,7 @@ class Step1Form extends StatelessWidget {
                       initialValue: emailController.text,
                       onSubmitted: (value) {
                         emailController.text = value;
+                        // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
                         emailController.notifyListeners();
                         if (onFieldChanged != null) onFieldChanged!();
                       },
@@ -305,6 +308,7 @@ class Step1Form extends StatelessWidget {
                       initialValue: phoneController.text,
                       onSubmitted: (value) {
                         phoneController.text = value;
+                        // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
                         phoneController.notifyListeners();
                         if (onFieldChanged != null) onFieldChanged!();
                       },
