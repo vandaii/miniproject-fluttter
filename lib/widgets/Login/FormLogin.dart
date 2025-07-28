@@ -67,9 +67,19 @@ class FormLogin extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide(color: primaryColor, width: 1.7),
                     ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Colors.red, width: 1.1),
+                    ),
                     filled: true,
                     fillColor: Colors.grey.shade50,
                   ),
+                  onChanged: (value) {
+                    // Trigger validation on change
+                    if (value.isNotEmpty) {
+                      // Clear any error state
+                    }
+                  },
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -91,6 +101,10 @@ class FormLogin extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide(color: primaryColor, width: 1.7),
                     ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Colors.red, width: 1.1),
+                    ),
                     filled: true,
                     fillColor: Colors.grey.shade50,
                     suffixIcon: IconButton(
@@ -101,6 +115,12 @@ class FormLogin extends StatelessWidget {
                       onPressed: onPasswordToggle,
                     ),
                   ),
+                  onChanged: (value) {
+                    // Trigger validation on change
+                    if (value.isNotEmpty) {
+                      // Clear any error state
+                    }
+                  },
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -108,13 +128,27 @@ class FormLogin extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Checkbox(value: rememberMe, onChanged: onRememberMeChanged),
-                        const Text('Remember me?'),
+                        Checkbox(
+                          value: rememberMe, 
+                          onChanged: onRememberMeChanged,
+                          activeColor: primaryColor,
+                          checkColor: Colors.white,
+                        ),
+                        const Text(
+                          'Remember me?',
+                          style: TextStyle(fontSize: 14),
+                        ),
                       ],
                     ),
                     TextButton(
                       onPressed: onForgetPasswordPressed,
-                      child: const Text('Forgot Password'),
+                      child: const Text(
+                        'Forgot Password?',
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -128,12 +162,26 @@ class FormLogin extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      elevation: 2,
                     ),
                     onPressed: isLoading ? null : onLoginPressed,
-                    child: const Text(
-                      'Sign In',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
+                    child: isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text(
+                            'Sign In',
+                            style: TextStyle(
+                              fontSize: 16, 
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -145,13 +193,18 @@ class FormLogin extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text("Don't have an account?"),
+            const Text(
+              "Don't have an account?",
+              style: TextStyle(fontSize: 14),
+            ),
             TextButton(
               onPressed: onSignUpPressed,
               child: const Text(
                 'Sign Up',
                 style: TextStyle(
-                  color: Color.fromARGB(255, 255, 0, 85),
+                  color: primaryColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
               ),
             ),

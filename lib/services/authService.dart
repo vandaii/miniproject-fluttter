@@ -4,13 +4,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:miniproject_flutter/config/APi.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthService {
   // Untuk menyimpan data data user ke dalam local storage
   final storage = const FlutterSecureStorage();
 
   // Untuk mengakses API
-  final http.Client client = ApiConfig.client;
   final String baseUrl = ApiConfig.baseUrl;
 
   //Untuk pemanggilan API Login dan Registrasi dari backend ke frontend
@@ -26,41 +26,76 @@ class AuthService {
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/register');
-      var request = http.MultipartRequest('POST', uri)
-        ..fields['employee_id'] = employeeId
-        ..fields['name'] = name
-        ..fields['email'] = email
-        ..fields['password'] = password
-        ..fields['password_confirmation'] = confirmedPassword
-        ..fields['phone'] = phone;
-
-      if (storeLocation != null) {
-        request.fields['store_location'] = storeLocation;
-      }
-
-      if (photoProfile != null) {
-        request.files.add(
-          await http.MultipartFile.fromPath('photo_profile', photoProfile.path),
+      
+      // Cek apakah kita di web atau mobile
+      if (kIsWeb) {
+        // Untuk web, gunakan request biasa
+        final response = await http.post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'employee_id': employeeId,
+            'name': name,
+            'email': email,
+            'password': password,
+            'password_confirmation': confirmedPassword,
+            'phone': phone,
+            'store_location': storeLocation ?? '1',
+          }),
         );
-      }
 
-      var streamedResponse = await client.send(request);
-      var response = await http.Response.fromStream(streamedResponse);
-
-      // Cek status code dan tipe response
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        try {
-          final resData = jsonDecode(response.body);
-          await storage.write(key: 'token', value: resData['access_token']);
-          return true;
-        } catch (e) {
-          print('Gagal decode JSON: ${response.body}');
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          try {
+            final resData = jsonDecode(response.body);
+            await storage.write(key: 'token', value: resData['access_token']);
+            return true;
+          } catch (e) {
+            print('Gagal decode JSON: ${response.body}');
+            return false;
+          }
+        } else {
+          print('Register gagal. Status: ${response.statusCode}');
+          print('Response: ${response.body}');
           return false;
         }
       } else {
-        print('Register gagal. Status: ${response.statusCode}');
-        print('Response: ${response.body}');
-        return false;
+        // Untuk mobile/desktop, gunakan multipart request
+        var request = http.MultipartRequest('POST', uri)
+          ..fields['employee_id'] = employeeId
+          ..fields['name'] = name
+          ..fields['email'] = email
+          ..fields['password'] = password
+          ..fields['password_confirmation'] = confirmedPassword
+          ..fields['phone'] = phone;
+
+        if (storeLocation != null) {
+          request.fields['store_location'] = storeLocation;
+        }
+
+        if (photoProfile != null) {
+          request.files.add(
+            await http.MultipartFile.fromPath('photo_profile', photoProfile.path),
+          );
+        }
+
+        var streamedResponse = await ApiConfig.client.send(request);
+        var response = await http.Response.fromStream(streamedResponse);
+
+        // Cek status code dan tipe response
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          try {
+            final resData = jsonDecode(response.body);
+            await storage.write(key: 'token', value: resData['access_token']);
+            return true;
+          } catch (e) {
+            print('Gagal decode JSON: ${response.body}');
+            return false;
+          }
+        } else {
+          print('Register gagal. Status: ${response.statusCode}');
+          print('Response: ${response.body}');
+          return false;
+        }
       }
     } catch (e) {
       print('Register Error: $e');
@@ -70,7 +105,7 @@ class AuthService {
 
   Future<bool> login(String login, String password, bool rememberMe) async {
     try {
-      final response = await client.post(
+      final response = await ApiConfig.client.post(
         Uri.parse('$baseUrl/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
@@ -110,7 +145,7 @@ class AuthService {
     final url = Uri.parse('$baseUrl/forgot-password');
 
     try {
-      final response = await http.post(
+      final response = await ApiConfig.client.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email}),
@@ -136,20 +171,19 @@ class AuthService {
     required String email,
     required String token,
     required String password,
-    required String passwordConfirmation, // ganti nama variabel agar jelas
+    required String passwordConfirmation,
   }) async {
     final url = Uri.parse('$baseUrl/reset-password');
 
     try {
-      final response = await http.post(
+      final response = await ApiConfig.client.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,
           'token': token,
           'password': password,
-          'password_confirmation':
-              passwordConfirmation, // harus sama dengan backend
+          'password_confirmation': passwordConfirmation,
         }),
       );
 
@@ -175,7 +209,7 @@ class AuthService {
   }) async {
     final url = Uri.parse('$baseUrl/validate-token');
     try {
-      final response = await http.post(
+      final response = await ApiConfig.client.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'token': token}),
@@ -197,7 +231,7 @@ class AuthService {
   /// Resend OTP
   Future<Map<String, dynamic>> resendOtp(String email) async {
     try {
-      final response = await http.post(
+      final response = await ApiConfig.client.post(
         Uri.parse('$baseUrl/resend-token'),
         headers: {
           'Accept': 'application/json',
@@ -238,32 +272,57 @@ class AuthService {
       final token = await storage.read(key: 'token');
       final uri = Uri.parse('$baseUrl/update');
 
-      var request = http.MultipartRequest('POST', uri);
-      request.headers['Authorization'] = 'Bearer $token';
-      request.headers['Accept'] = 'application/json';
-
-      // Hanya tambahkan field yang tidak null
-      if (name != null) request.fields['name'] = name;
-      if (email != null) request.fields['email'] = email;
-      if (phone != null) request.fields['phone'] = phone;
-      if (password != null) request.fields['password'] = password;
-      if (confirmPassword != null)
-        request.fields['password_confirmation'] = confirmPassword;
-      if (storeLocation != null)
-        request.fields['store_location'] = storeLocation;
-
-      if (photoProfile != null) {
-        request.files.add(
-          await http.MultipartFile.fromPath('photo_profile', photoProfile.path),
+      if (kIsWeb) {
+        // Untuk web, gunakan request biasa
+        final response = await http.post(
+          uri,
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            if (name != null) 'name': name,
+            if (email != null) 'email': email,
+            if (phone != null) 'phone': phone,
+            if (password != null) 'password': password,
+            if (confirmPassword != null) 'password_confirmation': confirmPassword,
+            if (storeLocation != null) 'store_location': storeLocation,
+          }),
         );
+        
+        final resData = jsonDecode(response.body);
+        print('Update Response: $resData');
+        return response.statusCode == 200;
+      } else {
+        // Untuk mobile/desktop, gunakan multipart request
+        var request = http.MultipartRequest('POST', uri);
+        request.headers['Authorization'] = 'Bearer $token';
+        request.headers['Accept'] = 'application/json';
+
+        // Hanya tambahkan field yang tidak null
+        if (name != null) request.fields['name'] = name;
+        if (email != null) request.fields['email'] = email;
+        if (phone != null) request.fields['phone'] = phone;
+        if (password != null) request.fields['password'] = password;
+        if (confirmPassword != null)
+          request.fields['password_confirmation'] = confirmPassword;
+        if (storeLocation != null)
+          request.fields['store_location'] = storeLocation;
+
+        if (photoProfile != null) {
+          request.files.add(
+            await http.MultipartFile.fromPath('photo_profile', photoProfile.path),
+          );
+        }
+
+        final streamedResponse = await ApiConfig.client.send(request);
+        final response = await http.Response.fromStream(streamedResponse);
+        final resData = jsonDecode(response.body);
+        print('Update Response: $resData');
+
+        return response.statusCode == 200;
       }
-
-      final streamedResponse = await client.send(request);
-      final response = await http.Response.fromStream(streamedResponse);
-      final resData = jsonDecode(response.body);
-      print('Update Response: $resData');
-
-      return response.statusCode == 200;
     } catch (e) {
       print('Update Error: $e');
       return false;
@@ -275,7 +334,7 @@ class AuthService {
       final token = await storage.read(key: 'token');
       if (token != null) {
         final headers = await ApiConfig.getHeadersWithAuth();
-        final response = await client.post(
+        final response = await ApiConfig.client.post(
           Uri.parse('$baseUrl/logout'),
           headers: headers,
         );
@@ -303,7 +362,7 @@ class AuthService {
       if (token == null) return null;
 
       final headers = await ApiConfig.getHeadersWithAuth();
-      final response = await client.get(
+      final response = await ApiConfig.client.get(
         Uri.parse('$baseUrl/profile'),
         headers: headers,
       );
@@ -322,8 +381,50 @@ class AuthService {
   }
 
   Future<Map<String, String?>> getRememberedCredentials() async {
-    final loginId = await storage.read(key: 'saved_login_id');
-    final password = await storage.read(key: 'saved_password');
-    return {'loginId': loginId, 'password': password};
+    try {
+      final loginId = await storage.read(key: 'saved_login_id');
+      final password = await storage.read(key: 'saved_password');
+      return {'loginId': loginId, 'password': password};
+    } catch (e) {
+      print('Error getting remembered credentials: $e');
+      return {'loginId': null, 'password': null};
+    }
+  }
+
+  // Method untuk menyimpan credentials dengan remember me
+  Future<void> saveCredentials(String loginId, String password, bool rememberMe) async {
+    try {
+      if (rememberMe) {
+        await storage.write(key: 'saved_login_id', value: loginId);
+        await storage.write(key: 'saved_password', value: password);
+      } else {
+        await storage.delete(key: 'saved_login_id');
+        await storage.delete(key: 'saved_password');
+      }
+    } catch (e) {
+      print('Error saving credentials: $e');
+    }
+  }
+
+  // Method untuk menghapus saved credentials
+  Future<void> clearSavedCredentials() async {
+    try {
+      await storage.delete(key: 'saved_login_id');
+      await storage.delete(key: 'saved_password');
+    } catch (e) {
+      print('Error clearing saved credentials: $e');
+    }
+  }
+
+  // Method untuk mengecek apakah ada saved credentials
+  Future<bool> hasSavedCredentials() async {
+    try {
+      final loginId = await storage.read(key: 'saved_login_id');
+      final password = await storage.read(key: 'saved_password');
+      return loginId != null && password != null;
+    } catch (e) {
+      print('Error checking saved credentials: $e');
+      return false;
+    }
   }
 }
