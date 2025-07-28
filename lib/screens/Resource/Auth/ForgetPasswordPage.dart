@@ -8,6 +8,55 @@ import 'package:miniproject_flutter/screens/Resource/Auth/OneTimePasswordPage.da
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
+import 'package:miniproject_flutter/config/APi.dart';
+import 'package:miniproject_flutter/utils/responsive_page.dart';
+
+// Custom painter untuk background pattern
+class BackgroundPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.05)
+      ..strokeWidth = 1;
+
+    // Draw grid pattern
+    for (double i = 0; i < size.width; i += 50) {
+      canvas.drawLine(
+        Offset(i, 0),
+        Offset(i, size.height),
+        paint,
+      );
+    }
+
+    for (double i = 0; i < size.height; i += 50) {
+      canvas.drawLine(
+        Offset(0, i),
+        Offset(size.width, i),
+        paint,
+      );
+    }
+
+    // Draw circles
+    final circlePaint = Paint()
+      ..color = Colors.white.withOpacity(0.1)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(
+      Offset(size.width * 0.2, size.height * 0.3),
+      80,
+      circlePaint,
+    );
+
+    canvas.drawCircle(
+      Offset(size.width * 0.8, size.height * 0.7),
+      120,
+      circlePaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
 
 class ForgetPasswordPage extends StatefulWidget {
   const ForgetPasswordPage({Key? key}) : super(key: key);
@@ -19,19 +68,17 @@ class ForgetPasswordPage extends StatefulWidget {
 class _ForgetPasswordPageState extends State<ForgetPasswordPage>
     with SingleTickerProviderStateMixin {
   final TextEditingController _emailController = TextEditingController();
-  final FocusNode _emailFocusNode = FocusNode(); // Tambahan untuk auto focus
+  final FocusNode _emailFocusNode = FocusNode();
   bool _isLoading = false;
   String? _message;
   bool _success = false;
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
-  // Warna utama
   final Color primaryColor = const Color.fromARGB(255, 255, 0, 85);
 
-  // Tambahan untuk OTP/token
   bool _emailSent = false;
   List<TextEditingController> _tokenControllers = List.generate(
-    4, // Jumlah digit token
+    4,
     (_) => TextEditingController(),
   );
   FocusNode? _firstTokenFocus;
@@ -54,7 +101,7 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage>
   @override
   void dispose() {
     _emailController.dispose();
-    _emailFocusNode.dispose(); // dispose focus node
+    _emailFocusNode.dispose();
     for (var c in _tokenControllers) {
       c.dispose();
     }
@@ -63,66 +110,124 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage>
     super.dispose();
   }
 
+  // Validasi email
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+
   Future<void> _submit() async {
-    // Sembunyikan keyboard
     FocusScope.of(context).unfocus();
 
     final email = _emailController.text.trim();
+    
+    // Validasi email
     if (email.isEmpty) {
-      setState(() {
-        _message = 'Email tidak boleh kosong!';
-        _success = false;
-      });
-      AwesomeDialog(
-        context: context,
-        dialogType: DialogType.error,
-        animType: AnimType.rightSlide,
-        title: 'Gagal',
-        desc: 'Email tidak boleh kosong!',
-        btnOkOnPress: () {},
-        body: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            const Text(
-              'Email tidak boleh kosong!',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ).show();
+      _showErrorDialog('Email tidak boleh kosong!');
       return;
     }
+
+    if (!_isValidEmail(email)) {
+      _showErrorDialog('Format email tidak valid!');
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _message = null;
     });
-    final result = await AuthService().forgotPassword(email);
-    setState(() {
-      _isLoading = false;
-      _message = result['message'];
-      _success = result['status'] == true;
-    });
-    if (_success) {
-      // Routing ke halaman OTP
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => OneTimePasswordPage(
-            email: email,
-            primaryColor: primaryColor,
-            showSuccess: true,
+
+    try {
+      // Cek koneksi terlebih dahulu
+      final isConnected = await ApiConfig.checkConnection();
+      if (!isConnected) {
+        _showErrorDialog('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.');
+        return;
+      }
+
+      final result = await AuthService().forgotPassword(email);
+      
+      setState(() {
+        _isLoading = false;
+        _message = result['message'];
+        _success = result['status'] == true;
+      });
+
+      if (_success) {
+        // Routing ke halaman OTP
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OneTimePasswordPage(
+              email: email,
+              primaryColor: primaryColor,
+              showSuccess: true,
+            ),
           ),
-        ),
-      );
-    } else {
-      _showDialog(_success, _message!);
+        );
+      } else {
+        _showErrorDialog(_message!);
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      String errorMessage = "Terjadi kesalahan yang tidak diketahui.";
+      
+      if (e.toString().toLowerCase().contains("failed host lookup") ||
+          e.toString().toLowerCase().contains("socketexception")) {
+        errorMessage = "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.";
+      } else if (e.toString().toLowerCase().contains("unsupported operation")) {
+        errorMessage = "Terjadi masalah dengan platform. Silakan coba lagi.";
+      } else if (e.toString().toLowerCase().contains("timeout")) {
+        errorMessage = "Koneksi timeout. Silakan coba lagi.";
+      } else if (e.toString().toLowerCase().contains("certificate")) {
+        errorMessage = "Masalah sertifikat SSL. Silakan coba lagi.";
+      }
+
+      _showErrorDialog(errorMessage);
     }
   }
 
+  void _showErrorDialog(String message) {
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.error,
+      animType: AnimType.rightSlide,
+      title: 'Gagal',
+      desc: message,
+      btnOkOnPress: () {},
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Lottie.asset(
+            'assets/lottie/failedinput.json',
+            width: 120,
+            height: 120,
+            repeat: true,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Gagal',
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: const TextStyle(fontSize: 16),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    ).show();
+  }
+
   void _showDialog(bool success, String message, {String? lottieOverride}) {
-    // Bersihkan pesan error agar user friendly
     String displayMessage = message;
     String lottieAsset = lottieOverride ?? '';
 
@@ -130,20 +235,17 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage>
         message.toLowerCase().contains('<!doctype') ||
         message.toLowerCase().contains('gagal menghubungkan') ||
         message.toLowerCase().contains('unexpected character')) {
-      displayMessage =
-          'Tidak dapat menghubungkan ke server. Silakan coba lagi nanti.';
+      displayMessage = 'Tidak dapat menghubungkan ke server. Silakan coba lagi nanti.';
       lottieAsset = 'assets/lottie/error404.json';
     } else if (message.toLowerCase().contains('not found') ||
         message.toLowerCase().contains('tidak ditemukan') ||
-        message.toLowerCase().contains(
-          'kode tidak valid atau sudah digunakan',
-        )) {
-      displayMessage =
-          'Data yang kamu masukkan tidak ditemukan atau kode tidak valid.';
+        message.toLowerCase().contains('kode tidak valid atau sudah digunakan')) {
+      displayMessage = 'Data yang kamu masukkan tidak ditemukan atau kode tidak valid.';
       lottieAsset = 'assets/lottie/failedinput.json';
     } else if (success) {
       lottieAsset = 'assets/lottie/success.json';
     }
+
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -165,7 +267,7 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage>
                   child: Lottie.asset(
                     lottieAsset,
                     width: 80,
-                    repeat: true, // selalu repeat
+                    repeat: true,
                     animate: true,
                   ),
                 ),
@@ -211,8 +313,8 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage>
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
+  // Widget untuk tampilan mobile
+  Widget _buildMobileLayout() {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -246,24 +348,20 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage>
                               const SizedBox(height: 8),
                               RichText(
                                 text: TextSpan(
-                                  text: 'Haus',
+                                  text: 'HAUS',
                                   style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
                                     color: Colors.black87,
                                   ),
                                   children: [
                                     TextSpan(
                                       text: ' Inventory',
                                       style: TextStyle(
-                                        fontSize: 24,
+                                        fontSize: 20,
                                         fontWeight: FontWeight.bold,
-                                        color: const Color.fromARGB(
-                                          255,
-                                          255,
-                                          0,
-                                          25,
-                                        ),
+                                        color: primaryColor,
+                                        fontStyle: FontStyle.italic,
                                       ),
                                     ),
                                   ],
@@ -271,389 +369,138 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage>
                               ),
                             ],
                           ),
-                          const SizedBox(height: 24),
-                          // Judul & Subjudul
-                          Text(
-                            'Forget Password',
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Enter your email account to reset password',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              color: Colors.black54,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 55),
-                          // Ilustrasi
-                          if (!_emailSent)
-                            Lottie.asset(
-                              'assets/lottie/MessageSent.json',
-                              width: 300,
-                              repeat: true,
-                              animate: true,
-                            ),
-                          const SizedBox(height: 10),
-                          // Card Form
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: Colors.blueGrey,
-                                  width: 7,
+                          const SizedBox(height: 40),
+                          // Konten utama
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Icon dan judul
+                                Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.lock_reset,
+                                    size: 60,
+                                    color: primaryColor,
+                                  ),
                                 ),
-                                top: BorderSide(
-                                  color: Colors.blueGrey,
-                                  width: 1,
+                                const SizedBox(height: 24),
+                                Text(
+                                  'Forgot Password?',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
                                 ),
-                                left: BorderSide(
-                                  color: Colors.blueGrey,
-                                  width: 1,
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Enter your email address to reset your password',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
-                                right: BorderSide(
-                                  color: Colors.blueGrey,
-                                  width: 1,
+                                const SizedBox(height: 40),
+                                // Form email
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade50,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Colors.grey.shade200,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: TextField(
+                                    controller: _emailController,
+                                    focusNode: _emailFocusNode,
+                                    style: GoogleFonts.poppins(fontSize: 16),
+                                    decoration: InputDecoration(
+                                      labelText: 'Email Address',
+                                      labelStyle: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 14,
+                                      ),
+                                      hintText: 'Enter your email',
+                                      hintStyle: TextStyle(
+                                        color: Colors.grey.shade400,
+                                        fontSize: 14,
+                                      ),
+                                      prefixIcon: Icon(
+                                        Icons.email_outlined,
+                                        color: primaryColor,
+                                        size: 20,
+                                      ),
+                                      border: InputBorder.none,
+                                      contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                        vertical: 16,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(18),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 16,
-                                  offset: Offset(0, 6),
+                                const SizedBox(height: 32),
+                                // Submit button
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 56,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: primaryColor,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                    onPressed: _isLoading ? null : _submit,
+                                    child: _isLoading
+                                        ? const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                            ),
+                                          )
+                                        : Text(
+                                            'Send Reset Link',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                // Back to login
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => LoginPage(),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    'Back to Login',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: primaryColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
-                            child: !_emailSent
-                                ? Column(
-                                    children: [
-                                      InkWell(
-                                        onTap: () async {
-                                          Future.delayed(
-                                            const Duration(milliseconds: 100),
-                                            () {
-                                              _emailFocusNode.requestFocus();
-                                            },
-                                          );
-                                          await showGeneralDialog(
-                                            context: context,
-                                            barrierDismissible: true,
-                                            barrierLabel:
-                                                MaterialLocalizations.of(
-                                                  context,
-                                                ).modalBarrierDismissLabel,
-                                            barrierColor: Colors.black54,
-                                            transitionDuration: const Duration(
-                                              milliseconds: 250,
-                                            ),
-                                            pageBuilder: (context, anim1, anim2) {
-                                              final viewInsets = MediaQuery.of(
-                                                context,
-                                              ).viewInsets;
-                                              final isKeyboardOpen =
-                                                  viewInsets.bottom > 0;
-                                              return GestureDetector(
-                                                behavior:
-                                                    HitTestBehavior.opaque,
-                                                onTap: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                                child: Stack(
-                                                  children: [
-                                                    // Form dialog
-                                                    AnimatedPositioned(
-                                                      duration: const Duration(
-                                                        milliseconds: 250,
-                                                      ),
-                                                      curve: Curves.easeOut,
-                                                      left: 0,
-                                                      right: 0,
-                                                      // Selalu menempel di atas keyboard
-                                                      bottom: viewInsets.bottom,
-                                                      child: Center(
-                                                        child: GestureDetector(
-                                                          onTap:
-                                                              () {}, // Supaya tap di form tidak menutup dialog
-                                                          child: Material(
-                                                            color: Colors
-                                                                .transparent,
-                                                            child: Container(
-                                                              width:
-                                                                  MediaQuery.of(
-                                                                    context,
-                                                                  ).size.width,
-                                                              constraints:
-                                                                  const BoxConstraints(
-                                                                    minHeight:
-                                                                        180,
-                                                                    maxHeight:
-                                                                        320,
-                                                                  ),
-                                                              decoration: const BoxDecoration(
-                                                                color: Colors
-                                                                    .white,
-                                                                borderRadius:
-                                                                    BorderRadius.vertical(
-                                                                      top:
-                                                                          Radius.circular(
-                                                                            18,
-                                                                          ),
-                                                                      bottom:
-                                                                          Radius.circular(
-                                                                            0,
-                                                                          ),
-                                                                    ),
-                                                              ),
-                                                              padding:
-                                                                  const EdgeInsets.symmetric(
-                                                                    horizontal:
-                                                                        0,
-                                                                    vertical:
-                                                                        18,
-                                                                  ),
-                                                              child: SingleChildScrollView(
-                                                                child: Column(
-                                                                  mainAxisSize:
-                                                                      MainAxisSize
-                                                                          .min,
-                                                                  crossAxisAlignment:
-                                                                      CrossAxisAlignment
-                                                                          .start,
-                                                                  children: [
-                                                                    Padding(
-                                                                      padding: const EdgeInsets.symmetric(
-                                                                        horizontal:
-                                                                            20,
-                                                                      ),
-                                                                      child: Column(
-                                                                        crossAxisAlignment:
-                                                                            CrossAxisAlignment.start,
-                                                                        children: [
-                                                                          const Text(
-                                                                            'Masukkan Email Anda',
-                                                                            style: TextStyle(
-                                                                              fontSize: 18,
-                                                                              fontWeight: FontWeight.bold,
-                                                                            ),
-                                                                          ),
-                                                                          const SizedBox(
-                                                                            height:
-                                                                                16,
-                                                                          ),
-                                                                          TextField(
-                                                                            controller:
-                                                                                _emailController,
-                                                                            focusNode:
-                                                                                _emailFocusNode,
-                                                                            keyboardType:
-                                                                                TextInputType.emailAddress,
-                                                                            autofocus:
-                                                                                true,
-                                                                            decoration: InputDecoration(
-                                                                              prefixIcon: const Icon(
-                                                                                Icons.email_outlined,
-                                                                                color: Colors.pinkAccent,
-                                                                              ),
-                                                                              hintText: 'Enter your email',
-                                                                              border: OutlineInputBorder(
-                                                                                borderRadius: BorderRadius.circular(
-                                                                                  14,
-                                                                                ),
-                                                                                borderSide: const BorderSide(
-                                                                                  color: Colors.pinkAccent,
-                                                                                ),
-                                                                              ),
-                                                                              focusedBorder: OutlineInputBorder(
-                                                                                borderRadius: BorderRadius.circular(
-                                                                                  14,
-                                                                                ),
-                                                                                borderSide: const BorderSide(
-                                                                                  color: Colors.pinkAccent,
-                                                                                  width: 2,
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                          const SizedBox(
-                                                                            height:
-                                                                                20,
-                                                                          ),
-                                                                          SizedBox(
-                                                                            width:
-                                                                                double.infinity,
-                                                                            height:
-                                                                                48,
-                                                                            child: ElevatedButton(
-                                                                              style: ElevatedButton.styleFrom(
-                                                                                backgroundColor: const Color.fromARGB(
-                                                                                  255,
-                                                                                  255,
-                                                                                  0,
-                                                                                  85,
-                                                                                ),
-                                                                                shape: RoundedRectangleBorder(
-                                                                                  borderRadius: BorderRadius.circular(
-                                                                                    12,
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                              onPressed: _isLoading
-                                                                                  ? null
-                                                                                  : () async {
-                                                                                      Navigator.of(
-                                                                                        context,
-                                                                                      ).pop();
-                                                                                      await _submit();
-                                                                                    },
-                                                                              child: const Text(
-                                                                                'Continue',
-                                                                                style: TextStyle(
-                                                                                  fontWeight: FontWeight.bold,
-                                                                                  color: Colors.white,
-                                                                                  fontSize: 16,
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
-                                          );
-                                        }, // end onTap
-                                        borderRadius: BorderRadius.circular(14),
-                                        child: Container(
-                                          width: double.infinity,
-                                          height: 48,
-                                          decoration: BoxDecoration(
-                                            border: Border.all(
-                                              color: Colors.grey.shade300,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              14,
-                                            ),
-                                            color: Colors.white,
-                                          ),
-                                          alignment: Alignment.centerLeft,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.email_outlined,
-                                                color: Colors.pinkAccent,
-                                              ),
-                                              const SizedBox(width: 10),
-                                              Expanded(
-                                                child: Text(
-                                                  _emailController.text.isEmpty
-                                                      ? 'Enter your email'
-                                                      : _emailController.text,
-                                                  style: TextStyle(
-                                                    color:
-                                                        _emailController
-                                                            .text
-                                                            .isEmpty
-                                                        ? Colors.grey
-                                                        : Colors.black87,
-                                                    fontSize: 16,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 20),
-                                      // Tombol Cancel tetap
-                                      SizedBox(
-                                        width: double.infinity,
-                                        height: 48,
-                                        child: OutlinedButton(
-                                          style: OutlinedButton.styleFrom(
-                                            side: BorderSide(
-                                              color: Colors.grey.shade300,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                          ),
-                                          onPressed: () => Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const LoginPage(),
-                                            ),
-                                          ),
-                                          child: const Text(
-                                            'Cancel',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black54,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                : Column(
-                                    children: [
-                                      // Tombol Cancel tetap
-                                      SizedBox(
-                                        width: double.infinity,
-                                        height: 48,
-                                        child: OutlinedButton(
-                                          style: OutlinedButton.styleFrom(
-                                            side: BorderSide(
-                                              color: Colors.grey.shade300,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                          ),
-                                          onPressed: () =>
-                                              Navigator.pushReplacement(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      const LoginPage(),
-                                                ),
-                                              ),
-                                          child: const Text(
-                                            'Cancel',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black54,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
                           ),
                         ],
                       ),
@@ -663,50 +510,409 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage>
               );
             },
           ),
-          // Overlay loading, selalu di root Stack
-          if (_isLoading)
-            Positioned.fill(
-              child: Container(
-                color: Colors.black.withOpacity(0.78),
-                alignment: Alignment.center,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Lottie.asset(
-                      'assets/lottie/loader.json',
-                      width: 220,
-                      height: 220,
-                      repeat: true,
-                      animate: true,
-                      fit: BoxFit.contain,
-                    ),
-                    const SizedBox(height: 0),
-                    Text(
-                      'Processing...',
-                      style: GoogleFonts.poppins(
-                        fontSize: 21,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: 0.7,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Please wait while we complete your request.',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white70,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
+          // Footer image
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Image.asset(
+              'assets/images/icons-logoDekoration.png',
+              width: double.infinity,
+              height: 140,
+              fit: BoxFit.cover,
+              alignment: Alignment.bottomCenter,
             ),
+          ),
+          if (_isLoading) _buildLoadingOverlay(),
         ],
       ),
+    );
+  }
+
+  // Widget untuk tampilan desktop/web
+  Widget _buildDesktopLayout() {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          Row(
+            children: [
+              // Left side - Background dengan gradient dan logo
+              Expanded(
+                flex: 1,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color.fromARGB(255, 255, 0, 85),
+                        const Color.fromARGB(255, 233, 30, 99),
+                        Colors.pink.shade400,
+                      ],
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Background pattern
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: BackgroundPatternPainter(),
+                        ),
+                      ),
+                      // Content
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Logo dan branding
+                            Container(
+                              padding: const EdgeInsets.all(40),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.2),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Image.asset(
+                                    'assets/images/icons-haus.png',
+                                    height: 120,
+                                    width: 120,
+                                  ),
+                                  const SizedBox(height: 24),
+                                  RichText(
+                                    text: TextSpan(
+                                      text: 'HAUS',
+                                      style: const TextStyle(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                        letterSpacing: 2,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: ' Inventory',
+                                          style: TextStyle(
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                            letterSpacing: 2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Haus Inventory Management System',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white.withOpacity(0.8),
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              
+              // Right side - Forgot password form
+              Expanded(
+                flex: 1,
+                child: Container(
+                  color: Colors.white,
+                  child: Center(
+                    child: Container(
+                      constraints: BoxConstraints(
+                        maxWidth: 450,
+                        maxHeight: Responsive.getHeight(context) * 0.8,
+                      ),
+                      child: Card(
+                        elevation: 1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(24),
+                            color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                spreadRadius: 1,
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(48),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Header untuk desktop
+                                Column(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        color: primaryColor.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.lock_reset,
+                                        size: 40,
+                                        color: primaryColor,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    Text(
+                                      'Forgot Password?',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color.fromARGB(255, 255, 0, 85),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Enter your email to reset your password',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 16,
+                                        color: Colors.grey.shade600,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 40),
+                                
+                                // Form forgot password yang lebih modern
+                                _buildDesktopForgotPasswordForm(),
+                                
+                                const SizedBox(height: 32),
+                                
+                                // Divider
+                                Row(
+                                  children: [
+                                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      child: Text(
+                                        'or',
+                                        style: TextStyle(
+                                          color: Colors.grey.shade500,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                                  ],
+                                ),
+                                
+                                const SizedBox(height: 24),
+                                
+                                // Back to login link
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "Remember your password? ",
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => LoginPage(),
+                                          ),
+                                        );
+                                      },
+                                      child: Text(
+                                        'Sign In',
+                                        style: TextStyle(
+                                          color: const Color.fromARGB(255, 255, 0, 85),
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (_isLoading) _buildLoadingOverlay(),
+        ],
+      ),
+    );
+  }
+
+  // Form forgot password khusus desktop yang lebih modern
+  Widget _buildDesktopForgotPasswordForm() {
+    return Column(
+      children: [
+        // Email field
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.grey.shade200,
+              width: 1,
+            ),
+          ),
+          child: TextField(
+            controller: _emailController,
+            focusNode: _emailFocusNode,
+            style: GoogleFonts.poppins(fontSize: 16),
+            decoration: InputDecoration(
+              labelText: 'Email Address',
+              labelStyle: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 14,
+              ),
+              hintText: 'Enter your email address',
+              hintStyle: TextStyle(
+                color: Colors.grey.shade400,
+                fontSize: 14,
+              ),
+              prefixIcon: Icon(
+                Icons.email_outlined,
+                color: const Color.fromARGB(255, 255, 0, 85),
+                size: 20,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
+            ),
+          ),
+        ),
+        
+        const SizedBox(height: 32),
+        
+        // Submit button
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 255, 0, 85),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 0,
+              shadowColor: const Color.fromARGB(255, 255, 0, 85).withOpacity(0.3),
+            ),
+            onPressed: _isLoading ? null : _submit,
+            child: _isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(
+                    'Send Reset Link',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+          ),
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Help text
+        Text(
+          'We will send you a password reset link to your email address',
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            color: Colors.grey.shade500,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoadingOverlay() {
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withOpacity(0.78),
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Lottie.asset(
+              'assets/lottie/loader.json',
+              width: 220,
+              height: 220,
+              repeat: true,
+              animate: true,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 0),
+            Text(
+              'Processing...',
+              style: GoogleFonts.poppins(
+                fontSize: 21,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                letterSpacing: 0.7,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Please wait while we complete your request.',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: Colors.white70,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ResponsiveLayout(
+      mobile: _buildMobileLayout(),
+      desktop: _buildDesktopLayout(),
     );
   }
 }

@@ -15,6 +15,7 @@ import 'package:miniproject_flutter/screens/Resource/Stock_Management/TransferSt
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/Waste_Page.dart';
 import 'package:miniproject_flutter/widgets/DirectPurchase/HeaderAppBar.dart';
 import 'package:miniproject_flutter/widgets/Sidebar.dart';
+import 'package:miniproject_flutter/widgets/MaterialCalculate/TitleCardMaterialCalculate.dart';
 import 'dart:ui';
 
 class MaterialCalculatePage extends StatefulWidget {
@@ -33,7 +34,7 @@ class _MaterialCalculatePageState extends State<MaterialCalculatePage> {
   int get _selectedIndex => widget.selectedIndex;
 
   final Color primaryColor = const Color(0xFFF8BBD0);
-  final Color deepPink = const Color.fromARGB(255, 233, 30, 99);
+  final Color deepPink = const Color.fromARGB(255, 255, 0, 85);
   final Color lightPink = const Color(0xFFFCE4EC);
 
   // Constants for menu index
@@ -43,6 +44,9 @@ class _MaterialCalculatePageState extends State<MaterialCalculatePage> {
   final AuthService _authService = AuthService();
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  
+  // TabController untuk title card
+  TabController? _tabController;
 
   void _toggleMenu(int menuIndex) {
     setState(() {
@@ -123,9 +127,9 @@ class _MaterialCalculatePageState extends State<MaterialCalculatePage> {
 
   // Dummy breakdown
   List<Map<String, dynamic>> breakdown = [
-    {'code': 'T-4', 'name': 'Tepung Tapioka', 'qty': 20, 'uom': 'gram'},
-    {'code': 'A-1', 'name': 'Air Mineral', 'qty': 250, 'uom': 'ml'},
-    {'code': 'B-2', 'name': 'Perisa Brown Sugar', 'qty': 100, 'uom': 'gram'},
+    {'code': 'T-4', 'name': 'Tepung Tapioka', 'qty': 20, 'uom': 'gram', 'icon': Icons.grain},
+    {'code': 'A-1', 'name': 'Air Mineral', 'qty': 250, 'uom': 'ml', 'icon': Icons.water_drop},
+    {'code': 'B-2', 'name': 'Perisa Brown Sugar', 'qty': 100, 'uom': 'gram', 'icon': Icons.cake},
   ];
 
   int currentPage = 1;
@@ -144,6 +148,11 @@ class _MaterialCalculatePageState extends State<MaterialCalculatePage> {
     } else if ([21, 22, 23, 24, 25].contains(_selectedIndex)) {
       _expandedMenuIndex = STOCK_MANAGEMENT_MENU;
     }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   void _calculateItem() {
@@ -206,6 +215,9 @@ class _MaterialCalculatePageState extends State<MaterialCalculatePage> {
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isMobile = screenWidth < 600;
+    
     return Scaffold(
       key: _scaffoldKey,
       drawer: Drawer(
@@ -229,538 +241,46 @@ class _MaterialCalculatePageState extends State<MaterialCalculatePage> {
           onLogout: _handleLogout,
         ),
       ),
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(80),
-        child: Container(
-          color: deepPink,
-          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top, left: 16, right: 16, bottom: 8),
-          child: HeaderFloatingCard(
-            isMobile: true,
-            onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-            onEmailTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => EmailPage())),
-            onNotifTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => NotificationPage())),
-            onAvatarTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => UserprofilePage())),
-            searchController: _searchController,
-            searchFocusNode: _searchFocusNode,
-            onSearchChanged: (value) {
-              // Handle search
-            },
-            avatarInitial: 'J',
-          ),
-        ),
-      ),
       backgroundColor: Color(0xFFF8F9FA),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Add Item',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-                color: Colors.grey[800],
-              ),
-            ),
-            SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.06),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              padding: EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: DropdownButtonFormField<String>(
-                          value: selectedCode,
-                          decoration: InputDecoration(
-                            labelText: 'Item Code',
-                            labelStyle: GoogleFonts.poppins(
-                              color: Colors.grey[600],
-                              fontSize: 13,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Color(0xFFE91E63)),
-                            ),
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 12,
-                            ),
-                          ),
-                          items: itemList
-                              .map(
-                                (item) => DropdownMenuItem(
-                                  value: item['code'],
-                                  child: Text(
-                                    item['code']!,
-                                    style: GoogleFonts.poppins(fontSize: 13),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (val) {
-                            setState(() {
-                              selectedCode = val;
-                              selectedName = itemList.firstWhere(
-                                (e) => e['code'] == val,
-                              )['name'];
-                            });
-                          },
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        flex: 3,
-                        child: DropdownButtonFormField<String>(
-                          value: selectedName,
-                          decoration: InputDecoration(
-                            labelText: 'Item Name',
-                            labelStyle: GoogleFonts.poppins(
-                              color: Colors.grey[600],
-                              fontSize: 13,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Color(0xFFE91E63)),
-                            ),
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 12,
-                            ),
-                          ),
-                          items: itemList
-                              .map(
-                                (item) => DropdownMenuItem(
-                                  value: item['name'],
-                                  child: Text(
-                                    item['name']!,
-                                    style: GoogleFonts.poppins(fontSize: 13),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (val) {
-                            setState(() {
-                              selectedName = val;
-                              selectedCode = itemList.firstWhere(
-                                (e) => e['name'] == val,
-                              )['code'];
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: TextFormField(
-                          initialValue: qty.toString(),
-                          keyboardType: TextInputType.number,
-                          style: GoogleFonts.poppins(fontSize: 13),
-                          decoration: InputDecoration(
-                            labelText: 'Qty',
-                            labelStyle: GoogleFonts.poppins(
-                              color: Colors.grey[600],
-                              fontSize: 13,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Color(0xFFE91E63)),
-                            ),
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 12,
-                            ),
-                          ),
-                          onChanged: (val) {
-                            setState(() {
-                              qty = int.tryParse(val) ?? 1;
-                            });
-                          },
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        flex: 2,
-                        child: DropdownButtonFormField<String>(
-                          value: selectedUom,
-                          decoration: InputDecoration(
-                            labelText: 'UoM',
-                            labelStyle: GoogleFonts.poppins(
-                              color: Colors.grey[600],
-                              fontSize: 13,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Color(0xFFE91E63)),
-                            ),
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 12,
-                            ),
-                          ),
-                          items: uomList
-                              .map(
-                                (uom) => DropdownMenuItem(
-                                  value: uom,
-                                  child: Text(
-                                    uom,
-                                    style: GoogleFonts.poppins(fontSize: 13),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (val) {
-                            setState(() {
-                              selectedUom = val;
-                            });
-                          },
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      Container(
-                        height: 48,
-                        width: 48,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.red[400]!, Colors.red[600]!],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.red.withOpacity(0.2),
-                              blurRadius: 6,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.delete,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          onPressed: () {},
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 16),
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: _calculateItem,
-                    icon: Icon(Icons.calculate, size: 18),
-                    label: Text(
-                      'Calculate',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFE91E63),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 24),
-            Text(
-              'Raw Material Breakdown',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-                color: Colors.grey[800],
-              ),
-            ),
-            SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.06),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            'Item Code',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                              color: Colors.grey[800],
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        Expanded(
-                          flex: 4,
-                          child: Text(
-                            'Item Name',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                              color: Colors.grey[800],
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            'Qty',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                              color: Colors.grey[800],
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            'UoM',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                              color: Colors.grey[800],
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  ...breakdown.map(
-                    (row) => Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Colors.grey[200]!,
-                            width: 1,
-                          ),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 2,
-                            child: Text(
-                              row['code'],
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                color: Colors.grey[800],
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          Expanded(
-                            flex: 4,
-                            child: Text(
-                              row['name'],
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                color: Colors.grey[800],
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Text(
-                              row['qty'].toString(),
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                color: Colors.grey[800],
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Text(
-                              row['uom'],
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                color: Colors.grey[800],
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '1 - 10 of 13 Pages',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                  ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Builder(
+                builder: (context) => HeaderFloatingCard(
+                  isMobile: MediaQuery.of(context).size.width < 700,
+                  onMenuTap: () {
+                    if (isMobile) {
+                      Scaffold.of(context).openDrawer();
+                    } else {
+                      // Handle desktop sidebar toggle if needed
+                    }
+                  },
+                  onEmailTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => EmailPage())),
+                  onNotifTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => NotificationPage())),
+                  onAvatarTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => UserprofilePage())),
+                  searchController: _searchController,
+                  searchFocusNode: _searchFocusNode,
+                  onSearchChanged: (value) {
+                    // Handle search
+                  },
+                  avatarInitial: 'J',
                 ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[300]!),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        'Page ',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      DropdownButton<int>(
-                        value: currentPage,
-                        underline: SizedBox(),
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: Color(0xFFE91E63),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        items: List.generate(totalPages, (i) => i + 1)
-                            .map(
-                              (e) => DropdownMenuItem(
-                                value: e,
-                                child: Text(e.toString()),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (val) {
-                          setState(() {
-                            currentPage = val!;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
-            SizedBox(height: 16),
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                onPressed: _refresh,
-                child: Text(
-                  'Refresh',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF43A047),
-                  elevation: 0,
-                  padding: EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TitleCardMaterialCalculate(
+                      isMobile: isMobile,
+                    ),
+                    SizedBox(height: 18),
+                    _buildCalculateContent(),
+                  ],
                 ),
               ),
             ),
@@ -773,8 +293,591 @@ class _MaterialCalculatePageState extends State<MaterialCalculatePage> {
     );
   }
 
-  // Sidebar implementation has been replaced with SidebarWidget
+  // Content method
+  Widget _buildCalculateContent() {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Add Item Section
+          Container(
+            margin: EdgeInsets.only(bottom: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: deepPink,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      'Add Item',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16),
+                Material(
+                  elevation: 1,
+                  borderRadius: BorderRadius.circular(16),
+                  color: Colors.white,
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Item Code & Item Name Row
+                        Row(
+                          children: [
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: selectedCode,
+                                decoration: InputDecoration(
+                                  labelText: 'Item Code',
+                                  labelStyle: GoogleFonts.poppins(
+                                    color: Colors.grey[600],
+                                    fontSize: 13,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: deepPink),
+                                  ),
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                items: itemList
+                                    .map(
+                                      (item) => DropdownMenuItem(
+                                        value: item['code'],
+                                        child: Text(
+                                          item['code']!,
+                                          style: GoogleFonts.poppins(fontSize: 13),
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (val) {
+                                  setState(() {
+                                    selectedCode = val;
+                                    selectedName = itemList.firstWhere(
+                                      (e) => e['code'] == val,
+                                    )['name'];
+                                  });
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: selectedName,
+                                decoration: InputDecoration(
+                                  labelText: 'Item Name',
+                                  labelStyle: GoogleFonts.poppins(
+                                    color: Colors.grey[600],
+                                    fontSize: 13,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: deepPink),
+                                  ),
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                items: itemList
+                                    .map(
+                                      (item) => DropdownMenuItem(
+                                        value: item['name'],
+                                        child: Text(
+                                          item['name']!,
+                                          style: GoogleFonts.poppins(fontSize: 13),
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (val) {
+                                  setState(() {
+                                    selectedName = val;
+                                    selectedCode = itemList.firstWhere(
+                                      (e) => e['name'] == val,
+                                    )['code'];
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        
+                        // Qty, UoM & Delete Button Row
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: qty.toString(),
+                                keyboardType: TextInputType.number,
+                                style: GoogleFonts.poppins(fontSize: 13),
+                                decoration: InputDecoration(
+                                  labelText: 'Qty',
+                                  labelStyle: GoogleFonts.poppins(
+                                    color: Colors.grey[600],
+                                    fontSize: 13,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: deepPink),
+                                  ),
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                onChanged: (val) {
+                                  setState(() {
+                                    qty = int.tryParse(val) ?? 1;
+                                  });
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: selectedUom,
+                                decoration: InputDecoration(
+                                  labelText: 'UoM',
+                                  labelStyle: GoogleFonts.poppins(
+                                    color: Colors.grey[600],
+                                    fontSize: 13,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: deepPink),
+                                  ),
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                items: uomList
+                                    .map(
+                                      (uom) => DropdownMenuItem(
+                                        value: uom,
+                                        child: Text(
+                                          uom,
+                                          style: GoogleFonts.poppins(fontSize: 13),
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (val) {
+                                  setState(() {
+                                    selectedUom = val;
+                                  });
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Container(
+                              height: 48,
+                              width: 48,
+                              decoration: BoxDecoration(
+                                color: Colors.red[400],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.delete,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                onPressed: () {},
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                // Calculate Button - Full Width
+                SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _calculateItem,
+                    icon: Icon(Icons.calculate, size: 18, color: Colors.white),
+                    label: Text(
+                      'Calculate',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: deepPink,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Raw Material Breakdown Section
+          Container(
+            margin: EdgeInsets.only(bottom: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: deepPink,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      'Raw Material Breakdown',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16),
+                
+                // Individual Cards for each item
+                ...breakdown.map((row) => Container(
+                  margin: EdgeInsets.only(bottom: 20),
+                  child: Material(
+                    elevation: 1,
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white,
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header with delete button and code
+                          Row(
+                            children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: deepPink,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.delete,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                  onPressed: () {},
+                                  padding: EdgeInsets.zero,
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                row['code'],
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[800],
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 12),
+                          
+                          // Inner container with item details
+                          Container(
+                            padding: EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  row['icon'],
+                                  size: 16,
+                                  color: deepPink,
+                                ),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    row['name'],
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      color: Colors.grey[700],
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                SizedBox(width: 12),
+                                
+                                // Quantity badge
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: deepPink.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '# ${row['qty']}',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: deepPink,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                
+                                // Unit badge with ruler icon
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.straighten,
+                                        size: 12,
+                                        color: deepPink,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        row['uom'],
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )).toList(),
+              ],
+            ),
+          ),
+          
+          // Pagination Section - No Card Wrapper
+          Container(
+            margin: EdgeInsets.only(top: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: Text(
+                      '1 - 3 of 3 items',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8),
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Page ',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: deepPink.withOpacity(0.3)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: deepPink.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: DropdownButton<int>(
+                          value: currentPage,
+                          underline: SizedBox(),
+                          icon: Icon(Icons.keyboard_arrow_down, color: deepPink, size: 16),
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: deepPink,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          items: List.generate(totalPages, (i) => i + 1)
+                              .map(
+                                (e) => DropdownMenuItem(
+                                  value: e,
+                                  child: Text(e.toString()),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (val) {
+                            setState(() {
+                              currentPage = val!;
+                            });
+                          },
+                        ),
+                      ),
+                      Text(
+                        ' of 13',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 8),
+                Flexible(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [deepPink, deepPink.withOpacity(0.8)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: deepPink.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: _refresh,
+                      icon: Icon(
+                        Icons.refresh_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                      label: Text(
+                        'Refresh',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        elevation: 0,
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
+}
+  // Sidebar implementation has been replaced with SidebarWidget
 
   // Menu item implementation has been replaced with SidebarWidget
 
