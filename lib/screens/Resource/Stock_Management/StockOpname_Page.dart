@@ -13,8 +13,8 @@ import 'package:miniproject_flutter/screens/Resource/Auth/UserProfile_Page.dart'
 import 'package:miniproject_flutter/screens/DashboardPage.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
-import 'package:miniproject_flutter/widgets/DirectPurchase/HeaderAppBar.dart';
-import 'package:miniproject_flutter/widgets/Sidebar.dart';
+import 'package:miniproject_flutter/component/HeaderAppBar.dart';
+import 'package:miniproject_flutter/component/Sidebar.dart';
 import 'package:miniproject_flutter/widgets/StockOpname/TitleCardStockOpname.dart';
 import 'package:miniproject_flutter/widgets/StockOpname/StockOpnameCard.dart';
 
@@ -41,7 +41,7 @@ class _StockOpnamePageState extends State<StockOpnamePage> with TickerProviderSt
   static const int STOCK_MANAGEMENT_MENU = 2;
 
   final AuthService _authService = AuthService();
-  
+
   // TabController untuk title card
   TabController? _tabController;
 
@@ -208,8 +208,8 @@ class _StockOpnamePageState extends State<StockOpnamePage> with TickerProviderSt
                   onSearchChanged: (value) {
                     // Handle search
                   },
-                  avatarInitial: 'J',
-                ),
+              avatarInitial: 'J',
+            ),
               ),
             ),
             Expanded(
@@ -259,15 +259,15 @@ class _StockOpnamePageState extends State<StockOpnamePage> with TickerProviderSt
                             status: 'Running',
                             date: '15/03/2024',
                             inputDate: '15/03/2024',
-                          ),
-                                ],
-                              ),
+                        ),
+                      ],
+                    ),
                             ),
                             // Completed Tab
                             SingleChildScrollView(
                               padding: const EdgeInsets.fromLTRB(0, 4, 0, 90),
                               child: Column(
-                                children: [
+              children: [
                           StockOpnameCard(
                             docNum: 'SO-2023-4',
                             outlet: 'Outlet D',
@@ -285,12 +285,12 @@ class _StockOpnamePageState extends State<StockOpnamePage> with TickerProviderSt
                             inputDate: '15/03/2024',
                                   ),
                                 ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
+                  ),
+                ),
+              ],
+            ),
+                          ),
+                        ],
                 ),
               ),
             ),

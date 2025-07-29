@@ -10,7 +10,6 @@ import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialRe
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/StockOpname_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/TransferStock_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/Waste_Page.dart';
-import 'package:miniproject_flutter/widgets/DirectPurchase/HeaderAppbar.dart';
 import 'package:miniproject_flutter/widgets/DirectPurchase/TitleCardDirectPurchase.dart';
 import 'package:miniproject_flutter/widgets/DirectPurchase/PurchaseCard.dart';
 import 'package:miniproject_flutter/widgets/DirectPurchase/SearchAndFilterBar.dart';
@@ -19,8 +18,8 @@ import 'package:miniproject_flutter/services/DirectService.dart';
 import 'package:miniproject_flutter/widgets/DirectPurchase/FilterBottomSheet.dart';
 import 'package:intl/intl.dart';
 import 'package:miniproject_flutter/widgets/DirectPurchase/CartDialog.dart';
-
-import 'package:miniproject_flutter/widgets/Sidebar.dart';
+import 'package:miniproject_flutter/component/Sidebar.dart';
+import 'package:miniproject_flutter/component/HeaderAppBar.dart';
 
 
 class DirectPurchasePage extends StatefulWidget {

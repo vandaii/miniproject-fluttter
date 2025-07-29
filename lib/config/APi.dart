@@ -15,7 +15,7 @@ class TimeoutIOClient extends IOClient {
 
 class ApiConfig {
   // Gunakan IP yang sesuai dengan environment
-  static const String baseUrl = 'http://192.168.1.8:8000/api';
+  static const String baseUrl ='http://192.168.1.23:8000/api';
 
   // HTTP client dengan error handling dan timeout
   static http.Client get client {

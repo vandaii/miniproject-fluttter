@@ -17,7 +17,7 @@ import 'package:miniproject_flutter/widgets/Dashboard/TaskCard.dart';
 import 'package:miniproject_flutter/screens/TaskDetailPage.dart';
 import 'package:flutter/physics.dart';
 import 'package:miniproject_flutter/widgets/Dashboard/AnimatedSidebar.dart';
-import 'package:miniproject_flutter/widgets/Sidebar.dart';
+import 'package:miniproject_flutter/component/Sidebar.dart';
 
 class DashboardPage extends StatefulWidget {
   final int selectedIndex;
