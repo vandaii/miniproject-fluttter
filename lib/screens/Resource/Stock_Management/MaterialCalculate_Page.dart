@@ -13,8 +13,8 @@ import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialRe
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/StockOpname_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/TransferStock_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/Waste_Page.dart';
-import 'package:miniproject_flutter/widgets/DirectPurchase/HeaderAppBar.dart';
-import 'package:miniproject_flutter/widgets/Sidebar.dart';
+import 'package:miniproject_flutter/component/HeaderAppBar.dart';
+import 'package:miniproject_flutter/component/Sidebar.dart';
 import 'package:miniproject_flutter/widgets/MaterialCalculate/TitleCardMaterialCalculate.dart';
 import 'dart:ui';
 

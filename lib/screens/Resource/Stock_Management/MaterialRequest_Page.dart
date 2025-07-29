@@ -6,7 +6,6 @@ import 'package:miniproject_flutter/screens/Resource/Auth/Email_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Help_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/Notification_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Purchasing/DirectPurchasePage.dart';
-
 import 'package:miniproject_flutter/screens/Resource/Purchasing/GRPO_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/MaterialCalculate_Page.dart';
 import 'package:miniproject_flutter/screens/Resource/Stock_Management/StockOpname_Page.dart';
@@ -16,11 +15,12 @@ import 'package:miniproject_flutter/screens/Resource/Auth/UserProfile_Page.dart'
 import 'package:miniproject_flutter/screens/DashboardPage.dart';
 import 'package:miniproject_flutter/services/authService.dart';
 import 'package:miniproject_flutter/screens/Resource/Auth/LoginPage.dart';
-import 'package:miniproject_flutter/widgets/Sidebar.dart';
-import 'package:miniproject_flutter/widgets/DirectPurchase/HeaderAppbar.dart';
+import 'package:miniproject_flutter/component/Sidebar.dart';
 import 'package:miniproject_flutter/widgets/MaterialRequest/TitleCardMaterialRequest.dart';
 import 'package:miniproject_flutter/widgets/MaterialRequest/MaterialRequestCard.dart';
 import 'package:miniproject_flutter/widgets/MaterialRequest/MaterialRequestForm.dart';
+
+import '../../../component/HeaderAppBar.dart';
 
 class MaterialRequestPage extends StatefulWidget {
   final int selectedIndex;
@@ -307,8 +307,8 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> with TickerP
                       // Tab 0: Pending
                       SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
-                        child: Column(
-                          children: [
+                  child: Column(
+                    children: [
                             MaterialRequestSimpleCard(
                               requestNo: 'REQ-2024-0125',
                               date: '15/03/2024',
@@ -341,15 +341,15 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> with TickerP
                               onViewDetails: () {
                                 // Implementasi detail view
                               },
-                            ),
-                          ],
-                        ),
+                                  ),
+                                ],
+                              ),
                       ),
                       // Tab 1: Approved
                       SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
                         child: Column(
-                          children: [
+                        children: [
                             MaterialRequestSimpleCard(
                               requestNo: 'MR-2023-4',
                               date: '10/06/2023',
@@ -373,9 +373,9 @@ class _MaterialRequest_PageState extends State<MaterialRequestPage> with TickerP
                               },
                             ),
                           ],
-                        ),
-                      ),
-                    ],
+                            ),
+                          ),
+                        ],
                   ) : Center(
                     child: CircularProgressIndicator(
                       color: deepPink,

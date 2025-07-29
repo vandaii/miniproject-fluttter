@@ -19,9 +19,9 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:miniproject_flutter/services/itemService.dart';
-import 'package:miniproject_flutter/widgets/DirectPurchase/HeaderAppBar.dart';
+import 'package:miniproject_flutter/component/HeaderAppBar.dart';
 import 'package:miniproject_flutter/widgets/Grpo/TitleCardGrpo.dart';
-import 'package:miniproject_flutter/widgets/Sidebar.dart';
+import 'package:miniproject_flutter/component/Sidebar.dart';
 
 class GRPO_Page extends StatefulWidget {
   final int selectedIndex;

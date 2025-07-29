@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class TitleCardDirectPurchase extends StatelessWidget {
+class TitleCardTransferStock extends StatelessWidget {
   final bool isMobile;
-  const TitleCardDirectPurchase({Key? key, this.isMobile = false, required TabController tabController}) : super(key: key);
+  final TabController tabController;
+  const TitleCardTransferStock({Key? key, this.isMobile = false, required this.tabController}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +34,7 @@ class TitleCardDirectPurchase extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Icon(
-                    Icons.shopping_cart_checkout_rounded,
+                    Icons.swap_horiz_rounded,
                     color: deepPink,
                     size: 28,
                   ),
@@ -44,7 +45,7 @@ class TitleCardDirectPurchase extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Direct Purchase',
+                        'Transfer Stock',
                         style: GoogleFonts.poppins(
                           fontSize: isMobile ? 18 : 22,
                           fontWeight: FontWeight.bold,
@@ -56,7 +57,7 @@ class TitleCardDirectPurchase extends StatelessWidget {
                       ),
                       SizedBox(height: 4),
                       Text(
-                        'Manage and monitor your store purchases easily.',
+                        'Manage stock transfers between locations efficiently.',
                         style: GoogleFonts.poppins(
                           fontSize: isMobile ? 12 : 14,
                           color: Colors.white.withOpacity(0.85),
@@ -66,6 +67,20 @@ class TitleCardDirectPurchase extends StatelessWidget {
                     ],
                   ),
                 ),
+              ],
+            ),
+            SizedBox(height: 18),
+            TabBar(
+              controller: tabController,
+              isScrollable: true,
+              indicatorColor: const Color.fromRGBO(255, 255, 255, 1),
+              indicatorWeight: 3,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+              tabs: const [
+                Tab(text: 'Transfer Out'),
+                Tab(text: 'Transfer In'),
               ],
             ),
           ],
